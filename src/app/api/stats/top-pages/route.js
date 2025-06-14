@@ -1,0 +1,50 @@
+import db from '../../../../../lib/db'; // Make sure this alias is correct for your setup
+import { NextResponse } from 'next/server';
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const siteId = searchParams.get('siteId');
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+
+  if (!siteId) {
+    return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
+  }
+
+  // Build the WHERE clause for the date range
+  let dateFilter = '';
+  const queryParams = [siteId];
+
+  if (startDate && endDate) {
+    const inclusiveEndDate = new Date(endDate);
+    inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
+
+    dateFilter = 'AND created_at BETWEEN ? AND ?';
+    queryParams.push(startDate, inclusiveEndDate.toISOString().split('T')[0]);
+  }
+
+  try {
+    // This query counts pageviews, groups them by the page path,
+    // and returns the top 7 most viewed pages.
+    const query = `
+      SELECT 
+        JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.path')) as page, 
+        COUNT(*) as views
+      FROM events
+      WHERE 
+        site_id = ? AND event_name = 'pageview' ${dateFilter}
+      GROUP BY 
+        page
+      ORDER BY 
+        views DESC
+      LIMIT 7;
+    `;
+    
+    const [results] = await db.query(query, queryParams);
+    return NextResponse.json(results, { status: 200 });
+
+  } catch (error) {
+    console.error('Error fetching top pages:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  }
+}
