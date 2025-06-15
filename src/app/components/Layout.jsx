@@ -7,10 +7,13 @@ import {
     ChartPieIcon, 
     Cog6ToothIcon, 
     ArrowRightEndOnRectangleIcon,
-    LightBulbIcon, // Icon for Recommendations
-    Bars3Icon,    // Hamburger menu icon
-    XMarkIcon     // Close (X) icon
+    LightBulbIcon,
+    MapIcon,
+    Bars3Icon,
+    XMarkIcon,
+    InformationCircleIcon // <-- New icon for banner
 } from '@heroicons/react/24/outline';
+import FeedbackButton from './FeedbackButton';
 
 // This sub-component contains the actual sidebar content
 const SidebarContent = () => {
@@ -54,6 +57,12 @@ const SidebarContent = () => {
                   </a>
                 </li>
                 <li>
+                  <a href="/roadmap" className={getLinkClass('/roadmap')}>
+                    <MapIcon className="h-6 w-6 mr-3" />
+                    <span>Roadmap</span>
+                  </a>
+                </li>
+                <li>
                   <a href="/settings" className={getLinkClass('/settings')}>
                     <Cog6ToothIcon className="h-6 w-6 mr-3" />
                     <span>Settings</span>
@@ -69,7 +78,7 @@ const SidebarContent = () => {
       <div>
         {status === 'authenticated' && (
           <div className="mb-4 text-sm">
-            <p className="font-semibold">{session.user.name}</p>
+            <p className="font-semibold text-white">{session.user.name}</p>
             <p className="text-gray-400 truncate">{session.user.email}</p>
           </div>
         )}
@@ -85,21 +94,50 @@ const SidebarContent = () => {
   );
 };
 
+// --- NEW Beta Notification Banner Component ---
+const BetaBanner = ({ onDismiss }) => {
+    return (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <div className="flex">
+                <div className="flex-shrink-0">
+                    <InformationCircleIcon className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                        This is a beta release. Some features may not work as expected. Please use the feedback button to report any issues.
+                    </p>
+                </div>
+                <div className="ml-auto pl-3">
+                    <div className="-mx-1.5 -my-1.5">
+                        <button
+                            type="button"
+                            onClick={onDismiss}
+                            className="inline-flex bg-yellow-50 rounded-md p-1.5 text-yellow-500 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600"
+                        >
+                            <span className="sr-only">Dismiss</span>
+                            <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isBannerVisible, setIsBannerVisible] = useState(true);
 
   return (
     <div className="relative h-screen flex bg-gray-100">
       
       {/* --- Mobile Sidebar --- */}
-      {/* Backdrop */}
       <div 
         className={`fixed inset-0 bg-gray-900 bg-opacity-30 z-30 lg:hidden transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setSidebarOpen(false)}
         aria-hidden="true"
       ></div>
-      {/* Sidebar Panel */}
       <aside className={`fixed inset-y-0 left-0 w-64 bg-gray-800 p-4 flex flex-col z-40 transform transition-transform duration-300 lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <button 
           onClick={() => setSidebarOpen(false)}
@@ -117,7 +155,6 @@ const Layout = ({ children }) => {
 
       {/* --- Main Content Area --- */}
       <div className="flex-1 flex flex-col w-0">
-        {/* Top bar for mobile with hamburger menu */}
         <header className="lg:hidden flex items-center h-16 bg-white border-b border-gray-200 px-4 flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -129,9 +166,16 @@ const Layout = ({ children }) => {
         </header>
 
         <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none p-6 lg:p-10">
+            {isBannerVisible && <BetaBanner onDismiss={() => setIsBannerVisible(false)} />}
             {children}
         </main>
+        
+        <footer className="text-center p-4 text-xs text-gray-800 bg-white border-t border-gray-200">
+          &copy; 2025 CortexCart v0.90 Beta
+        </footer>
       </div>
+
+      <FeedbackButton />
 
     </div>
   );

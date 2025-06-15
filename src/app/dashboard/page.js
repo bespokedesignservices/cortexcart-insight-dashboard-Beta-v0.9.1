@@ -17,6 +17,7 @@ import VisitorMap from '@/app/components/VisitorMap';
 import SkeletonCard from '@/app/components/SkeletonCard';
 import DeviceChart from '@/app/components/DeviceChart';
 import LiveVisitorCount from '@/app/components/LiveVisitorCount';
+import RealTimeClock from '@/app/components/RealTimeClock'; 
 
 const currencySymbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: '$', AUD: '$' };
 
@@ -46,8 +47,9 @@ export default function DashboardPage() {
   const [siteSettings, setSiteSettings] = useState({ currency: 'USD' });
   
   const siteId = session?.user?.email;
+  const userName = session?.user?.name?.split(' ')[0] || 'User'; // Get first name or default to 'User'
 
-  // Effect for fetching main dashboard data
+
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
     if (!session) { router.push('/'); return; }
@@ -76,19 +78,16 @@ export default function DashboardPage() {
       }
 
       try {
-        const [statsRes, chartRes, eventsRes, topPagesRes, topReferrersRes, locationsRes, settingsRes, deviceTypesRes] = await Promise.all([
+        const responses = await Promise.all([
           fetch(statsUrl), fetch(chartUrl), fetch(eventsUrl), fetch(topPagesUrl),
           fetch(topReferrersUrl), fetch(locationsUrl), fetch(settingsUrl), fetch(deviceTypesUrl)
         ]);
 
-        if (!statsRes.ok || !chartRes.ok || !eventsRes.ok || !topPagesRes.ok || !topReferrersRes.ok || !locationsRes.ok || !settingsRes.ok || !deviceTypesRes.ok) {
-          throw new Error('Failed to fetch dashboard data');
+        for (const res of responses) {
+            if (!res.ok) throw new Error('Failed to fetch dashboard data');
         }
 
-        const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData] = await Promise.all([
-          statsRes.json(), chartRes.json(), eventsRes.json(), topPagesRes.json(),
-          topReferrersRes.json(), locationsRes.json(), settingsRes.json(), deviceTypesRes.json()
-        ]);
+        const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData] = await Promise.all(responses.map(res => res.json()));
         
         setStats(statsData);
         setChartApiData(chartData);
@@ -109,7 +108,6 @@ export default function DashboardPage() {
     fetchData(dateRange.startDate, dateRange.endDate);
   }, [dateRange, siteId, session, status, router]);
 
-  // Effect for polling live visitor count
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
     if (!session) { return; }
@@ -117,9 +115,7 @@ export default function DashboardPage() {
     const interval = setInterval(() => {
       fetch(`/api/stats/live-visitors?siteId=${siteId}`)
         .then(res => res.json())
-        .then(data => {
-          setLiveVisitors(data.liveVisitors);
-        })
+        .then(data => setLiveVisitors(data.liveVisitors))
         .catch(console.error);
     }, 10000); 
 
@@ -131,32 +127,32 @@ export default function DashboardPage() {
 
   if (status === 'loading' || (isLoading && !stats)) {
     return (
-      <Layout>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-          <div className="h-9 w-64 bg-gray-200 rounded-lg animate-pulse"></div>
-          <div className="h-10 w-96 bg-gray-200 rounded-lg animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-        <div className="mt-8 space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            <div className="lg:col-span-3">
-              <ChartContainer title="Visitors by Country">
-                <SkeletonCard />
-              </ChartContainer>
-            </div>
-            <div className="lg:col-span-2">
-              <ChartContainer title="Top Referrers">
-                <SkeletonCard />
-              </ChartContainer>
+        <Layout>
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
+            <div className="h-9 w-64 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="h-10 w-96 bg-gray-200 rounded-lg animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="mt-8 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              <div className="lg:col-span-3">
+                <ChartContainer title="Visitors by Country">
+                  <SkeletonCard />
+                </ChartContainer>
+              </div>
+              <div className="lg:col-span-2">
+                <ChartContainer title="Top Referrers">
+                  <SkeletonCard />
+                </ChartContainer>
+              </div>
             </div>
           </div>
-        </div>
-      </Layout>
-    );
+        </Layout>
+      );
   }
   
   if (error) {
@@ -170,10 +166,13 @@ export default function DashboardPage() {
     <Layout>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-4">
-            <h2 className="text-3xl font-bold">Dashboard</h2>
+            <h2 className="text-3xl font-bold">Dashboard for {userName}</h2>
             <LiveVisitorCount count={liveVisitors} />
         </div>
-        <DateFilter onFilterChange={handleDateFilterChange} />
+        <div className="flex items-center gap-4">
+            <RealTimeClock />
+            <DateFilter onFilterChange={handleDateFilterChange} />
+        </div>
       </div>
       
       <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>

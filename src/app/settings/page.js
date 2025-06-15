@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-import Layout from '@/app/components/Layout'; 
+import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
 import ChartContainer from '@/app/components/ChartContainer';
 
@@ -14,18 +14,18 @@ const currencyOptions = [
     { code: 'GBP', symbol: '£', name: 'British Pound Sterling' },
 ];
 
-// Updated tabs array: "Recommendations" is removed.
+// Simplified tabs array
 const tabs = [
     { name: 'General', href: '#' },
     { name: 'Widget Settings', href: '#' },
     { name: 'Billing', href: '#' },
     { name: 'Danger Zone', href: '#' },
-]
+];
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [activeTab, setActiveTab] = useState(tabs[0].name);
   const [siteName, setSiteName] = useState('');
   const [siteUrl, setSiteUrl] = useState('');
@@ -42,7 +42,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/'); return; }
     if (siteId) {
-      // Fetch existing general settings
       async function fetchSettings() {
           try {
               const res = await fetch('/api/site-settings');
@@ -52,19 +51,18 @@ export default function SettingsPage() {
                   setSiteUrl(data.site_url || '');
                   setCurrency(data.currency || 'USD');
               }
-          } catch (error) { 
-              console.error("Failed to fetch settings", error); 
+          } catch (error) {
+              console.error("Failed to fetch settings", error);
               setFormMessage({ text: 'Failed to load your settings.', isError: true });
           }
       }
       fetchSettings();
-      
-      // Generate tracker snippet
+
       const trackerSnippet = `
 <!-- CortexCart Tracker -->
 <script async defer>
   (function() {
-    const SITE_ID = '${siteId}'; 
+    const SITE_ID = '${siteId}';
     const API_ENDPOINT = 'https://tracker.cortexcart.com/api/track';
     function sendEvent(eventName, data = {}) {
       const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer } };
@@ -83,7 +81,7 @@ export default function SettingsPage() {
       setSnippet(trackerSnippet);
     }
   }, [status, router, siteId]);
-  
+
   const handleSaveSettings = async (e) => {
       e.preventDefault();
       setIsSaving(true);
@@ -104,7 +102,7 @@ export default function SettingsPage() {
           setTimeout(() => setFormMessage({ text: '', isError: false }), 3000);
       }
   };
-  
+
   const handleAccountDelete = async () => {
     setIsDeleting(true);
     setFormMessage({ text: '', isError: false });
@@ -138,38 +136,36 @@ export default function SettingsPage() {
             <h2 className="text-3xl font-bold">Settings</h2>
             <p className="mt-1 text-sm text-gray-500">Manage your site settings and account preferences.</p>
         </div>
-
         <SettingsTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
-        
         <div className="py-8">
           {activeTab === 'General' && (
             <div className="max-w-3xl">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">General Information</h3>
-              <p className="mt-1 text-sm text-gray-600">Update your site&apos;s publicly displayed information.</p>
-              <form onSubmit={handleSaveSettings} className="mt-6 space-y-6">
-                  <div>
-                      <label htmlFor="siteName" className="block text-sm font-medium text-gray-700">Site Name</label>
-                      <input type="text" id="siteName" value={siteName} onChange={(e) => setSiteName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="My Awesome Shop" />
-                  </div>
-                  <div>
-                      <label htmlFor="siteUrl" className="block text-sm font-medium text-gray-700">Site URL</label>
-                      <input type="url" id="siteUrl" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="https://www.example.com" />
-                  </div>
-                  <div>
-                      <label htmlFor="currency" className="block text-sm font-medium text-gray-700">Currency</label>
-                      <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                          {currencyOptions.map(opt => (
-                              <option key={opt.code} value={opt.code}>{opt.name} ({opt.code})</option>
-                          ))}
-                      </select>
-                  </div>
-                  <div className="flex items-center justify-between">
-                      <button type="submit" disabled={isSaving} className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
-                          {isSaving ? 'Saving...' : 'Save Settings'}
-                      </button>
-                      {formMessage.text && <p className={`text-sm ${formMessage.isError ? 'text-red-600' : 'text-green-600'}`}>{formMessage.text}</p>}
-                  </div>
-              </form>
+                <h3 className="text-lg font-medium leading-6 text-gray-900">General Information</h3>
+                <p className="mt-1 text-sm text-gray-600">Update your site&apos;s publicly displayed information.</p>
+                <form onSubmit={handleSaveSettings} className="mt-6 space-y-6">
+                    <div>
+                        <label htmlFor="siteName" className="block text-sm font-medium text-gray-700">Site Name</label>
+                        <input type="text" id="siteName" value={siteName} onChange={(e) => setSiteName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="My Awesome Shop" />
+                    </div>
+                    <div>
+                        <label htmlFor="siteUrl" className="block text-sm font-medium text-gray-700">Site URL</label>
+                        <input type="url" id="siteUrl" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="https://www.example.com" />
+                    </div>
+                    <div>
+                        <label htmlFor="currency" className="block text-sm font-medium text-gray-700">Currency</label>
+                        <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                            {currencyOptions.map(opt => (
+                                <option key={opt.code} value={opt.code}>{opt.name} ({opt.code})</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <button type="submit" disabled={isSaving} className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
+                            {isSaving ? 'Saving...' : 'Save Settings'}
+                        </button>
+                        {formMessage.text && <p className={`text-sm ${formMessage.isError ? 'text-red-600' : 'text-green-600'}`}>{formMessage.text}</p>}
+                    </div>
+                </form>
             </div>
           )}
           {activeTab === 'Widget Settings' && (
