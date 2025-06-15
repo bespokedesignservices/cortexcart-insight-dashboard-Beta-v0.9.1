@@ -7,19 +7,18 @@ import {
     ChartPieIcon, 
     Cog6ToothIcon, 
     ArrowRightEndOnRectangleIcon,
-    LightBulbIcon, // Icon for Recommendations
-    Bars3Icon,    // Hamburger menu icon
-    XMarkIcon     // Close (X) icon
+    Bars3Icon, // Hamburger menu icon
+    XMarkIcon   // Close (X) icon
 } from '@heroicons/react/24/outline';
 
-// This sub-component contains the actual sidebar content
+// The Sidebar component remains mostly the same but will be positioned differently by the parent
 const SidebarContent = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
   const handleAuthClick = () => {
     if (session) {
-      signOut({ callbackUrl: '/' });
+      signOut({ callbackUrl: '/' }); // Redirect to homepage on sign out
     } else {
       signIn('google');
     }
@@ -45,12 +44,6 @@ const SidebarContent = () => {
                   <a href="/dashboard" className={getLinkClass('/dashboard')}>
                     <ChartPieIcon className="h-6 w-6 mr-3" />
                     <span>Dashboard</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="/recommendations" className={getLinkClass('/recommendations')}>
-                    <LightBulbIcon className="h-6 w-6 mr-3" />
-                    <span>Recommendations</span>
                   </a>
                 </li>
                 <li>
@@ -90,14 +83,13 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="relative h-screen flex bg-gray-100">
+    <div className="relative h-screen flex">
       
       {/* --- Mobile Sidebar --- */}
       {/* Backdrop */}
       <div 
         className={`fixed inset-0 bg-gray-900 bg-opacity-30 z-30 lg:hidden transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setSidebarOpen(false)}
-        aria-hidden="true"
       ></div>
       {/* Sidebar Panel */}
       <aside className={`fixed inset-y-0 left-0 w-64 bg-gray-800 p-4 flex flex-col z-40 transform transition-transform duration-300 lg:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -118,7 +110,7 @@ const Layout = ({ children }) => {
       {/* --- Main Content Area --- */}
       <div className="flex-1 flex flex-col w-0">
         {/* Top bar for mobile with hamburger menu */}
-        <header className="lg:hidden flex items-center h-16 bg-white border-b border-gray-200 px-4 flex-shrink-0">
+        <header className="lg:hidden flex items-center h-16 bg-white border-b border-gray-200 px-4">
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
@@ -128,7 +120,7 @@ const Layout = ({ children }) => {
           </button>
         </header>
 
-        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none p-6 lg:p-10">
+        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none p-6 lg:p-10 bg-gray-100">
             {children}
         </main>
       </div>
