@@ -1,62 +1,122 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 import Layout from '@/app/components/Layout'; 
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
+
+const RecommendationItem = ({ item, onUpdate }) => {
+    const isCompleted = item.status === 'completed';
+    return (
+        <li className="flex items-start space-x-3 py-2">
+            <button onClick={() => onUpdate(item.id, isCompleted ? 'pending' : 'completed')} className="flex-shrink-0 pt-0.5">
+                <CheckCircleIcon className={`h-6 w-6 transition-colors ${isCompleted ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`} />
+            </button>
+            <p className={`text-sm ${isCompleted ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                {item.recommendation}
+            </p>
+        </li>
+    );
+};
+
+const ReportCard = ({ report, onUpdate }) => {
+    const groupedItems = report.items.reduce((acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+    }, {});
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-md border">
+            <h4 className="font-semibold text-gray-800">
+                Homepage Analysis - {new Date(report.created_at).toLocaleDateString()}
+            </h4>
+            <div className="mt-4 space-y-4">
+                {Object.entries(groupedItems).map(([category, items]) => (
+                    <div key={category}>
+                        <h5 className="text-sm font-medium text-gray-600 uppercase tracking-wider">{category}</h5>
+                        <ul className="mt-2 divide-y divide-gray-200">
+                            {items.map(item => <RecommendationItem key={item.id} item={item} onUpdate={onUpdate} />)}
+                        </ul>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 export default function RecommendationsPage() {
   const { status } = useSession();
   const router = useRouter();
 
-  // State for homepage analysis
   const [isAnalyzingHomepage, setIsAnalyzingHomepage] = useState(false);
-  const [homepageResult, setHomepageResult] = useState(null);
-  const [homepageError, setHomepageError] = useState('');
+  const [analysisError, setAnalysisError] = useState('');
+  const [reportHistory, setReportHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
-  // --- NEW STATE for product analysis ---
-  const [isAnalyzingProducts, setIsAnalyzingProducts] = useState(false);
-  const [productResult, setProductResult] = useState(null);
-  const [productError, setProductError] = useState('');
+  const fetchHistory = useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+        const res = await fetch('/api/recommendations');
+        if (!res.ok) throw new Error("Could not fetch recommendation history.");
+        const data = await res.json();
+        setReportHistory(data);
+    } catch (error) {
+        setAnalysisError(error.message);
+    } finally {
+        setIsLoadingHistory(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (status === 'unauthenticated') { router.push('/'); }
-  }, [status, router]);
+    if (status === 'unauthenticated') { router.push('/'); return; }
+    if (status === 'authenticated') {
+        fetchHistory();
+    }
+  }, [status, router, fetchHistory]);
   
   const handleAnalyzeHomepage = async () => {
     setIsAnalyzingHomepage(true);
-    setHomepageResult(null);
-    setHomepageError('');
+    setAnalysisError('');
     try {
       const res = await fetch('/api/ai/analyze-homepage', { method: 'POST' });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Failed to analyze homepage.');
-      setHomepageResult(result);
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.message || 'Failed to analyze homepage.');
+      }
+      await fetchHistory(); 
     } catch (error) {
-      setHomepageError(error.message);
+      setAnalysisError(error.message);
     } finally {
       setIsAnalyzingHomepage(false);
     }
   };
 
-  // --- NEW handler for product analysis ---
-  const handleAnalyzeProducts = async () => {
-    setIsAnalyzingProducts(true);
-    setProductResult(null);
-    setProductError('');
+  const handleUpdateRecommendation = async (id, newStatus) => {
+    const originalHistory = [...reportHistory];
+    setReportHistory(currentHistory => 
+        currentHistory.map(report => ({
+            ...report,
+            items: report.items.map(item => 
+                item.id === id ? { ...item, status: newStatus } : item
+            )
+        }))
+    );
     try {
-        const res = await fetch('/api/ai/analyze-products', { method: 'POST' });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.message || 'Failed to analyze products.');
-        setProductResult(result);
+        await fetch('/api/recommendations', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recommendationId: id, status: newStatus })
+        });
     } catch (error) {
-        setProductError(error.message);
-    } finally {
-        setIsAnalyzingProducts(false);
+        // Corrected: Use the error variable to satisfy the linter.
+        console.error("Error updating recommendation:", error);
+        setAnalysisError("Failed to update status. Please try again.");
+        setReportHistory(originalHistory);
     }
   };
-
 
   if (status === 'loading') { return <Layout><p>Loading...</p></Layout>; }
 
@@ -64,82 +124,33 @@ export default function RecommendationsPage() {
     <Layout>
       <div className="mb-8">
         <h2 className="text-3xl font-bold">AI Recommendations</h2>
-        <p className="mt-1 text-sm text-gray-500">Generate reports to improve your site&apos;s performance.</p>
+        <p className="mt-1 text-sm text-gray-500">Generate and manage AI-powered reports to improve your site&apos;s performance.</p>
       </div>
 
       <div className="space-y-8 max-w-4xl">
-        {/* Corrected: Restored the Homepage Analysis JSX */}
-        <div className="p-4 border border-gray-200 rounded-lg">
+        <div className="p-4 border border-gray-200 rounded-lg bg-white">
             <div className="flex items-center justify-between">
                 <div>
                     <h4 className="font-semibold text-gray-800">Analyze Homepage</h4>
-                    <p className="mt-1 text-sm text-gray-600">Get AI recommendations on your homepage&apos;s layout, copy, and performance.</p>
+                    <p className="mt-1 text-sm text-gray-600">Get a new AI report on your homepage&apos;s layout, copy, and performance.</p>
                 </div>
-                <button
-                    onClick={handleAnalyzeHomepage}
-                    disabled={isAnalyzingHomepage}
-                    className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                >
-                    {isAnalyzingHomepage ? 'Analyzing...' : 'Generate Report'}
+                <button onClick={handleAnalyzeHomepage} disabled={isAnalyzingHomepage} className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-300">
+                    {isAnalyzingHomepage ? 'Analyzing...' : 'Generate New Report'}
                 </button>
             </div>
-            <div className="mt-4">
-                {homepageError && <p className="text-sm text-red-600">{homepageError}</p>}
-                {homepageResult && (
-                    <div className="p-4 bg-gray-50 rounded-md border">
-                        <h5 className="font-semibold mb-4 text-gray-800">Homepage Analysis Complete:</h5>
-                        <div className="space-y-6">
-                            {Object.entries(homepageResult).map(([category, recommendations]) => (
-                                <div key={category}>
-                                    <h6 className="font-semibold text-gray-700 capitalize">{category}</h6>
-                                    <ul className="mt-2 list-disc list-inside space-y-2 text-sm text-gray-600">
-                                        {Array.isArray(recommendations) && recommendations.map((rec, index) => (
-                                            <li key={index}>{rec.recommendation} <span className="text-gray-400">(Confidence: {Math.round(rec.confidence * 100)}%)</span></li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+            {analysisError && <p className="text-sm text-red-600 mt-2">{analysisError}</p>}
         </div>
 
-        {/* --- Product Performance Analysis Section --- */}
-        <div className="p-4 border border-gray-200 rounded-lg">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h4 className="font-semibold text-gray-800">Analyze Product Performance</h4>
-                    <p className="mt-1 text-sm text-gray-600">Get suggestions for improving underperforming product titles and descriptions.</p>
-                </div>
-                <button
-                    onClick={handleAnalyzeProducts}
-                    disabled={isAnalyzingProducts}
-                    className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                >
-                    {isAnalyzingProducts ? 'Analyzing...' : 'Generate Suggestions'}
-                </button>
-            </div>
-            <div className="mt-4">
-                {productError && <p className="text-sm text-red-600">{productError}</p>}
-                {productResult && (
-                    <div className="p-4 bg-gray-50 rounded-md border">
-                        <h5 className="font-semibold mb-4 text-gray-800">Product Suggestions:</h5>
-                        {Array.isArray(productResult) ? (
-                            <div className="space-y-4">
-                                {productResult.map((p, i) => (
-                                    <div key={i}>
-                                        <p className="font-semibold text-sm text-gray-800">{p.originalName}</p>
-                                        <p className="text-sm text-gray-500 mt-1">Suggested Name: <span className="font-medium text-gray-900">{p.newName}</span></p>
-                                        {/* Corrected: Replaced "" with &quot; */}
-                                        <p className="text-sm text-gray-500 mt-1">Suggested Description: <span className="italic">&quot;{p.newDescription}&quot;</span></p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-gray-600">{productResult.message}</p>
-                        )}
-                    </div>
+        <div>
+            <h3 className="text-lg font-medium text-gray-900">Report History</h3>
+            <div className="mt-4 space-y-6">
+                {isLoadingHistory ? <p className="text-sm text-gray-500">Loading history...</p> : 
+                reportHistory.length > 0 ? (
+                    reportHistory.map(report => (
+                        <ReportCard key={report.id} report={report} onUpdate={handleUpdateRecommendation} />
+                    ))
+                ) : (
+                    <p className="text-sm text-gray-500">No reports generated yet. Click the button above to create your first one.</p>
                 )}
             </div>
         </div>

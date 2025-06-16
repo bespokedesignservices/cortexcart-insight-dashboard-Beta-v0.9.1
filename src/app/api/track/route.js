@@ -1,6 +1,6 @@
 import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
-import * as UAParser from 'ua-parser-js';
+import UAParser from 'ua-parser-js';
 
 export async function POST(request) {
   try {
@@ -13,16 +13,26 @@ export async function POST(request) {
 
     const ua = request.headers.get('user-agent');
     const parser = new UAParser(ua);
-    const device = parser.getDevice().type || 'desktop';
+    const deviceType = parser.getDevice().type || 'desktop';
 
-    // --- NEW: Capture IP Address ---
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim();
-    // --- END OF NEW CODE ---
+    let country = null;
+
+    if (ip) {
+      try {
+        // --- THE FIX: Fetch the full country name, not the code ---
+        const geoResponse = await fetch(`http://ip-api.com/json/${ip}?fields=country`);
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          country = geoData.country; // This will be "United Kingdom", etc.
+        }
+      } catch (geoError) {
+        console.error("GeoIP lookup failed:", geoError);
+      }
+    }
     
-    const geo = { country: request.headers.get('x-vercel-ip-country') };
-    
-    // Add IP, geo, and device data to the event's data object
-    const dataWithMeta = { ...data, ip, ...geo, device };
+    // We now save the full country name in the event data.
+    const dataWithMeta = { ...data, ip, country: country, device: deviceType };
 
     await db.query(
       'INSERT INTO events (site_id, event_name, event_data) VALUES (?, ?, ?);',

@@ -1,4 +1,4 @@
-import db from '../../../../../lib/db'; 
+import db from '../../../../../lib/db'; // Corrected import path
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
@@ -22,8 +22,6 @@ export async function GET(request) {
   }
 
   try {
-    // This query counts pageviews, groups them by country code,
-    // and returns the results.
     const query = `
       SELECT 
         JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) as id, 

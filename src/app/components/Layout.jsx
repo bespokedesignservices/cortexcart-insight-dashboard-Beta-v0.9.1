@@ -171,7 +171,7 @@ const Layout = ({ children }) => {
         </main>
         
         <footer className="text-center p-4 text-xs text-gray-800 bg-white border-t border-gray-200">
-          &copy; 2025 CortexCart v0.90 Beta
+          &copy; 2025 CortexCart v0.9.1 Beta
         </footer>
       </div>
 

@@ -11,7 +11,7 @@ export async function POST() {
     const userEmail = session.user.email;
 
     try {
-        // 1. Find underperforming products (high views, low sales)
+        // Find underperforming products (e.g., more than 5 views, but 0 sales)
         const productStatsQuery = `
             SELECT
                 productId,
@@ -24,35 +24,35 @@ export async function POST() {
                     JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.productName')) AS productName,
                     event_name
                 FROM events
-                WHERE site_id = ? AND JSON_EXTRACT(event_data, '$.productId') IS NOT NULL
+                WHERE 
+                    site_id = ? 
+                    AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.type')) = 'product'
             ) AS product_events
             GROUP BY productId, productName
-            HAVING views > 10 AND sales < 2
+            HAVING views > 5 AND sales = 0
             ORDER BY views DESC
             LIMIT 3;
         `;
         const [products] = await db.query(productStatsQuery, [userEmail]);
 
         if (products.length === 0) {
-            return NextResponse.json({ message: "No underperforming products found to analyze. Keep gathering data!" }, { status: 200 });
+            return NextResponse.json({ message: "No underperforming products found to analyze. Great job, or keep gathering data!" }, { status: 200 });
         }
 
-        // 2. Construct the prompt for Gemini
         const prompt = `
             As an expert e-commerce copywriter, you are tasked with improving underperforming products.
             Here is a list of products with their view and sales counts:
             ${JSON.stringify(products, null, 2)}
 
-            For each product, suggest a new, more compelling "productName" and a brief, exciting "productDescription" (max 20 words) designed to increase conversions.
+            For each product, suggest a new, more compelling "productName" and a brief, exciting "productDescription" (maximum 20 words) designed to increase conversions.
             
             Your response MUST be a valid JSON object. Do not include any text or markdown formatting before or after the JSON object.
             The JSON object should be an array, where each element is an object containing "productId", "originalName", "newName", and "newDescription".
         `;
 
-        // 3. Call the Gemini API
         let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
         const payload = { contents: chatHistory };
-        const apiKey = ""; // Leave as-is
+        const apiKey = process.env.GEMINI_API_KEY;
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         
         const geminiResponse = await fetch(apiUrl, {

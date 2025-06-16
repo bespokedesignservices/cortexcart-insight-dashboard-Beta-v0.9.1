@@ -1,4 +1,3 @@
-// src/app/components/SalesBarChart.jsx
 'use client';
 
 import { Bar } from 'react-chartjs-2';
@@ -6,15 +5,15 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-// Change the prop name to be more descriptive
-const SalesBarChart = ({ apiData = [] }) => {
-
-  // This logic transforms the data from our API into the format Chart.js needs
+// --- FIX: Added 'currencySymbol' prop with a default value ---
+const SalesBarChart = ({ apiData = [], currencySymbol = '$' }) => {
+  
   const chartJsData = {
     labels: apiData.map(item => new Date(item.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })),
     datasets: [
       {
-        label: 'Sales ($)',
+        // --- FIX: Use the dynamic currency symbol in the label ---
+        label: `Sales (${currencySymbol})`,
         data: apiData.map(item => item.total_sales),
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
         borderColor: 'rgba(54, 162, 235, 1)',

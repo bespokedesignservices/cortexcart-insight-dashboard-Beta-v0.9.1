@@ -8,16 +8,16 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const DeviceChart = ({ deviceData = [] }) => {
   const data = {
-    labels: deviceData.map(d => d.device.charAt(0).toUpperCase() + d.device.slice(1)), // Capitalize device name
+    labels: deviceData.map(d => d.device.charAt(0).toUpperCase() + d.device.slice(1)),
     datasets: [
       {
         label: '# of Views',
         data: deviceData.map(d => d.views),
         backgroundColor: [
-          'rgba(54, 162, 235, 0.7)',  // Blue for desktop
-          'rgba(255, 159, 64, 0.7)', // Orange for mobile
-          'rgba(75, 192, 192, 0.7)',  // Green for tablet
-          'rgba(153, 102, 255, 0.7)', // Purple for other
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(255, 159, 64, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(153, 102, 255, 0.7)',
         ],
         borderColor: [
           'rgba(54, 162, 235, 1)',
@@ -34,9 +34,7 @@ const DeviceChart = ({ deviceData = [] }) => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        position: 'bottom',
-      },
+      legend: { position: 'bottom' },
     },
   };
   

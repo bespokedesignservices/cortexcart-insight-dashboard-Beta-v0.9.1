@@ -22,16 +22,14 @@ export async function GET(request) {
   }
 
   try {
-    // This query counts pageviews and groups them by device type.
     const query = `
       SELECT 
-        JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.device')) as device, 
+        COALESCE(JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.device')), 'unknown') as device, 
         COUNT(*) as views
       FROM events
       WHERE
         site_id = ? 
-        AND event_name = 'pageview' 
-        AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.device')) IS NOT NULL
+        AND event_name = 'pageview'
         ${dateFilter}
       GROUP BY 
         device;
@@ -39,7 +37,6 @@ export async function GET(request) {
     
     const [results] = await db.query(query, queryParams);
     return NextResponse.json(results, { status: 200 });
-
   } catch (error) {
     console.error('Error fetching device data:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
