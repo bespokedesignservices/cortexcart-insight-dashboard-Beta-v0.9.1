@@ -13,12 +13,11 @@ const completedFeatures = [
     { name: 'User Authentication', description: 'Secure sign-up and login with Google.' },
     { name: 'Date Range Filtering', description: 'Filter all dashboard data by specific time periods.' },
     { name: 'Top Pages & Referrers', description: 'Identify your most popular content and traffic sources.' },
-    { name: 'Visitor Location Map', description: 'Visualize where your audience is coming from.' },
-    { name: 'Device Breakdown Chart', description: 'See what percentage of users are on desktop, mobile, or tablet.' },
+    { name: 'Visitor Location Map & Device Chart', description: 'Visualize where your audience is coming from and what devices they use.' },
+    { name: 'AI Homepage Analysis', description: 'Get AI-powered recommendations on your homepage\'s layout, copy, and performance, with a full history.' },
 ];
 
 const inProgressFeatures = [
-    { name: 'AI Homepage Analysis', description: 'Get AI-powered recommendations on your homepage\'s layout, copy, and performance.' },
     { name: 'AI Product Analysis', description: 'Receive suggestions for improving underperforming product titles and descriptions.' },
 ];
 
@@ -38,7 +37,6 @@ const futureFeatures = [
         description: 'Interactive, platform-specific instructions for installing the tracker on Shopify, WooCommerce, etc.',
         icon: PuzzlePieceIcon
     },
-    // Other suggested features
     { 
         name: 'A/B Testing Framework', 
         description: 'Test different versions of your product titles, prices, or descriptions to see what converts best.',

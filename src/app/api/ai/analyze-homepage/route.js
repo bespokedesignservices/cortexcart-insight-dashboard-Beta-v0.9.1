@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 
 async function fetchPageContent(url) {
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, { redirect: 'follow' });
         if (!response.ok) throw new Error(`Failed to fetch page. Status: ${response.status}`);
         return await response.text();
     } catch (error) {
@@ -24,6 +24,23 @@ export async function POST() {
     const connection = await db.getConnection();
 
     try {
+        // --- Cooldown Logic ---
+        const [lastReport] = await connection.query(
+            `SELECT created_at FROM analysis_reports 
+             WHERE user_email = ? AND report_type = 'homepage' 
+             ORDER BY created_at DESC LIMIT 1`,
+            [userEmail]
+        );
+
+        if (lastReport.length > 0) {
+            const lastReportTime = new Date(lastReport[0].created_at);
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            if (lastReportTime > twentyFourHoursAgo) {
+                return NextResponse.json({ message: 'You can generate one homepage report per day. Please try again later.' }, { status: 429 });
+            }
+        }
+        // --- END OF COOLDOWN LOGIC ---
+
         const [rows] = await connection.query('SELECT site_url FROM sites WHERE user_email = ?', [userEmail]);
         const siteUrl = rows[0]?.site_url;
         if (!siteUrl) {
