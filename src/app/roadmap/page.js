@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
-import { CheckCircleIcon, ClockIcon, SparklesIcon, PuzzlePieceIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, SparklesIcon, PuzzlePieceIcon, ChartBarIcon, SupportIcon } from '@heroicons/react/24/outline';
 
 
 // --- Roadmap Data ---
@@ -47,6 +47,21 @@ const futureFeatures = [
         description: 'Visualize where users are clicking and scrolling on your most important pages.',
         icon: null
     },
+	{
+	name: 'Notifications',
+	description: 'Add a user notifications area and top navigation dropdown to show important updates and tasks to be completed',
+	icon: null
+	},
+	{
+	name: 'Support Ticket System',
+	description: 'Add a user support ticket system, allow users to submit tickets and get help and support with features',
+	icon: SupportIcon
+	},
+	{
+	name: 'FAQ Section',
+	description: 'Add a full FAQ section to provide help to understand how software works and to provide tips',
+	icon: SupportIcon
+	},
 ];
 
 
