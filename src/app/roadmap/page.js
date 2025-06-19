@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
-import { CheckCircleIcon, ClockIcon, SparklesIcon, PuzzlePieceIcon, ChartBarIcon, SupportIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, SparklesIcon, ChartBarIcon, LifeBuoyIcon } from '@heroicons/react/24/outline';
 
 
 // --- Roadmap Data ---
@@ -13,29 +13,22 @@ const completedFeatures = [
     { name: 'User Authentication', description: 'Secure sign-up and login with Google.' },
     { name: 'Date Range Filtering', description: 'Filter all dashboard data by specific time periods.' },
     { name: 'Top Pages & Referrers', description: 'Identify your most popular content and traffic sources.' },
-    { name: 'Visitor Location Map & Device Chart', description: 'Visualize where your audience is coming from and what devices they use.' },
+    { name: 'Device Chart', description: 'Visualize what devices they use.' },
     { name: 'AI Homepage Analysis', description: 'Get AI-powered recommendations on your homepage\'s layout, copy, and performance, with a full history.' },
+    { name: 'Platform Installation Guides', description: 'Interactive, platform-specific instructions for installing the tracker on Shopify, WooCommerce, etc.'},
+    { name: 'Notifications', description: 'Add a user notifications area and top navigation dropdown to show important updates and tasks to be completed'},
 ];
 
 const inProgressFeatures = [
     { name: 'AI Product Analysis', description: 'Receive suggestions for improving underperforming product titles and descriptions.' },
+    { name: 'Social Media Post Designer', description: 'Design social media posts with an intuitive editor. Use AI to generate post copy and images based on your product details.'},
 ];
 
 const futureFeatures = [
     { 
-        name: 'Social Media Post Designer', 
-        description: 'Design social media posts with an intuitive editor. Use AI to generate post copy and images based on your product details.',
-        icon: SparklesIcon
-    },
-    { 
         name: 'Social Media Analytics', 
         description: 'Connect your social accounts to track post views, interactions, mentions, and shares directly within the dashboard.',
         icon: ChartBarIcon
-    },
-    { 
-        name: 'Platform Installation Guides', 
-        description: 'Interactive, platform-specific instructions for installing the tracker on Shopify, WooCommerce, etc.',
-        icon: PuzzlePieceIcon
     },
     { 
         name: 'A/B Testing Framework', 
@@ -48,19 +41,14 @@ const futureFeatures = [
         icon: null
     },
 	{
-	name: 'Notifications',
-	description: 'Add a user notifications area and top navigation dropdown to show important updates and tasks to be completed',
-	icon: null
-	},
-	{
 	name: 'Support Ticket System',
 	description: 'Add a user support ticket system, allow users to submit tickets and get help and support with features',
-	icon: SupportIcon
+	icon: LifeBuoyIcon
 	},
 	{
 	name: 'FAQ Section',
 	description: 'Add a full FAQ section to provide help to understand how software works and to provide tips',
-	icon: SupportIcon
+	icon: LifeBuoyIcon
 	},
 ];
 

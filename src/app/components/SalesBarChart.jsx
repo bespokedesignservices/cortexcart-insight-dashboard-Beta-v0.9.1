@@ -5,14 +5,13 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-// --- FIX: Added 'currencySymbol' prop with a default value ---
-const SalesBarChart = ({ apiData = [], currencySymbol = '$' }) => {
+const SalesBarChart = ({ apiData = [], currencySymbol = '$', locale = 'en-US' }) => {
   
   const chartJsData = {
-    labels: apiData.map(item => new Date(item.date).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' })),
+    // --- FIX: Use the dynamic locale for chart labels ---
+    labels: apiData.map(item => new Date(item.date).toLocaleDateString(locale, { month: 'short', day: 'numeric' })),
     datasets: [
       {
-        // --- FIX: Use the dynamic currency symbol in the label ---
         label: `Sales (${currencySymbol})`,
         data: apiData.map(item => item.total_sales),
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
