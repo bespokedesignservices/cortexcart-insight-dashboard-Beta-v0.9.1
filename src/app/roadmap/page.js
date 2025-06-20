@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
-import { CheckCircleIcon, ClockIcon, SparklesIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, SparklesIcon, ChartBarIcon, LifebuoyIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 
 // --- Roadmap Data ---
 const completedFeatures = [
@@ -16,19 +16,16 @@ const completedFeatures = [
     { name: 'AI Homepage Analysis', description: 'Get AI-powered recommendations on your homepage\'s layout, copy, and performance, with a full history.' },
     { name: 'Platform Installation Guides', description: 'Interactive, platform-specific instructions for installing the tracker on Shopify, WooCommerce, etc.'},
     { name: 'Notifications', description: 'Add a user notifications area and top navigation dropdown to show important updates and tasks to be completed'},
+    { name: 'FAQ Section', description: 'Add a full FAQ section to provide help to understand how software works and to provide tips'},
+    { name: 'AI Product Analysis', description: 'Receive suggestions for improving underperforming product titles and descriptions.'},
 ];
 
 const inProgressFeatures = [
-    { name: 'AI Product Analysis', description: 'Receive suggestions for improving underperforming product titles and descriptions.' },
-    { name: 'Social Media Post Designer', description: 'Design social media posts with an intuitive editor. Use AI to generate post copy and images based on your product details.'},
+       { name: 'Social Media Post Designer', description: 'Design social media posts with an intuitive editor. Use AI to generate post copy and images based on your product details.'},
+       { name: 'Social Media Analytics', description: 'Connect your social accounts to track post views, interactions, mentions, and shares directly within the dashboard.'},
 ];
 
 const futureFeatures = [
-    { 
-        name: 'Social Media Analytics', 
-        description: 'Connect your social accounts to track post views, interactions, mentions, and shares directly within the dashboard.',
-        icon: ChartBarIcon
-    },
     { 
         name: 'A/B Testing Framework', 
         description: 'Test different versions of your product titles, prices, or descriptions to see what converts best.',
@@ -42,12 +39,7 @@ const futureFeatures = [
 	{
 	name: 'Support Ticket System',
 	description: 'Add a user support ticket system, allow users to submit tickets and get help and support with features',
-	icon: null
-	},
-	{
-	name: 'FAQ Section',
-	description: 'Add a full FAQ section to provide help to understand how software works and to provide tips',
-	icon: null
+	icon: QuestionMarkCircleIcon
 	},
 ];
 

@@ -16,14 +16,39 @@ const currencyOptions = [
     { code: 'GBP', symbol: '£', name: 'British Pound Sterling' },
 ];
 
+// Removed the "Recommendations" tab
 const tabs = [
     { name: 'General', href: '#' },
     { name: 'Widget Settings', href: '#' },
     { name: 'Social Connections', href: '#' },
-    { name: 'Recommendations', href: '#' },
     { name: 'Billing', href: '#' },
     { name: 'Danger Zone', href: '#' },
 ];
+
+// Reusable component for the code snippet box
+const SnippetBox = ({ snippet }) => {
+    const [copied, setCopied] = useState(false);
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(snippet);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="p-4 bg-gray-900 rounded-md text-white font-mono text-sm overflow-x-auto relative h-full flex flex-col justify-between">
+            <div>
+                <pre><code>{snippet}</code></pre>
+            </div>
+            <button
+                onClick={copyToClipboard}
+                className="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-1 px-3 text-xs rounded-md transition-colors"
+            >
+                {copied ? 'Copied!' : 'Copy'}
+            </button>
+        </div>
+    );
+};
 
 export default function SettingsPage() {
     const { data: session, status } = useSession();
@@ -35,13 +60,12 @@ export default function SettingsPage() {
     const [currency, setCurrency] = useState('USD');
     const [formMessage, setFormMessage] = useState({ text: '', isError: false });
     const [isSaving, setIsSaving] = useState(false);
-    const [snippet, setSnippet] = useState('');
-    const [copied, setCopied] = useState(false);
+    
+    const [mainSnippet, setMainSnippet] = useState('');
+    const [enhancedSnippet, setEnhancedSnippet] = useState('');
+
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [analysisResult, setAnalysisResult] = useState(null);
-    const [analysisError, setAnalysisError] = useState('');
     
     const siteId = session?.user?.email;
 
@@ -51,7 +75,8 @@ export default function SettingsPage() {
             return;
         }
         if (siteId) {
-            const trackerSnippet = `
+            // Generate the main tracker snippet
+            const baseSnippet = `
 <!-- CortexCart Analytics Tracker -->
 <!-- Paste this code just before the closing </head> tag on every page of your site. -->
 <script async defer>
@@ -63,7 +88,11 @@ export default function SettingsPage() {
       const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer } };
       navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData));
     }
+
+    // This tracks a generic pageview. It should be on ALL pages.
     sendEvent('pageview');
+
+    // Make the tracker globally available for specific event tracking.
     window.cortexcart = {
       track: function(eventName, data) {
         if (!eventName) { console.error('CortexCart Tracker: Event name is required.'); return; }
@@ -73,7 +102,46 @@ export default function SettingsPage() {
   })();
 <\/script>
       `.trim();
-            setSnippet(trackerSnippet);
+            setMainSnippet(baseSnippet);
+
+            // Generate the enhanced tracking snippet for e-commerce
+            const eCommerceSnippet = `
+/* [IMPORTANT] To enable Product and Sales tracking, you must add these specific calls 
+  on the relevant pages in addition to the main tracker script.
+*/
+
+/* 1. ON PRODUCT PAGES - Track a detailed product view */
+window.cortexcart.track('pageview', {
+  type: 'product',
+  productId: 'YOUR_DYNAMIC_PRODUCT_ID',
+  productName: 'YOUR_DYNAMIC_PRODUCT_NAME',
+  productDescription: 'A brief description of the product here.',
+  price: 19.99
+});
+
+
+/* 2. ON SALE CONFIRMATION / THANK YOU PAGE - Track a successful sale */
+window.cortexcart.track('sale', {
+  orderId: 'YOUR_ORDER_ID',
+  amount: 29.99, // The total sale amount
+  currency: 'USD', // The currency code (e.g., USD, GBP, EUR)
+  items: [
+    {
+        productId: 'YOUR_PRODUCT_ID_1',
+        productName: 'Product Name 1',
+        quantity: 1,
+        price: 19.99
+    },
+    {
+        productId: 'YOUR_PRODUCT_ID_2',
+        productName: 'Product Name 2',
+        quantity: 1,
+        price: 10.00
+    }
+  ]
+});
+      `.trim();
+            setEnhancedSnippet(eCommerceSnippet);
             
             async function fetchSettings() {
                 try {
@@ -126,33 +194,6 @@ export default function SettingsPage() {
             setIsDeleting(false);
         }
     };
-
-    const copyToClipboard = () => {
-        const textarea = document.createElement('textarea');
-        textarea.value = snippet;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const handleAnalyzeHomepage = async () => {
-        setIsAnalyzing(true);
-        setAnalysisResult(null);
-        setAnalysisError('');
-        try {
-            const res = await fetch('/api/ai/analyze-homepage', { method: 'POST' });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message || 'Failed to analyze homepage.');
-            setAnalysisResult(result);
-        } catch (error) {
-            setAnalysisError(error.message);
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
     
     if (status === 'loading') { return <Layout><p>Loading...</p></Layout>; }
 
@@ -161,7 +202,7 @@ export default function SettingsPage() {
             <Layout>
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold">Settings</h2>
-                    <p className="mt-1 text-sm text-gray-500">Manage your site settings and social connections.</p>
+                    <p className="mt-1 text-sm text-gray-500">Manage your site settings and tracking installation.</p>
                 </div>
 
                 <SettingsTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -199,23 +240,25 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'Widget Settings' && (
-                       <div className="max-w-3xl">
-                            <h3 className="text-lg font-medium leading-6 text-gray-900">Tracker Installation</h3>
-                            <p className="mt-1 text-sm text-gray-600">Place this snippet on every page of your site, just before the closing `&lt;/head&gt;` tag.</p>
-                            <div className="mt-6">
-                                <ChartContainer title="Your Tracker Snippet">
-                                    <div className="p-4 bg-gray-900 rounded-md text-white font-mono text-sm overflow-x-auto relative h-full flex flex-col justify-between">
-                                        <div>
-                                            <pre><code>{snippet}</code></pre>
-                                        </div>
-                                        <button
-                                            onClick={copyToClipboard}
-                                            className="absolute top-4 right-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-1 px-3 text-xs rounded-md transition-colors"
-                                        >
-                                            {copied ? 'Copied!' : 'Copy'}
-                                        </button>
-                                    </div>
-                                </ChartContainer>
+                       <div className="max-w-3xl space-y-8">
+                            <div>
+                                <h3 className="text-lg font-medium leading-6 text-gray-900">Main Tracker Script</h3>
+                                <p className="mt-1 text-sm text-gray-600">This script is required on <span className="font-bold">every page</span> of your website to enable general analytics tracking. Place it just before the closing `&lt;/head&gt;` tag.</p>
+                                <div className="mt-4">
+                                    <ChartContainer>
+                                        <SnippetBox snippet={mainSnippet} />
+                                    </ChartContainer>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 className="text-lg font-medium leading-6 text-gray-900">Enhanced E-commerce Tracking (Optional)</h3>
+                                <p className="mt-1 text-sm text-gray-600">To unlock powerful features like product-specific AI analysis and revenue tracking, add the following function calls to the relevant pages of your site.</p>
+                                <div className="mt-4">
+                                     <ChartContainer>
+                                        <SnippetBox snippet={enhancedSnippet} />
+                                    </ChartContainer>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -228,48 +271,6 @@ export default function SettingsPage() {
                                     description="This feature is coming soon. You'll be able to connect your accounts and manage credentials here."
                                     icon={ShareIcon}
                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'Recommendations' && (
-                         <div className="max-w-4xl">
-                            <h3 className="text-lg font-medium leading-6 text-gray-900">AI-Powered Analysis</h3>
-                            <p className="mt-1 text-sm text-gray-600">Generate reports and recommendations to improve your site&apos;s performance.</p>
-                            <div className="mt-6 p-4 border border-gray-200 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h4 className="font-semibold text-gray-800">Analyze Homepage</h4>
-                                        <p className="mt-1 text-sm text-gray-600">Get AI recommendations on your homepage&apos;s layout, copy, and performance.</p>
-                                    </div>
-                                    <button
-                                        onClick={handleAnalyzeHomepage}
-                                        disabled={isAnalyzing}
-                                        className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                                    >
-                                        {isAnalyzing ? 'Analyzing...' : 'Generate Report'}
-                                    </button>
-                                </div>
-                                <div className="mt-4">
-                                    {analysisError && <p className="text-sm text-red-600">{analysisError}</p>}
-                                    {analysisResult && (
-                                        <div className="p-4 bg-gray-50 rounded-md border">
-                                            <h5 className="font-semibold mb-4 text-gray-800">Analysis Complete:</h5>
-                                            <div className="space-y-6">
-                                                {Object.entries(analysisResult).map(([category, recommendations]) => (
-                                                    <div key={category}>
-                                                        <h6 className="font-semibold text-gray-700 capitalize">{category}</h6>
-                                                        <ul className="mt-2 list-disc list-inside space-y-2 text-sm text-gray-600">
-                                                            {Array.isArray(recommendations) && recommendations.map((rec, index) => (
-                                                                <li key={index}>{rec.recommendation} <span className="text-gray-400">(Confidence: {Math.round(rec.confidence * 100)}%)</span></li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         </div>
                     )}

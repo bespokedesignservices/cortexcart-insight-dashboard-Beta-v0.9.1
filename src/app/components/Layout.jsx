@@ -111,7 +111,7 @@ const Footer = () => {
                         <div key={link.name} className="px-5 py-2"><a href={link.href} className="text-sm text-gray-500 hover:text-gray-900">{link.name}</a></div>
                     ))}
                 </nav>
-                <p className="mt-6 text-center text-xs text-gray-400">&copy; 2025 CortexCart v0.90 Beta. All rights reserved.</p>
+                <p className="mt-6 text-center text-xs text-gray-400">&copy; 2025 CortexCart v0.9.1 Beta. All rights reserved.</p>
             </div>
         </footer>
     );
@@ -149,7 +149,7 @@ const SidebarContent = () => {
       </ul></nav></div>
       <div>
         {status === 'authenticated' && (
-          <div className="mb-4 text-sm"><p className="font-semibold">{session.user.name}</p><p className="text-gray-400 truncate">{session.user.email}</p></div>
+          <div className="mb-4 text-sm"><p className="font-semibold text-white">{session.user.name}</p><p className="text-gray-400 truncate">{session.user.email}</p></div>
         )}
         <button onClick={() => session ? signOut({ callbackUrl: '/' }) : signIn('google')} className="w-full flex items-center justify-center p-2 bg-gray-700 rounded-lg text-white hover:bg-gray-600 transition-colors">
           <ArrowRightEndOnRectangleIcon className="h-6 w-6 mr-3" /><span>{session ? 'Sign Out' : 'Sign In'}</span>
