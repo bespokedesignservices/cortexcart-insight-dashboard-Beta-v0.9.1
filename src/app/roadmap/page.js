@@ -4,8 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
-import { CheckCircleIcon, ClockIcon, SparklesIcon, ChartBarIcon, LifeBuoyIcon } from '@heroicons/react/24/outline';
-
+import { CheckCircleIcon, ClockIcon, SparklesIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 // --- Roadmap Data ---
 const completedFeatures = [
@@ -43,12 +42,12 @@ const futureFeatures = [
 	{
 	name: 'Support Ticket System',
 	description: 'Add a user support ticket system, allow users to submit tickets and get help and support with features',
-	icon: LifeBuoyIcon
+	icon: null
 	},
 	{
 	name: 'FAQ Section',
 	description: 'Add a full FAQ section to provide help to understand how software works and to provide tips',
-	icon: LifeBuoyIcon
+	icon: null
 	},
 ];
 

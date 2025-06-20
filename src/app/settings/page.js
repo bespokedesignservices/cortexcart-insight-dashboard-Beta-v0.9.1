@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
 import ChartContainer from '@/app/components/ChartContainer';
+import Placeholder from '@/app/components/Placeholder';
+import { ShareIcon } from '@heroicons/react/24/outline';
 
 const currencyOptions = [
     { code: 'USD', symbol: '$', name: 'United States Dollar' },
@@ -17,6 +19,7 @@ const currencyOptions = [
 const tabs = [
     { name: 'General', href: '#' },
     { name: 'Widget Settings', href: '#' },
+    { name: 'Social Connections', href: '#' },
     { name: 'Recommendations', href: '#' },
     { name: 'Billing', href: '#' },
     { name: 'Danger Zone', href: '#' },
@@ -39,7 +42,7 @@ export default function SettingsPage() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState(null);
     const [analysisError, setAnalysisError] = useState('');
-
+    
     const siteId = session?.user?.email;
 
     useEffect(() => {
@@ -60,11 +63,7 @@ export default function SettingsPage() {
       const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer } };
       navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData));
     }
-
-    // This tracks a generic pageview. It should be on ALL pages.
     sendEvent('pageview');
-
-    // Make the tracker globally available for specific event tracking.
     window.cortexcart = {
       track: function(eventName, data) {
         if (!eventName) { console.error('CortexCart Tracker: Event name is required.'); return; }
@@ -73,30 +72,6 @@ export default function SettingsPage() {
     };
   })();
 <\/script>
-
-<!-- 
-  [IMPORTANT] To enable Product and Sales tracking, you must add these specific calls:
-  
-  1. ON PRODUCT PAGES - Track a detailed product view:
-  <script>
-    window.cortexcart.track('pageview', {
-      type: 'product',
-      productId: 'YOUR_DYNAMIC_PRODUCT_ID',
-      productName: 'YOUR_DYNAMIC_PRODUCT_NAME'
-    });
-  <\/script>
-
-  2. ON SALE CONFIRMATION / THANK YOU PAGE - Track a successful sale:
-  <script>
-    window.cortexcart.track('sale', {
-      orderId: 'YOUR_ORDER_ID',
-      amount: 19.99, // The total sale amount
-      currency: 'USD', // The currency code
-      productId: 'YOUR_PRODUCT_ID',
-      productName: 'YOUR_PRODUCT_NAME'
-    });
-  <\/script>
--->
       `.trim();
             setSnippet(trackerSnippet);
             
@@ -186,7 +161,7 @@ export default function SettingsPage() {
             <Layout>
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold">Settings</h2>
-                    <p className="mt-1 text-sm text-gray-500">Manage your site settings and generate AI-powered recommendations.</p>
+                    <p className="mt-1 text-sm text-gray-500">Manage your site settings and social connections.</p>
                 </div>
 
                 <SettingsTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -224,7 +199,7 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'Widget Settings' && (
-                        <div className="max-w-3xl">
+                       <div className="max-w-3xl">
                             <h3 className="text-lg font-medium leading-6 text-gray-900">Tracker Installation</h3>
                             <p className="mt-1 text-sm text-gray-600">Place this snippet on every page of your site, just before the closing `&lt;/head&gt;` tag.</p>
                             <div className="mt-6">
@@ -245,8 +220,20 @@ export default function SettingsPage() {
                         </div>
                     )}
 
+                    {activeTab === 'Social Connections' && (
+                        <div className="max-w-3xl">
+                           <div className="flex items-center justify-center h-64 rounded-lg border-2 border-dashed border-gray-300">
+                               <Placeholder 
+                                    title="Connect Social Accounts"
+                                    description="This feature is coming soon. You'll be able to connect your accounts and manage credentials here."
+                                    icon={ShareIcon}
+                               />
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'Recommendations' && (
-                        <div className="max-w-4xl">
+                         <div className="max-w-4xl">
                             <h3 className="text-lg font-medium leading-6 text-gray-900">AI-Powered Analysis</h3>
                             <p className="mt-1 text-sm text-gray-600">Generate reports and recommendations to improve your site&apos;s performance.</p>
                             <div className="mt-6 p-4 border border-gray-200 rounded-lg">
@@ -288,14 +275,14 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'Billing' && (
-                        <div>
+                         <div>
                             <h3 className="text-lg font-medium leading-6 text-gray-900">Billing & Invoices</h3>
                             <p className="mt-1 text-sm text-gray-600">Manage your subscription and view payment history. (Coming soon!)</p>
                         </div>
                     )}
 
                     {activeTab === 'Danger Zone' && (
-                        <div className="max-w-3xl">
+                         <div className="max-w-3xl">
                             <h3 className="text-lg font-medium leading-6 text-red-700">Danger Zone</h3>
                             <div className="mt-4 p-4 border border-red-300 bg-red-50 rounded-lg">
                                 <div className="flex items-center justify-between">

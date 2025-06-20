@@ -13,11 +13,11 @@ import RecentEventsTable from '@/app/components/RecentEventsTable';
 import DateFilter from '@/app/components/DataFilter';
 import TopPagesList from '@/app/components/TopPagesList';
 import TopReferrersList from '@/app/components/TopReferrersList';
-import VisitorMap from '@/app/components/VisitorMap'; 
 import DeviceChart from '@/app/components/DeviceChart';
 import LiveVisitorCount from '@/app/components/LiveVisitorCount';
 import RealTimeClock from '@/app/components/RealTimeClock';
 import SkeletonCard from '@/app/components/SkeletonCard';
+import CountryViewsList from '@/app/components/CountryViewsList'; // <-- 1. Import the new component
 
 const currencySymbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: '$', AUD: '$' };
 
@@ -171,8 +171,8 @@ export default function DashboardPage() {
         <div className="mt-8 space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ChartContainer title="Visitors by Country">
-                   <div className="h-full w-full">
-                       <VisitorMap data={locationData} />
+                   <div className="h-full w-full"> 
+                       <CountryViewsList locationData={locationData} />
                    </div>
                 </ChartContainer>
                 <ChartContainer title="Recent Events">
