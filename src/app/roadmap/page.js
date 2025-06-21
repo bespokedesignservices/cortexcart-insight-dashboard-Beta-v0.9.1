@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
-import { CheckCircleIcon, ClockIcon, SparklesIcon, ChartBarIcon, LifebuoyIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, SparklesIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 
 // --- Roadmap Data ---
 const completedFeatures = [

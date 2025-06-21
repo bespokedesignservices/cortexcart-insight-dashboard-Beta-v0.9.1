@@ -1,7 +1,6 @@
-// src/lib/auth.js
 import GoogleProvider from 'next-auth/providers/google';
-import XProvider from 'next-auth/providers/twitter'; // Example for X (Twitter)
-import db from '../../lib/db'; // Make sure this path is correct
+import TwitterProvider from 'next-auth/providers/twitter';
+import db from './db'; // Assuming db.js is now in src/lib
 
 export const authOptions = {
   providers: [
@@ -9,18 +8,16 @@ export const authOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-    XProvider({
+    TwitterProvider({
       clientId: process.env.X_CLIENT_ID,
       clientSecret: process.env.X_CLIENT_SECRET,
-      version: "2.0", // Important for X's OAuth 2.0
+      version: "2.0", 
     }),
-    // You can add more providers here (Facebook, LinkedIn, etc.)
   ],
 
-  // This callback is triggered when a user links a new OAuth account
   events: {
     async accountLinked({ user, account }) {
-      if (user.email && account.provider !== 'google') { // We don't need to store Google tokens for this
+      if (user.email && account.provider !== 'google') {
         try {
           const query = `
             INSERT INTO social_connections (user_email, platform, access_token, refresh_token, token_expires_at)
@@ -30,18 +27,8 @@ export const authOptions = {
               refresh_token = VALUES(refresh_token),
               token_expires_at = VALUES(token_expires_at);
           `;
-
-          // Convert expires_in (seconds) to a TIMESTAMP
           const expiresAt = account.expires_at ? new Date(account.expires_at * 1000) : null;
-          
-          await db.query(query, [
-            user.email,
-            account.provider, // e.g., 'x', 'facebook'
-            account.access_token,
-            account.refresh_token,
-            expiresAt
-          ]);
-          console.log(`Saved tokens for ${user.email} and platform ${account.provider}`);
+          await db.query(query, [ user.email, account.provider, account.access_token, account.refresh_token, expiresAt ]);
         } catch (error) {
           console.error('Failed to save social connection tokens:', error);
         }
@@ -49,13 +36,34 @@ export const authOptions = {
     }
   },
 
-  // The session callback adds the user's ID for database relations
   callbacks: {
+    // This callback runs every time a session is checked.
     async session({ session, token }) {
+      // Add the user's role and ID to the session object
       if (token) {
-        session.userId = token.sub; 
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
       return session;
     },
+    // This callback runs when a user signs in.
+    async jwt({ token, user }) {
+      if (user) { // This is only available on sign-in
+        try {
+          // Check if the user exists in our new 'admins' table
+          const [admins] = await db.query('SELECT role FROM admins WHERE email = ?', [user.email]);
+          if (admins.length > 0) {
+            token.role = admins[0].role; // e.g., 'superadmin'
+          } else {
+            token.role = 'user'; // Default role for everyone else
+          }
+          token.id = user.id;
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          token.role = 'user'; // Fallback to default role on error
+        }
+      }
+      return token;
+    }
   },
 };
