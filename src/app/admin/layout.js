@@ -3,19 +3,21 @@ import {
     HomeIcon,
     UsersIcon,
     DocumentTextIcon,
-    PencilSquareIcon, // Already here, perfect for the blog
+    PencilSquareIcon,
     ChartBarIcon,
     CreditCardIcon,
     ArrowRightEndOnRectangleIcon,
+    WrenchScrewdriverIcon, // New Icon for SEO
 } from '@heroicons/react/24/outline';
 
 const adminNavLinks = [
     { name: 'Dashboard', href: '/admin', icon: HomeIcon },
     { name: 'User Management', href: '/admin/users', icon: UsersIcon },
     { name: 'CMS', href: '/admin/cms', icon: DocumentTextIcon },
-    { name: 'Blog', href: '/admin/blog', icon: PencilSquareIcon }, // This line is correct
+    { name: 'Blog', href: '/admin/blog', icon: PencilSquareIcon },
     { name: 'User Stats', href: '/admin/stats', icon: ChartBarIcon },
     { name: 'Subscription Plans', href: '/admin/plans', icon: CreditCardIcon },
+    { name: 'SEO', href: '/admin/seo', icon: WrenchScrewdriverIcon }, // New Link
 ];
 
 export default function AdminLayout({ children }) {

@@ -19,7 +19,7 @@ const StatCard = ({ title, value, icon: Icon }) => (
     </div>
 );
 
-export default function AdminDashboardPage() {
+export default function UserStatsPage() {
     const [stats, setStats] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard CortexCart</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">User & Platform Stats</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard title="Total Registered Users" value={stats?.totalUsers.toLocaleString() || '0'} icon={UsersIcon} />

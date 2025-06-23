@@ -16,10 +16,9 @@ export async function GET(request, { params }) {
         if (plans.length === 0) {
             return NextResponse.json({ message: 'Plan not found' }, { status: 404 });
         }
-        // Parse the features JSON string before sending it back
         const plan = {
             ...plans[0],
-            features: typeof plans[0].features === 'string' ? JSON.parse(plans[0].features) : plans[0].features,
+            features: typeof plans[0].features === 'string' ? JSON.parse(plans[0].features) : [],
         };
         return NextResponse.json(plan, { status: 200 });
     } catch (error) {
@@ -39,6 +38,10 @@ export async function PUT(request, { params }) {
         const { id } = params;
         const { name, description, price_monthly, visitor_limit, features, is_popular } = await request.json();
         
+        if (!name || !price_monthly || !visitor_limit || !features) {
+            return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+        }
+        
         await db.query(
             'UPDATE subscription_plans SET name = ?, description = ?, price_monthly = ?, visitor_limit = ?, features = ?, is_popular = ? WHERE id = ?',
             [name, description, price_monthly, visitor_limit, JSON.stringify(features), is_popular, id]
@@ -47,6 +50,23 @@ export async function PUT(request, { params }) {
         return NextResponse.json({ message: 'Plan updated successfully' }, { status: 200 });
     } catch (error) {
         console.error('Error updating plan:', error);
+        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+// DELETE handler to remove a plan
+export async function DELETE(request, { params }) {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.role !== 'superadmin') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+
+    try {
+        const { id } = params;
+        await db.query('DELETE FROM subscription_plans WHERE id = ?', [id]);
+        return NextResponse.json({ message: 'Plan deleted successfully' }, { status: 200 });
+    } catch (error) {
+        console.error('Error deleting plan:', error);
         return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
     }
 }

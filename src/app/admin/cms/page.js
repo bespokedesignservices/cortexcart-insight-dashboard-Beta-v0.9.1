@@ -66,7 +66,9 @@ export default function CmsManagementPage() {
                 const data = await res.json();
                 setContent(data);
             } catch (err) {
-                setError(err.message);
+                if (err instanceof Error) {
+                    setError(err.message);
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -107,7 +109,8 @@ export default function CmsManagementPage() {
                  {/* Features Section */}
                  <div className="p-6 bg-white rounded-lg shadow-sm border">
                     <h2 className="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Features Section</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
+                        {/* Row 1 */}
                         <div className="space-y-4">
                             <h3 className="font-medium text-center">Feature 1</h3>
                              <EditableField fieldKey="feature_1_title" label="Title" value={content.feature_1_title} onSave={handleSaveField} />
@@ -122,6 +125,22 @@ export default function CmsManagementPage() {
                             <h3 className="font-medium text-center">Feature 3</h3>
                              <EditableField fieldKey="feature_3_title" label="Title" value={content.feature_3_title} onSave={handleSaveField} />
                              <EditableField fieldKey="feature_3_description" label="Description" value={content.feature_3_description} onSave={handleSaveField} type="textarea" />
+                        </div>
+                        {/* Row 2 (New Features) */}
+                         <div className="space-y-4">
+                            <h3 className="font-medium text-center">Feature 4</h3>
+                             <EditableField fieldKey="feature_4_title" label="Title" value={content.feature_4_title} onSave={handleSaveField} />
+                             <EditableField fieldKey="feature_4_description" label="Description" value={content.feature_4_description} onSave={handleSaveField} type="textarea" />
+                        </div>
+                         <div className="space-y-4">
+                            <h3 className="font-medium text-center">Feature 5</h3>
+                             <EditableField fieldKey="feature_5_title" label="Title" value={content.feature_5_title} onSave={handleSaveField} />
+                             <EditableField fieldKey="feature_5_description" label="Description" value={content.feature_5_description} onSave={handleSaveField} type="textarea" />
+                        </div>
+                         <div className="space-y-4">
+                            <h3 className="font-medium text-center">Feature 6</h3>
+                             <EditableField fieldKey="feature_6_title" label="Title" value={content.feature_6_title} onSave={handleSaveField} />
+                             <EditableField fieldKey="feature_6_description" label="Description" value={content.feature_6_description} onSave={handleSaveField} type="textarea" />
                         </div>
                     </div>
                 </div>
