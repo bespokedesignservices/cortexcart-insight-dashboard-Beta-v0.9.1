@@ -2,6 +2,8 @@
 
 import { useState, useEffect, ElementType } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+// The 'Metadata' type is no longer needed here since we removed the function
 import { 
     ShieldCheckIcon, ChartBarIcon, SparklesIcon, ArrowRightIcon, 
     PuzzlePieceIcon, TableCellsIcon, BeakerIcon 
@@ -100,7 +102,16 @@ export default function HomePage() {
         <div className="bg-white text-gray-800 font-sans">
             <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-                    <a href="#" className="text-2xl font-bold text-gray-900">CortexCart</a>
+               {/* This is the new logo image, wrapped in a link to the homepage */}
+                    <Link href="/" passHref>
+                      <Image
+                        src="/cortexcart-com-logo-home.png" // This points to /public/logo.png
+                        alt="CortexCart Logo"
+                        width={150} // Adjust this to your logo's width
+                        height={40}  // Adjust this to your logo's height
+                        priority // Helps load the logo faster on the homepage
+                      />
+                    </Link>
                     <ul className="flex items-center space-x-6">
                         <li><a href="#features" className="hover:text-blue-600">Features</a></li>
                         <li><a href="#pricing" className="hover:text-blue-600">Pricing</a></li>
@@ -122,15 +133,15 @@ export default function HomePage() {
 
             <header className="text-center py-20 lg:py-32 bg-blue-700">
                  <div className="container mx-auto px-6">
-                    <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-100 leading-tight">
+                    <h1 className="text-4xl lg:text-6xl font-extrabold text-white leading-tight">
                         {content?.hero_title || 'The AI-Powered Analytics Dashboard for E-commerce'}
                     </h1>
-                    <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-100">
+                    <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-200">
                         {content?.hero_subtitle || 'Stop guessing. Start growing. CortexCart gives you the actionable insights you need to boost sales.'}
                     </p>
                     <div className="mt-8">
                         <Link href="/dashboard">
-                           <div className="inline-flex items-center px-8 py-4 text-lg font-semibold text-dark bg-gray-100 rounded-full hover:bg-blue-700 transition-transform transform hover:scale-105 cursor-pointer">
+                           <div className="inline-flex items-center px-8 py-4 text-lg font-semibold text-blue-700 bg-white rounded-full hover:bg-gray-200 transition-transform transform hover:scale-105 cursor-pointer">
                                 Get Started for Free <ArrowRightIcon className="h-5 w-5 ml-2" />
                             </div>
                         </Link>
@@ -164,7 +175,12 @@ export default function HomePage() {
                         </div>
                         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-8 rounded-lg shadow-xl">
                             <div className="w-full">
-                                <img src={recentPost.featured_image_url || 'https://placehold.co/600x400/E2E8F0/4A5568?text=CortexCart'} alt={recentPost.title} className="w-full h-full object-cover rounded-lg"/>
+  <Image 
+          src={recentPost.featured_image_url || 'https://placehold.co/600x400/E2E8F0/4A5568?text=CortexCart'} 
+          alt={recentPost.title}
+          fill
+          className="object-cover"
+        />
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">

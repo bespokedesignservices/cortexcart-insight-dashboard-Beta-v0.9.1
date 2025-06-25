@@ -6,15 +6,25 @@ import { marked } from 'marked';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
-
+import DisqusComments from '../../components/DisqusComments'; // Import the new component
 
 const PublicLayout = ({ children }) => (
     <div className="bg-gray-50">
         <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
             <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-                <Link href="/"><div className="text-2xl font-bold text-gray-900 cursor-pointer">CortexCart</div></Link>
+ {/* This is the new logo image, wrapped in a link to the homepage */}
+                    <Link href="/" passHref>
+                      <Image
+                        src="/cortexcart-com-logo-home.png" // This points to /public/logo.png
+                        alt="CortexCart Logo"
+                        width={150} // Adjust this to your logo's width
+                        height={40}  // Adjust this to your logo's height
+                        priority // Helps load the logo faster on the homepage
+                      />
+                    </Link>
                 <ul className="flex items-center space-x-6">
                     <li><Link href="/#features"><span className="hover:text-blue-600 cursor-pointer">Features</span></Link></li>
+		   <li><Link href="/#pricing"><span className="hover:texxt-blue-600 cursor-pointer">Pricing</span></Link></li>
                     <li><Link href="/blog"><span className="text-blue-600 font-semibold cursor-pointer">Blog</span></Link></li>
                     <li>
                         <Link href="/dashboard">
@@ -66,8 +76,10 @@ const BlogCategoryNav = () => {
         'Conversion Optimization', 
         'Product Updates'
     ];
-    // Helper to convert category name to a URL-friendly slug
-    const toSlug = (name) => name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-');
+    
+    // Corrected: This function now creates URL-friendly slugs
+    // that match the API's logic.
+    const toSlug = (name) => name.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-');
 
     return (
         <div className="border-b border-gray-200 bg-white">
@@ -83,7 +95,6 @@ const BlogCategoryNav = () => {
         </div>
     );
 };
-
 
 export default function BlogPostPage() {
     const { slug } = useParams();
@@ -135,7 +146,7 @@ export default function BlogPostPage() {
                     {/* Left Sidebar: Recent Articles */}
                     <aside className="hidden lg:block lg:col-span-1">
                         <div className="sticky top-24 space-y-8">
-                            {sidebarPosts.length > 0 && (
+                            {recentPosts.length > 0 && (
                                 <div className="bg-white p-6 rounded-lg shadow-md">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Articles</h3>
                                     <div className="space-y-4">
@@ -173,19 +184,25 @@ export default function BlogPostPage() {
                             )}
                             
                             <div className="blog-content mt-8" dangerouslySetInnerHTML={getMarkdownText()} />
+                            
+                            {/* Disqus Comment Section */}
+                            <div className="border-t mt-12 pt-8">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Comments</h2>
+                                <DisqusComments post={post} />
+                            </div>
                         </div>
                     </div>
                     
                     {/* Right Sidebar: Related Articles */}
                     <aside className="lg:col-span-1 mt-12 lg:mt-0">
                          <div className="sticky top-24 space-y-8">
-                             {sidebarPosts.length > 2 && (
+                             {relatedPosts.length > 0 && (
                                 <div className="bg-white p-6 rounded-lg shadow-md">
                                     <h3 className="text-lg font-bold text-gray-900 mb-4">Related Articles</h3>
                                     <div className="space-y-4">
                                         {relatedPosts.map(p => <SidebarPostCard key={p.id} post={p} />)}
                                     </div>
-                                </div>
+                                 </div>
                             )}
                         </div>
                     </aside>
@@ -193,10 +210,14 @@ export default function BlogPostPage() {
             </div>
 
             <style jsx global>{`
+                .blog-content {
+                    color: #374151;
+                }
                 .blog-content h1, .blog-content h2, .blog-content h3 {
                     font-weight: 700;
                     margin-top: 1.5em;
                     margin-bottom: 0.5em;
+                    color: #111827;
                 }
                 .blog-content h1 { font-size: 2.25rem; }
                 .blog-content h2 { font-size: 1.875rem; }
@@ -209,13 +230,7 @@ export default function BlogPostPage() {
                     color: #2563eb;
                     text-decoration: underline;
                 }
-                .blog-content ul {
-                    list-style-type: disc;
-                    padding-left: 2em;
-                    margin-bottom: 1.25em;
-                }
-                .blog-content ol {
-                    list-style-type: decimal;
+                .blog-content ul, .blog-content ol {
                     padding-left: 2em;
                     margin-bottom: 1.25em;
                 }

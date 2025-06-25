@@ -1,0 +1,20 @@
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../../../src/lib/auth';
+import db from '../../../../../src/lib/db';
+import { NextResponse } from 'next/server';
+
+// GET handler to fetch all blog categories
+export async function GET() {
+    const session = await getServerSession(authOptions);
+    if (session?.user?.role !== 'superadmin') {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
+
+    try {
+        const [categories] = await db.query('SELECT id, name FROM blog_categories ORDER BY name ASC');
+        return NextResponse.json(categories, { status: 200 });
+    } catch (error) {
+        console.error('Error fetching blog categories:', error);
+        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    }
+}
