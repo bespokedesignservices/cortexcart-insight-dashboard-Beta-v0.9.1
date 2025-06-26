@@ -264,6 +264,14 @@ export default function BlogPostPage() {
                     padding: 0;
                     margin: 0;
                 }
+/* --- ADD THIS NEW RULE FOR IMAGES --- */
+    .blog-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.75rem; /* 12px */
+        margin-top: 2em;
+        margin-bottom: 2em;
+    }
             `}</style>
         </PublicLayout>
     );

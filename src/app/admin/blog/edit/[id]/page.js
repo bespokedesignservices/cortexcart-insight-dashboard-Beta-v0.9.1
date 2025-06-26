@@ -2,22 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { SparklesIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import Image from 'next/image'; // Import the Image component
+import { SparklesIcon, XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
-// In a real app, you would fetch these from your 'blog_categories' table
 const blogCategories = [
-    { id: 0, name: 'General' },
     { id: 1, name: 'E-commerce Strategy' },
-    { id: 2, name: 'Data & Analytics' },
+    { id: 2, name: 'Data & Analytics' }, 
     { id: 3, name: 'AI for E-commerce' },
-    { id: 4, name: 'Generative AI' },
+    { id: 4, name: 'Generative AI' }, 
     { id: 5, name: 'Conversion Optimization' },
     { id: 6, name: 'Product Updates' },
 ];
 
 const IdeaGeneratorModal = ({ isOpen, onClose, onIdeaSelect }) => {
-    // This component is self-contained and correct
     const [topic, setTopic] = useState('');
     const [ideas, setIdeas] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -80,6 +77,76 @@ const IdeaGeneratorModal = ({ isOpen, onClose, onIdeaSelect }) => {
     );
 };
 
+const ImageGeneratorModal = ({ isOpen, onClose, onImageSelect }) => {
+    const [prompt, setPrompt] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleGenerate = async () => {
+        setIsGenerating(true);
+        setError('');
+        setImageUrl('');
+        try {
+            const res = await fetch('/api/admin/ai/generate-blog-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt }),
+            });
+            if (!res.ok) {
+                const result = await res.json();
+                throw new Error(result.message || 'Failed to generate image.');
+            }
+            const data = await res.json();
+            setImageUrl(data.imageUrl);
+        } catch (err) {
+            setError(err.message instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+    
+    const handleSelectAndClose = () => {
+        onImageSelect(imageUrl);
+        onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">Generate Featured Image</h3>
+                    <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200"><XMarkIcon className="h-6 w-6" /></button>
+                </div>
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="prompt" className="block text-sm font-medium text-gray-700">Image Prompt:</label>
+                        <textarea id="prompt" rows={3} value={prompt} onChange={(e) => setPrompt(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., A futuristic dashboard with glowing charts and graphs"/>
+                    </div>
+                    <button onClick={handleGenerate} disabled={isGenerating || !prompt} className="w-full inline-flex justify-center items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:bg-blue-300">
+                        <SparklesIcon className="h-5 w-5 mr-2" />
+                        {isGenerating ? 'Generating...' : 'Generate Image'}
+                    </button>
+                    {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+                    {imageUrl && (
+                        <div className="border-t pt-4 mt-4 space-y-4">
+                            <h4 className="font-semibold">Generated Image Preview:</h4>
+                            <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
+                                <Image src={imageUrl} alt="AI generated preview" fill className="object-cover" />
+                            </div>
+                            <button onClick={handleSelectAndClose} className="w-full inline-flex justify-center items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                                Use This Image
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 export default function BlogEditorPage() {
     const router = useRouter();
@@ -97,7 +164,8 @@ export default function BlogEditorPage() {
     const [scheduleTime, setScheduleTime] = useState('09:00');
     const [isLoading, setIsLoading] = useState(isEditing);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isIdeaModalOpen, setIdeaModalOpen] = useState(false);
+    const [isImageModalOpen, setImageModalOpen] = useState(false);
     const [isGenerating, setIsGenerating] = useState({ content: false, meta: false });
     const [error, setError] = useState('');
 
@@ -117,7 +185,7 @@ export default function BlogEditorPage() {
                         setScheduleTime(`${hours}:${minutes}`);
                     }
                 } catch (err) {
-                    setError(err.message);
+                    setError(err.message instanceof Error ? err.message : 'An unknown error occurred');
                 } finally {
                     setIsLoading(false);
                 }
@@ -150,7 +218,7 @@ export default function BlogEditorPage() {
             const key = type === 'meta_description' ? 'meta_description' : 'content';
             setPostData(prev => ({ ...prev, [key]: data.generatedText }));
         } catch (err) {
-            setError(err.message);
+            setError(err.message instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
             setIsGenerating(prev => ({ ...prev, [genType]: false }));
         }
@@ -158,7 +226,11 @@ export default function BlogEditorPage() {
 
     const handleIdeaSelect = (ideaTitle) => {
         setPostData(prev => ({ ...prev, title: ideaTitle, meta_title: ideaTitle }));
-        setIsModalOpen(false);
+        setIdeaModalOpen(false);
+    };
+
+    const handleImageSelect = (imageUrl) => {
+        setPostData(prev => ({ ...prev, featured_image_url: imageUrl }));
     };
 
     const handleSubmit = async (e) => {
@@ -184,7 +256,7 @@ export default function BlogEditorPage() {
             }
             router.push('/admin/blog');
         } catch (err) {
-            setError(err.message);
+            setError(err.message instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
             setIsSubmitting(false);
         }
@@ -194,10 +266,12 @@ export default function BlogEditorPage() {
 
     return (
         <>
-            <IdeaGeneratorModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onIdeaSelect={handleIdeaSelect} />
+            <IdeaGeneratorModal isOpen={isIdeaModalOpen} onClose={() => setIdeaModalOpen(false)} onIdeaSelect={handleIdeaSelect} />
+            <ImageGeneratorModal isOpen={isImageModalOpen} onClose={() => setImageModalOpen(false)} onImageSelect={handleImageSelect} />
+
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">{isEditing ? 'Edit Blog Post' : 'Create New Blog Post'}</h1>
-                <button type="button" onClick={() => setIsModalOpen(true)} className="inline-flex items-center rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500">
+                <button type="button" onClick={() => setIdeaModalOpen(true)} className="inline-flex items-center rounded-md bg-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500">
                     <SparklesIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                     Generate Ideas
                 </button>
@@ -209,7 +283,6 @@ export default function BlogEditorPage() {
                     <input type="text" name="title" id="title" value={postData.title || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required />
                 </div>
 
-                {/* --- Author & Read Time --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                     <div>
                         <label htmlFor="author_name" className="block text-sm font-medium text-gray-700">Author Name</label>
@@ -221,10 +294,19 @@ export default function BlogEditorPage() {
                     </div>
                 </div>
 
-                {/* --- Featured Image --- */}
                 <div className="space-y-2 rounded-md border border-gray-200 p-4">
-                    <h3 className="text-base font-semibold text-gray-800">Featured Image</h3>
-                    {postData.featured_image_url && <Image src={postData.featured_image_url} alt="Featured image preview" width={600} height={400} className="w-full h-auto rounded-md object-cover" />}
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-base font-semibold text-gray-800">Featured Image</h3>
+                        <button type="button" onClick={() => setImageModalOpen(true)} className="text-xs inline-flex items-center rounded-full bg-purple-100 px-2 py-1 font-semibold text-purple-700 hover:bg-purple-200">
+                           <PhotoIcon className="h-4 w-4 mr-1" />
+                           Generate with AI
+                        </button>
+                    </div>
+                    {postData.featured_image_url && (
+                        <div className="relative w-full aspect-video rounded-md overflow-hidden mt-2">
+                             <Image src={postData.featured_image_url} alt="Featured image preview" layout="fill" className="object-cover" />
+                        </div>
+                    )}
                     <label htmlFor="featured_image_url" className="block text-sm font-medium text-gray-700 pt-2">Image URL</label>
                     <input id="featured_image_url" name="featured_image_url" type="text" value={postData.featured_image_url || ''} onChange={handleChange} className="block w-full rounded-md border-gray-300 shadow-sm" placeholder="https://example.com/image.jpg"/>
                     <label htmlFor="featured_image_attribution_text" className="block text-sm font-medium text-gray-700 pt-2">Attribution Text</label>
@@ -232,12 +314,11 @@ export default function BlogEditorPage() {
                     <label htmlFor="featured_image_attribution_link" className="block text-sm font-medium text-gray-700 pt-2">Attribution Link</label>
                     <input type="text" name="featured_image_attribution_link" id="featured_image_attribution_link" value={postData.featured_image_attribution_link || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="e.g., https://unsplash.com/photos/..." />
                 </div>
-
-                {/* --- SEO Meta Fields --- */}
+                
                 <div className="space-y-4 rounded-md border border-gray-200 p-4">
                      <div className="flex justify-between items-center">
                         <h3 className="text-base font-semibold text-gray-800">SEO & Meta</h3>
-                        <button type="button" onClick={() => handleGenerateText('meta_description')} disabled={isGenerating.meta} className="text-xs inline-flex items-center rounded-full bg-purple-100 px-2 py-1 font-semibold text-purple-700 hover:bg-purple-200 disabled:opacity-50">
+                        <button type="button" onClick={() => handleGenerateText('meta_description')} disabled={!postData.title || isGenerating.meta} className="text-xs inline-flex items-center rounded-full bg-purple-100 px-2 py-1 font-semibold text-purple-700 hover:bg-purple-200 disabled:opacity-50">
                             <SparklesIcon className="h-4 w-4 mr-1" />{isGenerating.meta ? 'Generating...' : 'Generate Meta Description'}
                         </button>
                      </div>
@@ -251,7 +332,6 @@ export default function BlogEditorPage() {
                     </div>
                 </div>
                 
-                {/* --- Content with AI Button --- */}
                 <div>
                     <div className="flex justify-between items-center">
                         <label htmlFor="content" className="block text-sm font-medium leading-6 text-gray-900">Content</label>
@@ -262,7 +342,6 @@ export default function BlogEditorPage() {
                     <textarea id="content" name="content" rows={18} value={postData.content || ''} onChange={handleChange} className="mt-2 block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300" />
                 </div>
 
-                {/* --- Status, Category, and Scheduling --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div>
                         <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">Category</label>

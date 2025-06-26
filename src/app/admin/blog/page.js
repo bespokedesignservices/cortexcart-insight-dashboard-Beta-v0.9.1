@@ -58,8 +58,10 @@ export default function BlogManagementPage() {
         const statusClasses = {
             published: "bg-green-50 text-green-700 ring-green-600/20",
             draft: "bg-yellow-50 text-yellow-800 ring-yellow-600/20",
+            scheduled: "bg-blue-50 text-blue-700 ring-blue-600/20"
         };
-        return <span className={`${baseClasses} ${statusClasses[status] || ''}`}>{status}</span>;
+        const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+        return <span className={`${baseClasses} ${statusClasses[status] || ''}`}>{statusText}</span>;
     };
 
     return (
@@ -80,7 +82,6 @@ export default function BlogManagementPage() {
                     </div>
                 </div>
 
-                {/* Posts Table */}
                 <div className="mt-6 flow-root">
                     <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
@@ -130,7 +131,6 @@ export default function BlogManagementPage() {
                 </div>
             </div>
 
-            {/* Delete Confirmation Modal */}
             {postToDelete && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" aria-modal="true">
                     <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">

@@ -2,22 +2,13 @@
 
 import { useState, useEffect, ElementType } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-// The 'Metadata' type is no longer needed here since we removed the function
 import { 
     ShieldCheckIcon, ChartBarIcon, SparklesIcon, ArrowRightIcon, 
     PuzzlePieceIcon, TableCellsIcon, BeakerIcon 
 } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
-const featureIcons = {
-    feature_1: ChartBarIcon,
-    feature_2: SparklesIcon,
-    feature_3: ShieldCheckIcon,
-    feature_4: PuzzlePieceIcon,
-    feature_5: TableCellsIcon,
-    feature_6: BeakerIcon,
-};
-
+// --- Interfaces for Type Safety ---
 interface CmsContent {
     hero_title: string;
     hero_subtitle: string;
@@ -62,16 +53,26 @@ interface PricingCardProps {
     plan: Plan;
 }
 
+const featureIcons = {
+    feature_1: ChartBarIcon,
+    feature_2: SparklesIcon,
+    feature_3: ShieldCheckIcon,
+    feature_4: PuzzlePieceIcon,
+    feature_5: TableCellsIcon,
+    feature_6: BeakerIcon,
+};
+
+
+// --- Main Homepage Component ---
 export default function HomePage() {
     const [content, setContent] = useState<Partial<CmsContent>>({});
     const [plans, setPlans] = useState<Plan[]>([]);
     const [recentPost, setRecentPost] = useState<BlogPost | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
+   useEffect(() => {
         async function fetchData() {
             try {
-                // Fetch all data in parallel
                 const [cmsRes, blogRes, plansRes] = await Promise.all([
                     fetch('/api/content/homepage'),
                     fetch('/api/blog'),
@@ -83,7 +84,15 @@ export default function HomePage() {
                     const blogPosts = await blogRes.json();
                     if (blogPosts.length > 0) setRecentPost(blogPosts[0]);
                 }
-                if (plansRes.ok) setPlans(await plansRes.json());
+                if (plansRes.ok) {
+                    const planData = await plansRes.json();
+                    // This is the corrected line with the type annotation
+                    const formattedPlans = planData.map((plan: Plan) => ({
+                        ...plan,
+                        features: Array.isArray(plan.features) ? plan.features : []
+                    }));
+                    setPlans(formattedPlans);
+                }
 
             } catch (err) {
                 console.error("Failed to fetch page data:", err);
@@ -93,7 +102,6 @@ export default function HomePage() {
         }
         fetchData();
     }, []);
-
     if (isLoading) {
         return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
     }
@@ -102,14 +110,13 @@ export default function HomePage() {
         <div className="bg-white text-gray-800 font-sans">
             <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
                 <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-               {/* This is the new logo image, wrapped in a link to the homepage */}
                     <Link href="/" passHref>
                       <Image
-                        src="/cortexcart-com-logo-home.png" // This points to /public/logo.png
+                        src="/cortexcart-com-logo-home.png" 
                         alt="CortexCart Logo"
-                        width={150} // Adjust this to your logo's width
-                        height={40}  // Adjust this to your logo's height
-                        priority // Helps load the logo faster on the homepage
+                        width={150} 
+                        height={40}
+                        priority
                       />
                     </Link>
                     <ul className="flex items-center space-x-6">
@@ -133,15 +140,15 @@ export default function HomePage() {
 
             <header className="text-center py-20 lg:py-32 bg-blue-700">
                  <div className="container mx-auto px-6">
-                    <h1 className="text-4xl lg:text-6xl font-extrabold text-white leading-tight">
+                    <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-100 leading-tight">
                         {content?.hero_title || 'The AI-Powered Analytics Dashboard for E-commerce'}
                     </h1>
-                    <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-200">
+                    <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-100">
                         {content?.hero_subtitle || 'Stop guessing. Start growing. CortexCart gives you the actionable insights you need to boost sales.'}
                     </p>
                     <div className="mt-8">
                         <Link href="/dashboard">
-                           <div className="inline-flex items-center px-8 py-4 text-lg font-semibold text-blue-700 bg-white rounded-full hover:bg-gray-200 transition-transform transform hover:scale-105 cursor-pointer">
+                           <div className="inline-flex items-center px-8 py-4 text-lg font-semibold text-blue bg-gray-100 rounded-full hover:bg-blue-700 transition-transform transform hover:scale-105 cursor-pointer">
                                 Get Started for Free <ArrowRightIcon className="h-5 w-5 ml-2" />
                             </div>
                         </Link>
@@ -174,13 +181,8 @@ export default function HomePage() {
                             <p className="mt-4 max-w-2xl mx-auto text-gray-600">Check out our latest insights and tutorials.</p>
                         </div>
                         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-white p-8 rounded-lg shadow-xl">
-                            <div className="w-full">
-  <Image 
-          src={recentPost.featured_image_url || 'https://placehold.co/600x400/E2E8F0/4A5568?text=CortexCart'} 
-          alt={recentPost.title}
-          fill
-          className="object-cover"
-        />
+                            <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                                <Image src={recentPost.featured_image_url || 'https://placehold.co/600x400/E2E8F0/4A5568?text=CortexCart'} alt={recentPost.title} fill className="object-cover"/>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">
@@ -199,7 +201,7 @@ export default function HomePage() {
                 </section>
             )}
             
-            <section id="pricing" className="py-20 bg-gray-50">
+            <section id="pricing" className="py-20">
                  <div className="container mx-auto px-6">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">Simple, Transparent Pricing</h2>
@@ -237,7 +239,10 @@ const FeatureCard = ({ icon: Icon, title, description }: FeatureCardProps) => (
     </div>
 );
 
+// Located at the bottom of src/app/page.tsx
+
 const PricingCard = ({ plan }: PricingCardProps) => {
+    // This condition checks the plan's name in a case-insensitive way.
     const isCustom = plan.name.toLowerCase() === 'custom';
 
     return (
@@ -266,13 +271,13 @@ const PricingCard = ({ plan }: PricingCardProps) => {
             <div className="mt-8">
                  {isCustom ? (
                      <Link href="/contact">
-                        <div className={`w-full text-center px-6 py-3 font-semibold rounded-lg transition-colors text-white bg-gray-700 hover:bg-gray-800`}>
+                        <div className={`w-full text-center px-6 py-3 font-semibold rounded-lg transition-colors text-white bg-gray-700 hover:bg-gray-800 cursor-pointer`}>
                             Contact Us
                         </div>
                     </Link>
                  ) : (
                     <Link href="/dashboard">
-                        <div className={`w-full text-center px-6 py-3 font-semibold rounded-lg transition-colors ${plan.is_popular ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-blue-600 bg-blue-100 hover:bg-blue-200'}`}>
+                        <div className={`w-full text-center px-6 py-3 font-semibold rounded-lg transition-colors ${plan.is_popular ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-blue-600 bg-blue-100 hover:bg-blue-200'} cursor-pointer`}>
                             Start 14-Day Free Trial
                         </div>
                     </Link>

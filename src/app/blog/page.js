@@ -8,15 +8,16 @@ const PublicLayout = ({ children }) => (
     <div className="bg-gray-50">
         <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
             <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-                <Link href="/"><div className="text-2xl font-bold text-gray-900 cursor-pointer">
-<Image
+{/* This is the new logo image, wrapped in a link to the homepage */}
+                    <Link href="/" passHref>
+                      <Image
                         src="/cortexcart-com-logo-home.png" // This points to /public/logo.png
                         alt="CortexCart Logo"
                         width={150} // Adjust this to your logo's width
                         height={40}  // Adjust this to your logo's height
                         priority // Helps load the logo faster on the homepage
                       />
-		</div></Link>
+                    </Link>
                 <ul className="flex items-center space-x-6">
                     <li><Link href="/#features"><span className="hover:text-blue-600 cursor-pointer">Features</span></Link></li>
                     <li><Link href="/#pricing"><span className="hover:text-blue-600 cursor-pointer">Pricing</span></Link></li>
@@ -42,16 +43,9 @@ const PublicLayout = ({ children }) => (
 
 const BlogCategoryNav = () => {
     const categories = [
-        'E-commerce Strategy', 
-        'Data & Analytics', 
-        'AI for E-commerce', 
-        'Generative AI', 
-        'Conversion Optimization', 
-        'Product Updates'
+        'E-commerce Strategy', 'Data & Analytics', 'AI for E-commerce', 
+        'Generative AI', 'Conversion Optimization', 'Product Updates'
     ];
-    
-    // Corrected: This function now creates URL-friendly slugs
-    // that match the API's logic.
     const toSlug = (name) => name.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-');
 
     return (
@@ -123,14 +117,28 @@ export default function BlogIndexPage() {
     return (
         <PublicLayout>
             <BlogCategoryNav />
+
+            {/* --- THIS IS THE NEW HERO SECTION --- */}
+            <div className="relative bg-slate-900 h-[400px] flex items-center justify-center">
+                <Image
+                    src="https://cortexcart.com/images/cortexcart-blog-homepage-hero-AI-ecommerce-technology-image.png" // <-- Your actual image URL
+                    alt="Blog hero background"
+                    layout="fill"
+                    objectFit="cover"
+                    className="absolute inset-0 z-0 opacity-40"
+                />
+                {/* This z-10 ensures the text appears above the image */}
+                <div className="relative z-10 text-center px-6">
+                    <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">From the Blog</h2>
+                    <p className="mt-2 text-lg leading-8 text-gray-200">
+                       Insights, tutorials, and updates from the CortexCart team.
+                    </p>
+                </div>
+            </div>
+
+            {/* --- This is the blog post list --- */}
             <div className="bg-white py-24 sm:py-32">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div className="mx-auto max-w-2xl text-center">
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">From the Blog</h2>
-                        <p className="mt-2 text-lg leading-8 text-gray-600">
-                           Insights, tutorials, and updates from the CortexCart team.
-                        </p>
-                    </div>
                     {isLoading ? (
                         <p className="text-center mt-8">Loading posts...</p>
                     ) : (
