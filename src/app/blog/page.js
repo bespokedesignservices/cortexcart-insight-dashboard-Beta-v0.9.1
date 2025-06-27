@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation'; // Import the hook to get URL params
 
 const PublicLayout = ({ children }) => (
     <div className="bg-gray-50">
@@ -40,25 +41,55 @@ const PublicLayout = ({ children }) => (
         </footer>
     </div>
 );
-
 const BlogCategoryNav = () => {
+    // Get the current category slug from the URL to determine the active link
+    const params = useParams();
+    const currentSlug = params.categorySlug;
+
     const categories = [
-        'E-commerce Strategy', 'Data & Analytics', 'AI for E-commerce', 
-        'Generative AI', 'Conversion Optimization', 'Product Updates'
+        'E-commerce Strategy', 
+        'Data & Analytics', 
+        'AI for E-commerce', 
+        'Generative AI', 
+        'Conversion Optimization', 
+        'Product Updates'
     ];
     const toSlug = (name) => name.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-');
 
     return (
         <div className="border-b border-gray-200 bg-white">
-            <nav className="container mx-auto -mb-px flex space-x-8 overflow-x-auto px-6" aria-label="Categories">
-                {categories.map((category) => (
-                <Link key={category} href={`/blog/category/${toSlug(category)}`}>
-                    <div className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium cursor-pointer">
-                        {category}
-                    </div>
-                </Link>
-                ))}
-            </nav>
+            <div className="container mx-auto">
+                <nav className="flex" aria-label="Categories">
+                    {categories.map((category, index) => {
+                        const slug = toSlug(category);
+                        const isActive = currentSlug === slug;
+
+                        return (
+                            // Use a wrapper div to hold the link and the separator
+                            <div key={category} className="flex items-center">
+                                <Link href={`/blog/category/${slug}`} passHref>
+                                    <div
+                                        className={`
+                                            whitespace-nowrap py-4 px-5 text-sm font-medium transition-colors duration-200 ease-in-out cursor-pointer
+                                            ${isActive
+                                                ? 'bg-blue-700 text-white' // Active state styles
+                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800' // Default and hover styles
+                                            }
+                                        `}
+                                    >
+                                        {category}
+                                    </div>
+                                </Link>
+
+                                {/* Add a separator, but not after the very last item */}
+                                {index < categories.length - 1 && (
+                                    <span className="h-6 w-px bg-gray-300" aria-hidden="true" />
+                                )}
+                            </div>
+                        );
+                    })}
+                </nav>
+            </div>
         </div>
     );
 };
