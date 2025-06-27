@@ -33,5 +33,6 @@ export const config = {
         '/admin/:path*',      // Protect all admin routes
         '/dashboard/:path*',  // Protect all user dashboard routes
         '/settings/:path*',   // Protect all settings routes
+	'/subscribe/:path*', // logged in users to choose plan before proceeding
     ], 
 };

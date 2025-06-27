@@ -28,6 +28,7 @@ export async function GET(request, { params }) {
 }
 
 // PUT handler to update a plan
+// PUT handler to update a plan
 export async function PUT(request, { params }) {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== 'superadmin') {
@@ -36,15 +37,17 @@ export async function PUT(request, { params }) {
 
     try {
         const { id } = params;
-        const { name, description, price_monthly, visitor_limit, features, is_popular } = await request.json();
+        // Corrected: Now accepts stripe_price_id from the request
+        const { name, description, price_monthly, stripe_price_id, visitor_limit, features, is_popular } = await request.json();
         
         if (!name || !price_monthly || !visitor_limit || !features) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
         }
         
+        // Corrected: The UPDATE query now includes the stripe_price_id field
         await db.query(
-            'UPDATE subscription_plans SET name = ?, description = ?, price_monthly = ?, visitor_limit = ?, features = ?, is_popular = ? WHERE id = ?',
-            [name, description, price_monthly, visitor_limit, JSON.stringify(features), is_popular, id]
+            'UPDATE subscription_plans SET name = ?, description = ?, price_monthly = ?, stripe_price_id = ?, visitor_limit = ?, features = ?, is_popular = ? WHERE id = ?',
+            [name, description, price_monthly, stripe_price_id || null, visitor_limit, JSON.stringify(features), is_popular, id]
         );
 
         return NextResponse.json({ message: 'Plan updated successfully' }, { status: 200 });
@@ -53,7 +56,6 @@ export async function PUT(request, { params }) {
         return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
     }
 }
-
 // DELETE handler to remove a plan
 export async function DELETE(request, { params }) {
     const session = await getServerSession(authOptions);

@@ -28,18 +28,18 @@ export async function POST(request) {
     }
 
     try {
-        const { name, description, price_monthly, visitor_limit, features, is_popular } = await request.json();
+        const { name, description, price_monthly, stripe_price_id, visitor_limit, features, is_popular } = await request.json();
         
         if (!name || !price_monthly || !visitor_limit || !features) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
         }
 
         const query = `
-            INSERT INTO subscription_plans (name, description, price_monthly, visitor_limit, features, is_popular)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO subscription_plans (name, description, price_monthly, stripe_price_id, visitor_limit, features, is_popular)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
         
-        const [result] = await db.query(query, [name, description, price_monthly, visitor_limit, JSON.stringify(features), is_popular]);
+        const [result] = await db.query(query, [name, description, price_monthly, stripe_price_id || null, visitor_limit, JSON.stringify(features), is_popular]);
         
         return NextResponse.json({ message: 'Plan created successfully', planId: result.insertId }, { status: 201 });
     } catch (error) {

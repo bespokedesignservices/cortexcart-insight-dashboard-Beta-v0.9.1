@@ -1,4 +1,4 @@
-import db from '../../../../lib/db'; // Adjust path if necessary
+import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 
 // This line tells Next.js to always fetch this route dynamically (no caching)
@@ -6,8 +6,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
+        // Corrected: The query now selects the stripe_price_id column
         const [plans] = await db.query(
-            `SELECT name, description, price_monthly, features, is_popular 
+            `SELECT name, description, price_monthly, stripe_price_id, features, is_popular 
              FROM subscription_plans 
              WHERE is_active = TRUE 
              ORDER BY price_monthly ASC`
