@@ -1,20 +1,16 @@
 'use client';
 
-// Removed the unused import for useState and useEffect
 import Link from 'next/link';
 import Image from 'next/image';
 import { marked } from 'marked';
+import { useParams } from 'next/navigation';
 import { UserCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
-import { useParams } from 'next/navigation'; // Import the hook to get URL params
-
-// --- Sub-Components (PublicLayout, SidebarPostCard, BlogCategoryNav) ---
-// ... (These components remain the same as before) ...
 
 const PublicLayout = ({ children }) => (
     <div className="bg-gray-50">
         <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
             <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-{/* This is the new logo image, wrapped in a link to the homepage */}
+		{/* This is the new logo image, wrapped in a link to the homepage */}
                     <Link href="/" passHref>
                       <Image
                         src="/cortexcart-com-logo-home.png" // This points to /public/logo.png
@@ -68,20 +64,15 @@ const SidebarPostCard = ({ post }) => (
     </Link>
 );
 
-const BlogCategoryNav = () => {
-    // Get the current category slug from the URL to determine the active link
+const BlogCategoryNav = ({ activeCategory }) => {
     const params = useParams();
-    const currentSlug = params.categorySlug;
+    const toSlug = (name) => name.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-');
+    const currentSlug = params.categorySlug || (activeCategory ? toSlug(activeCategory) : null);
 
     const categories = [
-        'E-commerce Strategy', 
-        'Data & Analytics', 
-        'AI for E-commerce', 
-        'Generative AI', 
-        'Conversion Optimization', 
-        'Product Updates'
+        'E-commerce Strategy', 'Data & Analytics', 'AI for E-commerce', 
+        'Generative AI', 'Conversion Optimization', 'Product Updates'
     ];
-    const toSlug = (name) => name.toLowerCase().replace(/ & /g, '-and-').replace(/ /g, '-');
 
     return (
         <div className="border-b border-gray-200 bg-white">
@@ -90,28 +81,14 @@ const BlogCategoryNav = () => {
                     {categories.map((category, index) => {
                         const slug = toSlug(category);
                         const isActive = currentSlug === slug;
-
                         return (
-                            // Use a wrapper div to hold the link and the separator
                             <div key={category} className="flex items-center">
                                 <Link href={`/blog/category/${slug}`} passHref>
-                                    <div
-                                        className={`
-                                            whitespace-nowrap py-4 px-5 text-sm font-medium transition-colors duration-200 ease-in-out cursor-pointer
-                                            ${isActive
-                                                ? 'bg-blue-700 text-white' // Active state styles
-                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800' // Default and hover styles
-                                            }
-                                        `}
-                                    >
+                                    <div className={`whitespace-nowrap py-4 px-5 text-sm font-medium transition-colors duration-200 ease-in-out cursor-pointer ${isActive ? 'bg-blue-700 text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}`}>
                                         {category}
                                     </div>
                                 </Link>
-
-                                {/* Add a separator, but not after the very last item */}
-                                {index < categories.length - 1 && (
-                                    <span className="h-6 w-px bg-gray-300" aria-hidden="true" />
-                                )}
+                                {index < categories.length - 1 && (<span className="h-6 w-px bg-gray-300" aria-hidden="true" />)}
                             </div>
                         );
                     })}
@@ -121,7 +98,6 @@ const BlogCategoryNav = () => {
     );
 };
 
-// --- Main Layout Component ---
 export default function BlogPostLayout({ post, sidebarPosts }) {
     if (!post) {
         return <PublicLayout><div className="text-center p-24">404 - Post Not Found</div></PublicLayout>;
@@ -137,7 +113,7 @@ export default function BlogPostLayout({ post, sidebarPosts }) {
 
     return (
         <PublicLayout>
-            <BlogCategoryNav />
+            <BlogCategoryNav activeCategory={post.category} />
             <div className="container mx-auto px-6 py-12 lg:py-16">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-x-8">
                     <aside className="hidden lg:block lg:col-span-1">
@@ -200,7 +176,7 @@ export default function BlogPostLayout({ post, sidebarPosts }) {
                     margin-bottom: 2em;
                     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
                 }
-                /* ... other styles remain the same */
+                /* other styles */
             `}</style>
         </PublicLayout>
     );

@@ -100,8 +100,10 @@ const TopNav = () => {
 // --- Sub-component: Footer ---
 const Footer = () => {
     const footerLinks = [
-        { name: 'About', href: '/about' }, { name: 'Contact', href: '/contact' },
-        { name: 'Terms of Service', href: '/terms' }, { name: 'Privacy Policy', href: '/privacy' },
+        { name: 'About', href: '/about' }, 
+	{ name: 'Contact', href: '/contact' },
+        { name: 'Terms of Service', href: '/terms' }, 
+	{ name: 'Privacy Policy', href: '/privacy' },
     ];
     return (
         <footer className="bg-white border-t border-gray-200">
@@ -268,7 +270,7 @@ const Layout = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col w-0">
         {/* Corrected Header Structure */}
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
+        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow ${isScrolled ? 'bg-white' : 'bg-transparent'}">
             <button onClick={() => setSidebarOpen(true)} className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none lg:hidden">
                 <span className="sr-only">Open sidebar</span>
                 <Bars3Icon className="h-6 w-6" />
