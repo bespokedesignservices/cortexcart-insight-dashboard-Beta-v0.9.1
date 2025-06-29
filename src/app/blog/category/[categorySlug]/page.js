@@ -37,6 +37,15 @@ const PublicLayout = ({ children }) => (
         <footer className="bg-gray-800 text-white py-8">
             <div className="container mx-auto px-6 text-center">
                 <p>&copy; {new Date().getFullYear()} CortexCart. All rights reserved.</p>
+                   <div className="mt-4">
+                        <Link href="/about"><span className="px-3 hover:underline cursor-pointer">About</span></Link>
+                        <span className="text-gray-500">|</span>
+                        <Link href="/contact"><span className="px-3 hover:underline cursor-pointer">Contact</span></Link>
+                        <span className="text-gray-500">|</span>
+     			 <Link href="/terms"><span className="px-3 hover:underline cursor-pointer">Terms of Service</span></Link>
+                        <span className="text-gray-500">|</span>
+                        <Link href="/privacy"><span className="px-3 hover:underline cursor-pointer">Privacy Policy</span></Link>    
+                    </div>
             </div>
         </footer>
     </div>
