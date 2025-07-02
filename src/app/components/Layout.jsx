@@ -5,6 +5,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import RealTimeClock from './RealTimeClock';
+import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
 import { 
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
     MapIcon, TagIcon, Bars3Icon, XMarkIcon, InformationCircleIcon, 
@@ -137,7 +138,8 @@ const SidebarContent = () => {
         {session && (
         <>
             <li><a href="/dashboard" className={getLinkClass('/dashboard')}><ChartPieIcon className="h-6 w-6 mr-3" /><span>Dashboard</span></a></li>
-            <li><a href="/recommendations" className={getLinkClass('/recommendations')}><LightBulbIcon className="h-6 w-6 mr-3" /><span>Homepage AI</span></a></li>
+           <li><a href="/reports" className={getLinkClass('/reports')}><DocumentChartBarIcon className="h-6 w-6 mr-3" /><span>AI Reports</span></a></li> {/* <-- ADD THIS LINE */}
+	    <li><a href="/recommendations" className={getLinkClass('/recommendations')}><LightBulbIcon className="h-6 w-6 mr-3" /><span>Homepage AI</span></a></li>
             <li><a href="/products/recommendations" className={getLinkClass('/products')}><TagIcon className="h-6 w-6 mr-3" /><span>Product AI</span></a></li>
             <li><a href="/social" className={getLinkClass('/social')}><ShareIcon className="h-6 w-6 mr-3" /><span>Social Manager</span></a></li>
             <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">Help & Support</span></li>
