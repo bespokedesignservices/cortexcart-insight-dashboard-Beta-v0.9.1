@@ -15,53 +15,45 @@ import TopPagesList from '@/app/components/TopPagesList';
 import TopReferrersList from '@/app/components/TopReferrersList';
 import DeviceChart from '@/app/components/DeviceChart';
 import LiveVisitorCount from '@/app/components/LiveVisitorCount';
-import RealTimeClock from '@/app/components/RealTimeClock';
 import SkeletonCard from '@/app/components/SkeletonCard';
 import CountryViewsList from '@/app/components/CountryViewsList';
+import Ga4LineChart from '@/app/components/Ga4LineChart';
+import PerformanceScore from '@/app/components/PerformanceScore';
 
 const currencySymbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: '$', AUD: '$' };
 
-// --- New Toggle Switch Component for Data Source ---
 const DataSourceToggle = ({ dataSource, setDataSource }) => (
   <div className="flex items-center p-1 bg-gray-200 rounded-lg">
-    <button
-      onClick={() => setDataSource('cortexcart')}
-      className={`px-4 py-1 text-sm font-medium rounded-md transition-colors ${
-        dataSource === 'cortexcart' ? 'bg-white shadow' : 'text-gray-600'
-      }`}
-    >
-      CortexCart
-    </button>
-    <button
-      onClick={() => setDataSource('ga4')}
-      className={`px-4 py-1 text-sm font-medium rounded-md transition-colors ${
-        dataSource === 'ga4' ? 'bg-white shadow' : 'text-gray-600'
-      }`}
-    >
-      Google Analytics
-    </button>
+    <button onClick={() => setDataSource('cortexcart')} className={`px-4 py-1 text-sm font-medium rounded-md transition-colors ${dataSource === 'cortexcart' ? 'bg-white shadow' : 'text-gray-600'}`}>CortexCart</button>
+    <button onClick={() => setDataSource('ga4')} className={`px-4 py-1 text-sm font-medium rounded-md transition-colors ${dataSource === 'ga4' ? 'bg-white shadow' : 'text-gray-600'}`}>Google Analytics</button>
   </div>
 );
-
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // State for all dashboard data
+  // State for CortexCart data
   const [stats, setStats] = useState(null);
-  const [ga4Stats, setGa4Stats] = useState(null); // <-- New state for GA4 data
   const [chartApiData, setChartApiData] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
   const [topPages, setTopPages] = useState([]);
   const [topReferrers, setTopReferrers] = useState([]);
   const [locationData, setLocationData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
+  const [performanceData, setPerformanceData] = useState(null);
+  
+  // State for GA4 data
+  const [ga4Stats, setGa4Stats] = useState(null);
+  const [ga4ChartData, setGa4ChartData] = useState([]);
+
+  // General state
   const [liveVisitors, setLiveVisitors] = useState(0);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [dataSource, setDataSource] = useState('cortexcart'); // <-- New state for data source
-
+  const [dataSource, setDataSource] = useState('cortexcart');
+  const [siteSettings, setSiteSettings] = useState({ currency: 'USD' });
+  
   const [dateRange, setDateRange] = useState(() => {
     const endDate = new Date();
     const startDate = new Date();
@@ -69,49 +61,39 @@ export default function DashboardPage() {
     return { startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] };
   });
 
-  const [siteSettings, setSiteSettings] = useState({ currency: 'USD' });
   const siteId = session?.user?.email;
 
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
     if (!session) { router.push('/'); return; }
 
-    async function fetchData(startDate, endDate) {
+    async function fetchData() {
       setIsLoading(true);
       setError('');
       
-      // Conditionally fetch data based on the selected source
+      const sd = dateRange.startDate ? `&startDate=${dateRange.startDate}` : '';
+      const ed = dateRange.endDate ? `&endDate=${dateRange.endDate}` : '';
+      const dateParams = `${sd}${ed}`;
+
       if (dataSource === 'cortexcart') {
-        let statsUrl = `/api/stats?siteId=${siteId}`;
-        let chartUrl = `/api/charts/sales-by-day?siteId=${siteId}`;
-        let eventsUrl = `/api/events?siteId=${siteId}`;
-        let topPagesUrl = `/api/stats/top-pages?siteId=${siteId}`;
-        let topReferrersUrl = `/api/stats/top-referrers?siteId=${siteId}`;
-        let locationsUrl = `/api/stats/locations?siteId=${siteId}`;
-        let deviceTypesUrl = `/api/stats/device-types?siteId=${siteId}`;
-        let settingsUrl = '/api/site-settings';
-
-        if (startDate && endDate) {
-            statsUrl += `&startDate=${startDate}&endDate=${endDate}`;
-            chartUrl += `&startDate=${startDate}&endDate=${endDate}`;
-            eventsUrl += `&startDate=${startDate}&endDate=${endDate}`;
-            topPagesUrl += `&startDate=${startDate}&endDate=${endDate}`;
-            topReferrersUrl += `&startDate=${startDate}&endDate=${endDate}`;
-            locationsUrl += `&startDate=${startDate}&endDate=${endDate}`;
-            deviceTypesUrl += `&startDate=${startDate}&endDate=${endDate}`;
-        }
-
         try {
           const responses = await Promise.all([
-            fetch(statsUrl), fetch(chartUrl), fetch(eventsUrl), fetch(topPagesUrl),
-            fetch(topReferrersUrl), fetch(locationsUrl), fetch(settingsUrl), fetch(deviceTypesUrl)
+            fetch(`/api/stats?siteId=${siteId}${dateParams}`),
+            fetch(`/api/charts/sales-by-day?siteId=${siteId}${dateParams}`),
+            fetch(`/api/events?siteId=${siteId}${dateParams}`),
+            fetch(`/api/stats/top-pages?siteId=${siteId}${dateParams}`),
+            fetch(`/api/stats/top-referrers?siteId=${siteId}${dateParams}`),
+            fetch(`/api/stats/locations?siteId=${siteId}${dateParams}`),
+            fetch(`/api/site-settings?siteId=${siteId}`),
+            fetch(`/api/stats/device-types?siteId=${siteId}${dateParams}`),
+            fetch('/api/performance/get-speed')
           ]);
 
           for (const res of responses) {
             if (!res.ok) throw new Error(`A data fetch failed: ${res.statusText}`);
           }
           
-          const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData] = await Promise.all(responses.map(res => res.json()));
+          const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData, perfData] = await Promise.all(responses.map(res => res.json()));
           
           setStats(statsData);
           setChartApiData(chartData);
@@ -121,30 +103,27 @@ export default function DashboardPage() {
           setLocationData(locationsData);
           setSiteSettings(settingsData);
           setDeviceData(deviceTypesData);
+          setPerformanceData(perfData);
 
-        } catch (err) { 
-          setError(err.message);
-        } finally { 
-          setIsLoading(false); 
-        }
+        } catch (err) { setError(err.message); }
       } else { // Fetch from GA4
         try {
-          const res = await fetch(`/api/ga4-stats?siteId=${siteId}&startDate=${startDate}&endDate=${endDate}`);
-          if (!res.ok) throw new Error('Failed to fetch GA4 data.');
-          const data = await res.json();
-          setGa4Stats(data);
-          // NOTE: You would need to fetch other chart/table data from GA4 as well
-          // and populate the other state variables (setChartApiData, setTopPages, etc.)
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
+          const [statsRes, chartRes] = await Promise.all([
+              fetch(`/api/ga4-stats?siteId=${siteId}${dateParams}`),
+              fetch(`/api/ga4-charts?siteId=${siteId}${dateParams}`)
+          ]);
+          if (!statsRes.ok || !chartRes.ok) throw new Error('Failed to fetch GA4 data.');
+          const statsData = await statsRes.json();
+          const chartData = await chartRes.json();
+          setGa4Stats(statsData);
+          setGa4ChartData(chartData);
+        } catch (err) { setError(err.message); }
       }
+      setIsLoading(false);
     }
     
-    fetchData(dateRange.startDate, dateRange.endDate);
-  }, [dateRange, siteId, session, status, router, dataSource]); // <-- Add dataSource to dependency array
+    fetchData();
+  }, [dateRange.startDate, dateRange.endDate, siteId, session, status, router, dataSource]);
 
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
@@ -160,91 +139,86 @@ export default function DashboardPage() {
   
   const handleDateFilterChange = (startDate, endDate) => { setDateRange({ startDate, endDate }); };
 
-  if (status === 'loading' || (isLoading && !stats && !ga4Stats)) {
-    return (
-        <Layout>
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-            <div className="h-9 w-64 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div className="h-10 w-96 bg-gray-200 rounded-lg animate-pulse"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        </Layout>
-      );
-  }
+  if (status === 'loading') return <Layout><p>Loading...</p></Layout>;
+  if (error) return <Layout><p className="p-6 text-red-600">Error: {error}</p></Layout>;
   
-  if (error) {
-    return <Layout><p className="p-6 text-red-600">Error: {error}</p></Layout>;
-  }
-
   const currencySymbol = siteSettings?.currency ? (currencySymbols[siteSettings.currency] || '$') : '$';
-  
-  // Conditionally render data from the selected source
-  const displayStats = dataSource === 'cortexcart' ? stats : ga4Stats;
-  const formattedRevenue = `${currencySymbol}${displayStats?.totalRevenue ? parseFloat(displayStats.totalRevenue).toFixed(2) : '0.00'}`;
+  const formattedRevenue = `${currencySymbol}${stats?.totalRevenue ? parseFloat(stats.totalRevenue).toFixed(2) : '0.00'}`;
 
   return (
     <Layout>
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-<h2 className="text-3xl font-bold">Dashboard</h2>
         <div className="flex items-center gap-4">
+            <h2 className="text-3xl font-bold">Dashboard</h2>
             <LiveVisitorCount count={liveVisitors} />
         </div>
         <div className="flex items-center gap-4">
             <DataSourceToggle dataSource={dataSource} setDataSource={setDataSource} />
-            <RealTimeClock />
             <DateFilter onFilterChange={handleDateFilterChange} />
         </div>
       </div>
       
-      <div className={`transition-opacity duration-300 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard title="Total Revenue" value={dataSource === 'cortexcart' ? formattedRevenue : 'N/A'} icon="💰" />
-          <StatCard title="Total Sales" value={dataSource === 'cortexcart' ? (displayStats?.sales || 0) : 'N/A'} icon="🛒" />
-          <StatCard title="Page Views" value={displayStats?.pageviews || 0} icon="👁️" />
-        </div>
-        
-        <div className="mt-8 space-y-8">
-            {dataSource === 'cortexcart' ? (
-              <>
-                <ChartContainer title="Sales by Day">
-                    <SalesBarChart apiData={chartApiData} currencySymbol={currencySymbol} />
-                </ChartContainer>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <ChartContainer title="Visitors by Country">
-                       <CountryViewsList locationData={locationData} />
-                    </ChartContainer>
-                    <ChartContainer title="Recent Events">
-                        <RecentEventsTable events={recentEvents} />
-                    </ChartContainer>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <ChartContainer title="Top Pages">
-                        <TopPagesList pages={topPages} />
-                    </ChartContainer>
-                    <ChartContainer title="Device Breakdown">
-                      <div className="h-64 flex items-center justify-center">
-                        <DeviceChart deviceData={deviceData} />
-                      </div>
-                    </ChartContainer>
-                    <ChartContainer title="Top Referrers">
-                        <TopReferrersList referrers={topReferrers} />
-                    </ChartContainer>
-                </div>
-              </>
-            ) : (
-              <div className="text-center p-12 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-semibold">Google Analytics Data</h3>
-                <p className="text-gray-600 mt-2">GA4 data display is being implemented. Connect your account in settings to get started.</p>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6"><SkeletonCard /><SkeletonCard /><SkeletonCard /><SkeletonCard /></div>
+      ) : (
+        <div className={`transition-opacity duration-300`}>
+          {dataSource === 'cortexcart' ? (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <StatCard title="Total Revenue" value={formattedRevenue} icon="💰" />
+                <StatCard title="Total Sales" value={stats?.sales?.toLocaleString() || 0} icon="🛒" />
+                <StatCard title="Page Views" value={stats?.pageviews?.toLocaleString() || 0} icon="👁️" />
               </div>
-            )}
+              <ChartContainer title="Sales by Day">
+                <SalesBarChart apiData={chartApiData} currencySymbol={currencySymbol} />
+              </ChartContainer>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <ChartContainer title="Visitors by Country">
+                  <CountryViewsList locationData={locationData} />
+                </ChartContainer>
+                <ChartContainer title="Recent Events">
+                  <RecentEventsTable events={recentEvents} />
+                </ChartContainer>
+              </div>
+              {/* --- THIS IS THE CORRECTED GRID --- */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <ChartContainer title="Top Pages">
+                    <TopPagesList pages={topPages} />
+                </ChartContainer>
+                <ChartContainer title="Device Breakdown">
+                  <div className="h-64 flex items-center justify-center">
+                    <DeviceChart deviceData={deviceData} />
+                  </div>
+                </ChartContainer>
+                <ChartContainer title="Top Referrers">
+                  <TopReferrersList referrers={topReferrers} />
+                </ChartContainer>
+              </div>
+              <ChartContainer title="Page Speed Score (Mobile)" description="Powered by Google Lighthouse, this score reflects your homepage's performance on a mobile device.">
+                  {performanceData ? (
+                      <div className="h-64 flex items-center justify-center">
+                          <PerformanceScore {...performanceData} />
+                      </div>
+                  ) : (
+                      <p className="text-center text-gray-500">Loading score...</p>
+                  )}
+              </ChartContainer>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard title="Total Users" value={ga4Stats?.users?.toLocaleString() || 0} icon="👥" />
+                <StatCard title="Sessions" value={ga4Stats?.sessions?.toLocaleString() || 0} icon="💻" />
+                <StatCard title="Page Views" value={ga4Stats?.pageviews?.toLocaleString() || 0} icon="👁️" />
+                <StatCard title="Conversions" value={ga4Stats?.conversions?.toLocaleString() || 0} icon="🎯" />
+              </div>
+              <ChartContainer title="Page Views & Conversions Over Time">
+                <Ga4LineChart data={ga4ChartData} />
+              </ChartContainer>
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </Layout>
   );
 }

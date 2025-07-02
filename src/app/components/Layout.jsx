@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import RealTimeClock from './RealTimeClock';
 import { 
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
     MapIcon, TagIcon, Bars3Icon, XMarkIcon, InformationCircleIcon, 
@@ -66,6 +67,7 @@ const TopNav = () => {
 
     return (
         <div className="flex items-center space-x-4 h-full">
+<RealTimeClock />
             <div className="relative h-full flex items-center" ref={notificationsRef}>
                 <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 relative">
                     <BellIcon className="h-6 w-6" />

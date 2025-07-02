@@ -1,3 +1,5 @@
+// src/app/api/ga4-charts/route.js
+
 import { BetaAnalyticsDataClient } from '@google-analytics/data';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -20,37 +22,30 @@ export async function GET() {
         const propertyId = connections[0]?.ga4_property_id;
 
         if (!propertyId) {
-            throw new Error("Your GA4 Property ID has not been set. Please add it in the Settings > Integrations tab.");
+            throw new Error("GA4 Property ID has not been set.");
         }
 
+        // This report fetches Page Views and Conversions for each day in the date range.
         const [response] = await analyticsDataClient.runReport({
             property: `properties/${propertyId}`,
             dateRanges: [{ startDate: '28daysAgo', endDate: 'today' }],
+            dimensions: [{ name: 'date' }], // We want the data broken down by date
             metrics: [
-                { name: 'totalUsers' },
                 { name: 'screenPageViews' },
-                { name: 'sessions' },
                 { name: 'conversions' },
             ],
+            orderBys: [{ dimension: { orderType: "ALPHANUMERIC", dimensionName: "date" }}] // Order by date
         });
 
-        const ga4Stats = {
-            users: 0,
-            pageviews: 0,
-            sessions: 0,
-            conversions: 0,
-        };
+        const chartData = response.rows?.map(row => ({
+            date: `${row.dimensionValues[0].value.slice(0, 4)}-${row.dimensionValues[0].value.slice(4, 6)}-${row.dimensionValues[0].value.slice(6, 8)}`,
+            pageviews: parseInt(row.metricValues[0].value, 10),
+            conversions: parseInt(row.metricValues[1].value, 10)
+        })) || [];
 
-        if (response.rows && response.rows.length > 0) {
-            ga4Stats.users = parseInt(response.rows[0].metricValues[0].value, 10);
-            ga4Stats.pageviews = parseInt(response.rows[0].metricValues[1].value, 10);
-            ga4Stats.sessions = parseInt(response.rows[0].metricValues[2].value, 10);
-            ga4Stats.conversions = parseInt(response.rows[0].metricValues[3].value, 10);
-        }
-
-        return NextResponse.json(ga4Stats, { status: 200 });
+        return NextResponse.json(chartData, { status: 200 });
     } catch (error) {
-        console.error('Error fetching GA4 data:', error);
-        return NextResponse.json({ message: `Failed to fetch GA4 data: ${error.message}` }, { status: 500 });
+        console.error('Error fetching GA4 chart data:', error);
+        return NextResponse.json({ message: `Failed to fetch GA4 chart data: ${error.message}` }, { status: 500 });
     }
 }
