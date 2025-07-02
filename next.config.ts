@@ -25,7 +25,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'upload.wikimedia.org',
         pathname: '/**',
-      }
+      },
+	{
+	  protocol: 'https',
+	  hostname: 'pbs.twimg.com',
+	  pathname: '/**',
+	}
     ],
   },
 };

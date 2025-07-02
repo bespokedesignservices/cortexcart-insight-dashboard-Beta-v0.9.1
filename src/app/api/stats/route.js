@@ -1,4 +1,4 @@
-import db from '../../../../lib/db'; // Adjust path if necessary
+import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
@@ -36,10 +36,13 @@ export async function GET(request) {
         db.query(revenueQuery, queryParams)
     ]);
 
+    // **THE FIX IS HERE**
+    // We now use optional chaining (?.) and provide a fallback of 0.
+    // This prevents an error if pageviewsResult[0] is undefined for a new user.
     return NextResponse.json({
-      pageviews: pageviewsResult[0].count,
-      sales: salesResult[0].count,
-      totalRevenue: revenueResult[0].total || 0,
+      pageviews: pageviewsResult[0]?.count || 0,
+      sales: salesResult[0]?.count || 0,
+      totalRevenue: revenueResult[0]?.total || 0,
     }, { status: 200 });
 
   } catch (error) {

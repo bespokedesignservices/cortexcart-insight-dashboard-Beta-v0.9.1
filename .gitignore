@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Google Cloud Credentials
+analytics-dashboard-464606-6c0947d73aab.json

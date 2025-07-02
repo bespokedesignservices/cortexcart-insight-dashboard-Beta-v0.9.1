@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
-import { CheckCircleIcon, ClockIcon, SparklesIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 // --- Roadmap Data ---
 const completedFeatures = [
@@ -23,6 +23,7 @@ const completedFeatures = [
 const inProgressFeatures = [
        { name: 'Social Media Post Designer', description: 'Design social media posts with an intuitive editor. Use AI to generate post copy and images based on your product details.'},
        { name: 'Social Media Analytics', description: 'Connect your social accounts to track post views, interactions, mentions, and shares directly within the dashboard.'},
+       { name: 'Support Ticket System', description: 'Add user support ticket system, allow users to submit tickets and get help and support with features' },
 ];
 
 const futureFeatures = [
@@ -37,10 +38,15 @@ const futureFeatures = [
         icon: null
     },
 	{
-	name: 'Support Ticket System',
-	description: 'Add a user support ticket system, allow users to submit tickets and get help and support with features',
-	icon: QuestionMarkCircleIcon
-	},
+	name: 'GA4',
+	description: 'Integrate Google Analytics 4, leverage ststistics and other data provided by the platform',
+	icon:  null
+},
+	{
+	name: 'Auto Reports',
+	description: 'Provide automatic reports on weekly, bi-weekly and monthly basis set by user',
+	icon: null
+},
 ];
 
 

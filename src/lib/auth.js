@@ -1,12 +1,19 @@
 import GoogleProvider from 'next-auth/providers/google';
 import TwitterProvider from 'next-auth/providers/twitter';
-import db from './db'; // Assuming db.js is now in src/lib
+import db from './db';
 
 export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+authorization: {
+  params: {
+scope: 'openid email profile https://www.googleapis.com/auth/analytics.readonly',
+    access_type: 'offline',
+    prompt: 'consent',
+  },
+},
     }),
     TwitterProvider({
       clientId: process.env.X_CLIENT_ID,
@@ -37,30 +44,26 @@ export const authOptions = {
   },
 
   callbacks: {
-    // This callback runs every time a session is checked.
     async session({ session, token }) {
-      // Add the user's role and ID to the session object
       if (token) {
         session.user.id = token.id;
         session.user.role = token.role;
       }
       return session;
     },
-    // This callback runs when a user signs in.
     async jwt({ token, user }) {
-      if (user) { // This is only available on sign-in
+      if (user) {
         try {
-          // Check if the user exists in our new 'admins' table
           const [admins] = await db.query('SELECT role FROM admins WHERE email = ?', [user.email]);
           if (admins.length > 0) {
-            token.role = admins[0].role; // e.g., 'superadmin'
+            token.role = admins[0].role;
           } else {
-            token.role = 'user'; // Default role for everyone else
+            token.role = 'user';
           }
           token.id = user.id;
         } catch (error) {
           console.error("Error fetching user role:", error);
-          token.role = 'user'; // Fallback to default role on error
+          token.role = 'user';
         }
       }
       return token;

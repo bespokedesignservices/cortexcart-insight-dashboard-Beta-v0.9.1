@@ -47,7 +47,12 @@ const faqs = [
         question: "How do I delete my account?",
         answer: "You can permanently delete your account and all associated data from the 'Danger Zone' in the Settings page. Please be aware that this action is irreversible and will remove all your site analytics, reports, and settings.",
         category: "Account"
-    }
+    },
+   {
+	question: "How do you get the Google Analytics 4 Property ID?",
+	answer: "You can get this in your google Analytics dashboard, select Property Details in the property settings/property details link, at the top of this page on the right is your PROPERTY ID: 000000 where 00000 is your actual property ID",
+	category: "Settings",
+   }
 ];
 
 export default function FaqPage() {
