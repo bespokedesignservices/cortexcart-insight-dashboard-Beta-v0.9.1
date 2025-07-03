@@ -128,7 +128,7 @@ const Footer = () => {
 const SidebarContent = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const [isAiMenuOpen, setIsAiMenuOpen] = useState(true); // State for the new dropdown, default to open
+  const [isAiMenuOpen, setIsAiMenuOpen] = useState(false); // State for the new dropdown, default to open
 
   const getLinkClass = (path) => {
     if (path === '/dashboard') {

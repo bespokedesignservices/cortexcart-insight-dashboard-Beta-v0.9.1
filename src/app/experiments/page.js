@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Layout from '@/app/components/Layout'; // <-- 1. IMPORT THE LAYOUT
+import Layout from '@/app/components/Layout';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 export default function AbTestingPage() {
@@ -13,7 +13,7 @@ export default function AbTestingPage() {
         name: '',
         description: '',
         target_selector: '',
-        target_url: '',
+        target_path: '',
         control_content: '',
         variant_content: ''
     });
@@ -45,7 +45,7 @@ export default function AbTestingPage() {
 
         if (res.ok) {
             setIsModalOpen(false);
-            setNewExperiment({ name: '', description: '', target_selector: '', target_url: '', control_content: '', variant_content: '' });
+            setNewExperiment({ name: '', description: '', target_selector: '', target_path: '', control_content: '', variant_content: '' });
             fetchExperiments();
         } else {
             alert('Failed to create experiment.');
@@ -62,7 +62,6 @@ export default function AbTestingPage() {
     };
 
     return (
-        // 2. WRAP EVERYTHING IN THE LAYOUT COMPONENT
         <Layout>
             <div className="sm:flex sm:items-center sm:justify-between mb-8">
                 <div>
@@ -75,7 +74,6 @@ export default function AbTestingPage() {
                 </button>
             </div>
 
-            {/* Table of Experiments */}
             <div className="mt-6 flow-root">
                 <div className="overflow-x-auto">
                     <div className="inline-block min-w-full align-middle">
@@ -110,7 +108,6 @@ export default function AbTestingPage() {
                 </div>
             </div>
 
-            {/* Add/Edit Experiment Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                     <form onSubmit={handleSaveExperiment} className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg space-y-4">
@@ -120,8 +117,8 @@ export default function AbTestingPage() {
                             <input type="text" name="name" id="name" value={newExperiment.name} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="e.g., Test new product title" required />
                         </div>
                         <div>
-                            <label htmlFor="target_url" className="block text-sm font-medium text-gray-700">Target URL</label>
-                            <input type="url" name="target_url" id="target_url" value={newExperiment.target_url} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="e.g., https://example.com/products/my-product" required />
+                            <label htmlFor="target_path" className="block text-sm font-medium text-gray-700">Target Path</label>
+                            <input type="text" name="target_path" id="target_path" value={newExperiment.target_path} onChange={handleInputChange} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="e.g., /products/my-product" required />
                         </div>
                         <div>
                             <label htmlFor="target_selector" className="block text-sm font-medium text-gray-700">CSS Selector</label>

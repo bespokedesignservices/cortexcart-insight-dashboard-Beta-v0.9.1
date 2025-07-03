@@ -145,65 +145,36 @@ const IntegrationsTabContent = () => {
     );
 };
 
-// --- Sub-component for Widget Settings ---
 const WidgetSettingsTabContent = ({ siteId }) => {
     const [mainSnippet, setMainSnippet] = useState('');
-    
     useEffect(() => {
         if (siteId) {
-            const newSnippet = `
+            const snippet = `
 <script>
   (function() {
     const SITE_ID = '${siteId}';
-    const API_ENDPOINT = 'https://cortexcart.com/api/track';
-    const EXP_API_ENDPOINT = 'https://cortexcart.com/api/experiments/active';
+    const API_ENDPOINT = 'https://tracker.cortexcart.com/api/track';
+    const EXP_API_ENDPOINT = 'https://tracker.cortexcart.com/api/experiments/active';
     let abTestInfo = null;
 
-    function getCookie(name) {
-        const value = \`; \${document.cookie}\`;
-        const parts = value.split(\`; \${name}=\`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-    }
-
-    function setCookie(name, value, days) {
-        let expires = "";
-        if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days*24*60*60*1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-    }
-
     function sendEvent(eventName, data = {}) {
-      const eventData = {
-        siteId: SITE_ID,
-        eventName: eventName,
-        data: { 
-            ...data, 
-            path: window.location.pathname, 
-            referrer: document.referrer,
-            abTest: abTestInfo
-        }
-      };
-      try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } 
-      catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
+      const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer, abTest: abTestInfo }};
+      try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
     }
 
     document.addEventListener('click', function(e) {
-        const clickData = { x: e.pageX, y: e.pageY, screenWidth: window.innerWidth };
-        sendEvent('click', clickData);
+        sendEvent('click', { x: e.pageX, y: e.pageY, screenWidth: window.innerWidth });
     }, true);
 
     async function runAbTest() {
         try {
-            const res = await fetch(\`\${EXP_API_ENDPOINT}?url=\${encodeURIComponent(window.location.href)}&siteId=\${SITE_ID}\`);
+            const res = await fetch(\`\${EXP_API_ENDPOINT}?path=\${encodeURIComponent(window.location.pathname)}&siteId=\${SITE_ID}\`);
+            if (!res.ok) return; // Fail silently if API returns an error
             const experiment = await res.json();
             if (!experiment) return;
+            
             // ... rest of A/B test logic ...
-        } catch(e) {
-            console.error('CortexCart A/B Test Error:', e);
-        }
+        } catch (e) { console.error('CortexCart A/B Test Error:', e); }
     }
 
     async function initializeTracker() {
@@ -215,15 +186,14 @@ const WidgetSettingsTabContent = ({ siteId }) => {
     initializeTracker();
   })();
 <\/script>`.trim();
-
-            setMainSnippet(newSnippet);
+            setMainSnippet(snippet);
         }
     }, [siteId]);
 
     return (
         <div className="max-w-3xl space-y-8">
             <h3 className="text-lg font-medium leading-6 text-gray-900">Main Tracker Script</h3>
-            <p className="mt-1 text-sm text-gray-600">This script includes all features. Place it just before the closing `&lt;/head&gt;` tag on every page of your website.</p>
+            <p className="mt-1 text-sm text-gray-600">Place this script just before the closing \`&lt;/head&gt;\` tag on every page of your website.</p>
             <div className="p-4 bg-gray-900 rounded-md text-white font-mono text-sm overflow-x-auto relative mt-4 h-96">
                 <pre><code>{mainSnippet}</code></pre>
             </div>

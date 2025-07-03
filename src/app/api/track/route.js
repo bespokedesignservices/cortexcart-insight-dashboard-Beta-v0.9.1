@@ -1,6 +1,6 @@
-import db from '../../../../lib/db';
+import db from '@/lib/db';
 import { NextResponse } from 'next/server';
-import UAParser from 'ua-parser-js';
+// We are removing the 'ua-parser-js' import from the top of the file.
 
 export async function POST(request) {
   try {
@@ -11,6 +11,10 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
+    // --- THIS IS THE FIX ---
+    // We now use require() to load the library inside the function.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+    const UAParser = require('ua-parser-js');
     const ua = request.headers.get('user-agent');
     const parser = new UAParser(ua);
     const deviceType = parser.getDevice().type || 'desktop';
@@ -20,18 +24,16 @@ export async function POST(request) {
 
     if (ip) {
       try {
-        // --- THE FIX: Fetch the full country name, not the code ---
         const geoResponse = await fetch(`http://ip-api.com/json/${ip}?fields=country`);
         if (geoResponse.ok) {
           const geoData = await geoResponse.json();
-          country = geoData.country; // This will be "United Kingdom", etc.
+          country = geoData.country;
         }
       } catch (geoError) {
         console.error("GeoIP lookup failed:", geoError);
       }
     }
     
-    // We now save the full country name in the event data.
     const dataWithMeta = { ...data, ip, country: country, device: deviceType };
 
     await db.query(
@@ -39,7 +41,8 @@ export async function POST(request) {
       [siteId, eventName, JSON.stringify(dataWithMeta)] 
     );
 
-    return NextResponse.json({ message: 'Event tracked' }, { status: 200 });
+    const headers = { 'Access-Control-Allow-Origin': '*' };
+    return NextResponse.json({ message: 'Event tracked' }, { status: 200, headers });
   } catch (error) {
     console.error('--- TRACK API CRASHED ---:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });

@@ -1,68 +1,47 @@
-// src/app/api/admin/experiments/route.js
-
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../../../src/lib/auth';
-import db from '../../../../src/lib/db';
+import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 
-// GET handler (remains the same)
-export async function GET() {
-    // ... code from previous step ...
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-        return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+export async function GET(request) {
+    const { searchParams } = new URL(request.url);
+    const path = searchParams.get('path');
+    const siteId = searchParams.get('siteId');
+
+    if (!path || !siteId) {
+        return NextResponse.json({ message: 'Missing required parameters' }, { status: 400 });
     }
 
     try {
         const [experiments] = await db.query(
-            'SELECT * FROM ab_experiments WHERE user_email = ? ORDER BY created_at DESC',
-            [session.user.email]
+            `SELECT * FROM ab_experiments 
+             WHERE user_email = ? AND status = 'running' AND target_path = ? 
+             LIMIT 1`,
+            [siteId, path]
         );
-        return NextResponse.json(experiments, { status: 200 });
+
+        if (experiments.length === 0) {
+            return NextResponse.json(null, { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } });
+        }
+
+        const experiment = experiments[0];
+        const [variants] = await db.query(
+            'SELECT * FROM ab_variants WHERE experiment_id = ?',
+            [experiment.id]
+        );
+        experiment.variants = variants;
+
+        return NextResponse.json(experiment, { status: 200, headers: { 'Access-Control-Allow-Origin': '*' } });
+
     } catch (error) {
-        console.error('Error fetching experiments:', error);
+        console.error('Error fetching active experiment:', error);
         return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
     }
 }
 
-// POST handler (updated to include target_url)
-export async function POST(request) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-        return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
-    }
-
-    const connection = await db.getConnection();
-    try {
-        const { name, description, target_selector, target_url, control_content, variant_content } = await request.json();
-        if (!name || !target_selector || !target_url || !control_content || !variant_content) {
-            return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
-        }
-        
-        await connection.beginTransaction();
-
-        const [expResult] = await connection.query(
-            'INSERT INTO ab_experiments (user_email, name, description, target_selector, target_url) VALUES (?, ?, ?, ?, ?)',
-            [session.user.email, name, description, target_selector, target_url]
-        );
-        const experimentId = expResult.insertId;
-
-        await connection.query(
-            'INSERT INTO ab_variants (experiment_id, name, content, is_control) VALUES (?, ?, ?, ?)',
-            [experimentId, 'Control', control_content, true]
-        );
-        await connection.query(
-            'INSERT INTO ab_variants (experiment_id, name, content) VALUES (?, ?, ?)',
-            [experimentId, 'Variant', variant_content]
-        );
-
-        await connection.commit();
-        return NextResponse.json({ message: 'Experiment created successfully', experimentId }, { status: 201 });
-    } catch (error) {
-        await connection.rollback();
-        console.error('Error creating experiment:', error);
-        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
-    } finally {
-        connection.release();
-    }
+export async function OPTIONS() {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
 }
