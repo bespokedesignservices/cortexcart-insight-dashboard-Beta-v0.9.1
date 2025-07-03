@@ -10,7 +10,7 @@ import {
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
     MapIcon, TagIcon, Bars3Icon, XMarkIcon, InformationCircleIcon, 
     ChatBubbleLeftRightIcon, ShareIcon, PuzzlePieceIcon, QuestionMarkCircleIcon,
-    LifebuoyIcon, BellIcon, BeakerIcon, SparklesIcon, ChevronDownIcon
+    LifebuoyIcon, BellIcon, BeakerIcon, SparklesIcon, ChevronDownIcon, FireIcon
 } from '@heroicons/react/24/outline';
 
 // --- Sub-component: Top Navigation ---
@@ -172,7 +172,7 @@ const SidebarContent = () => {
 
                 <li><a href="/social" className={getLinkClass('/social')}><ShareIcon className="h-6 w-6 mr-3" /><span>Social Manager</span></a></li>
                 <li><a href="/experiments" className={getLinkClass('/experiments')}><BeakerIcon className="h-6 w-6 mr-3" /><span>A/B Testing</span></a></li>
-                
+                <li><a href="/heatmaps" className={getLinkClass('/heatmaps')}><FireIcon className="h-6 w-6 mr-3" /><span>Heatmaps</span></a></li>
                 <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">Help & Support</span></li>
                 <li><a href="/install" className={getLinkClass('/install')}><PuzzlePieceIcon className="h-6 w-6 mr-3" /><span>Install Guides</span></a></li>
                 <li><a href="/faq" className={getLinkClass('/faq')}><QuestionMarkCircleIcon className="h-6 w-6 mr-3" /><span>FAQ</span></a></li>
