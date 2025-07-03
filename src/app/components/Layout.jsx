@@ -10,7 +10,7 @@ import {
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
     MapIcon, TagIcon, Bars3Icon, XMarkIcon, InformationCircleIcon, 
     ChatBubbleLeftRightIcon, ShareIcon, PuzzlePieceIcon, QuestionMarkCircleIcon,
-    LifebuoyIcon, BellIcon
+    LifebuoyIcon, BellIcon, BeakerIcon, SparklesIcon, ChevronDownIcon
 } from '@heroicons/react/24/outline';
 
 // --- Sub-component: Top Navigation ---
@@ -123,36 +123,69 @@ const Footer = () => {
 };
 
 // --- Sub-component: Sidebar Content ---
+// In src/app/components/Layout.jsx
+
 const SidebarContent = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const [isAiMenuOpen, setIsAiMenuOpen] = useState(true); // State for the new dropdown, default to open
+
   const getLinkClass = (path) => {
     if (path === '/dashboard') {
         return pathname === path ? 'flex items-center p-2 bg-gray-700 rounded-lg text-white' : 'flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors';
     }
     return pathname.startsWith(path) ? 'flex items-center p-2 bg-gray-700 rounded-lg text-white' : 'flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors';
   };
+
+  // Sub-link style for the dropdown items
+  const getSubLinkClass = (path) => {
+    return pathname.startsWith(path) ? 'text-white font-semibold' : 'text-gray-400 hover:text-white';
+  };
+
   return (
     <>
-      <div className="flex-grow"><a href="/" className="flex items-center pb-6 px-2"><h1 className="text-2xl font-bold text-white">CortexCart</h1></a><nav><ul className="space-y-2">
-        {session && (
-        <>
-            <li><a href="/dashboard" className={getLinkClass('/dashboard')}><ChartPieIcon className="h-6 w-6 mr-3" /><span>Dashboard</span></a></li>
-           <li><a href="/reports" className={getLinkClass('/reports')}><DocumentChartBarIcon className="h-6 w-6 mr-3" /><span>AI Reports</span></a></li> {/* <-- ADD THIS LINE */}
-	    <li><a href="/recommendations" className={getLinkClass('/recommendations')}><LightBulbIcon className="h-6 w-6 mr-3" /><span>Homepage AI</span></a></li>
-            <li><a href="/products/recommendations" className={getLinkClass('/products')}><TagIcon className="h-6 w-6 mr-3" /><span>Product AI</span></a></li>
-            <li><a href="/social" className={getLinkClass('/social')}><ShareIcon className="h-6 w-6 mr-3" /><span>Social Manager</span></a></li>
-            <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">Help & Support</span></li>
-            <li><a href="/install" className={getLinkClass('/install')}><PuzzlePieceIcon className="h-6 w-6 mr-3" /><span>Install Guides</span></a></li>
-            <li><a href="/faq" className={getLinkClass('/faq')}><QuestionMarkCircleIcon className="h-6 w-6 mr-3" /><span>FAQ</span></a></li>
-            <li><a href="/support" className={getLinkClass('/support')}><LifebuoyIcon className="h-6 w-6 mr-3" /><span>Support Tickets</span></a></li>
-            <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">General</span></li>
-            <li><a href="/roadmap" className={getLinkClass('/roadmap')}><MapIcon className="h-6 w-6 mr-3" /><span>Roadmap</span></a></li>
-            <li><a href="/notifications" className={getLinkClass('/notifications')}><BellIcon className="h-6 w-6 mr-3" /><span>Notifications</span></a></li>
-            <li><a href="/settings" className={getLinkClass('/settings')}><Cog6ToothIcon className="h-6 w-6 mr-3" /><span>Settings</span></a></li>
-        </>
-        )}
-      </ul></nav></div>
+      <div className="flex-grow">
+        <a href="/" className="flex items-center pb-6 px-2"><h1 className="text-2xl font-bold text-white">CortexCart</h1></a>
+        <nav>
+          <ul className="space-y-2">
+            {session && (
+            <>
+                <li><a href="/dashboard" className={getLinkClass('/dashboard')}><ChartPieIcon className="h-6 w-6 mr-3" /><span>Dashboard</span></a></li>
+                
+                {/* --- New AI Tools Dropdown --- */}
+                <li>
+                    <button onClick={() => setIsAiMenuOpen(!isAiMenuOpen)} className="flex items-center justify-between w-full p-2 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
+                        <div className="flex items-center">
+                            <SparklesIcon className="h-6 w-6 mr-3" />
+                            <span>AI Tools</span>
+                        </div>
+                        <ChevronDownIcon className={`h-5 w-5 transition-transform ${isAiMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isAiMenuOpen && (
+                        <ul className="pt-2 pl-7 mt-1 space-y-2 border-l border-gray-700 ml-4">
+                            <li><a href="/reports" className={getSubLinkClass('/reports')}><span>AI Reports</span></a></li>
+                            <li><a href="/recommendations" className={getSubLinkClass('/recommendations')}><span>Homepage AI</span></a></li>
+                            <li><a href="/products/recommendations" className={getSubLinkClass('/products')}><span>Product AI</span></a></li>
+                        </ul>
+                    )}
+                </li>
+
+                <li><a href="/social" className={getLinkClass('/social')}><ShareIcon className="h-6 w-6 mr-3" /><span>Social Manager</span></a></li>
+                <li><a href="/experiments" className={getLinkClass('/experiments')}><BeakerIcon className="h-6 w-6 mr-3" /><span>A/B Testing</span></a></li>
+                
+                <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">Help & Support</span></li>
+                <li><a href="/install" className={getLinkClass('/install')}><PuzzlePieceIcon className="h-6 w-6 mr-3" /><span>Install Guides</span></a></li>
+                <li><a href="/faq" className={getLinkClass('/faq')}><QuestionMarkCircleIcon className="h-6 w-6 mr-3" /><span>FAQ</span></a></li>
+                <li><a href="/support" className={getLinkClass('/support')}><LifebuoyIcon className="h-6 w-6 mr-3" /><span>Support Tickets</span></a></li>
+                
+                <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">General</span></li>
+                <li><a href="/roadmap" className={getLinkClass('/roadmap')}><MapIcon className="h-6 w-6 mr-3" /><span>Roadmap</span></a></li>
+                <li><a href="/notifications" className={getLinkClass('/notifications')}><BellIcon className="h-6 w-6 mr-3" /><span>Notifications</span></a></li>
+            </>
+            )}
+          </ul>
+        </nav>
+      </div>
       <div>
         {status === 'authenticated' && (
           <div className="mb-4 text-sm"><p className="font-semibold text-white">{session.user.name}</p><p className="text-gray-400 truncate">{session.user.email}</p></div>
@@ -265,7 +298,7 @@ const FeedbackButton = () => {
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="relative h-screen flex bg-gray-100">
+    <div className="relative h-screen flex bg-gray-100 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:flex-shrink-0 w-64 bg-gray-800 p-4 flex-col">
         <SidebarContent />

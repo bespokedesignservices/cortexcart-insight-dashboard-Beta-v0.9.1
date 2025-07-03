@@ -128,7 +128,7 @@ const IntegrationsTabContent = () => {
 
     return (
         <div className="max-w-3xl">
-<image href="https://upload.wikimedia.org/wikipedia/commons/6/64/Google-analytics.png"></image>
+<img src="https://upload.wikimedia.org/wikipedia/commons/6/64/Google-analytics.png"/>
             <h3 className="text-lg font-medium leading-6 text-gray-900">Google Analytics Integration</h3>
             <form onSubmit={handleSaveGA4Settings} className="mt-6 space-y-6">
                 <div>
@@ -152,20 +152,88 @@ const WidgetSettingsTabContent = ({ siteId }) => {
     
     useEffect(() => {
         if (siteId) {
-            const snippet = `
-<script async defer>
+            const newSnippet = `
+<script>
   (function() {
-    const SITE_ID = '${siteId}'; 
-    const API_ENDPOINT = 'https://tracker.cortexcart.com/api/track';
-    function sendEvent(eventName, data = {}) {
-      const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer } };
-      try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
+    const SITE_ID = '${siteId}';
+    const API_ENDPOINT = 'https://cortexcart.com/api/track';
+    const EXP_API_ENDPOINT = 'https://cortexcart.com/api/experiments/active';
+    let abTestInfo = null;
+
+    function getCookie(name) {
+        const value = \`; \${document.cookie}\`;
+        const parts = value.split(\`; \${name}=\`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
     }
-    sendEvent('pageview');
-    window.cortexcart = { track: function(eventName, data) { if (!eventName) { console.error('CortexCart Tracker: Event name is required.'); return; } sendEvent(eventName, data); } };
+
+    function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+
+    function sendEvent(eventName, data = {}) {
+      const eventData = {
+        siteId: SITE_ID,
+        eventName: eventName,
+        data: { 
+            ...data, 
+            path: window.location.pathname, 
+            referrer: document.referrer,
+            abTest: abTestInfo // Include A/B test info if present
+        }
+      };
+      try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } 
+      catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
+    }
+
+    async function runAbTest() {
+        try {
+            const res = await fetch(\`\${EXP_API_ENDPOINT}?url=\${encodeURIComponent(window.location.href)}&siteId=\${SITE_ID}\`);
+            const experiment = await res.json();
+
+            if (!experiment) return;
+
+            abTestInfo = { experimentId: experiment.id, variantId: null };
+            const cookieName = \`cortex-exp-\${experiment.id}\`;
+            let assignedVariantId = getCookie(cookieName);
+
+            if (assignedVariantId) {
+                abTestInfo.variantId = parseInt(assignedVariantId, 10);
+            } else {
+                const randomIndex = Math.floor(Math.random() * experiment.variants.length);
+                const assignedVariant = experiment.variants[randomIndex];
+                abTestInfo.variantId = assignedVariant.id;
+                setCookie(cookieName, assignedVariant.id, 30); // Remember assignment for 30 days
+            }
+            
+            const variantToApply = experiment.variants.find(v => v.id === abTestInfo.variantId);
+            if (variantToApply) {
+                const element = document.querySelector(experiment.target_selector);
+                if (element) {
+                    element.innerText = variantToApply.content;
+                }
+            }
+        } catch(e) {
+            console.error('CortexCart A/B Test Error:', e);
+        }
+    }
+
+    async function initializeTracker() {
+        await runAbTest();
+        sendEvent('pageview');
+    }
+
+    window.cortexcart = { track: sendEvent };
+    initializeTracker();
   })();
 <\/script>`.trim();
-            setMainSnippet(snippet);
+
+            setMainSnippet(newSnippet);
         }
     }, [siteId]);
 
