@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 // Import all components
 import Layout from '@/app/components/Layout';
+import AlertBanner from '@/app/components/AlertBanner';
 import StatCard from '@/app/components/StatCard';
 import ChartContainer from '@/app/components/ChartContainer';
 import SalesBarChart from '@/app/components/SalesBarChart';
@@ -42,6 +43,7 @@ export default function DashboardPage() {
   const [locationData, setLocationData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
   const [performanceData, setPerformanceData] = useState(null);
+  const [alerts, setAlerts] = useState([]);
   
   // State for GA4 data
   const [ga4Stats, setGa4Stats] = useState(null);
@@ -74,6 +76,11 @@ export default function DashboardPage() {
       const sd = dateRange.startDate ? `&startDate=${dateRange.startDate}` : '';
       const ed = dateRange.endDate ? `&endDate=${dateRange.endDate}` : '';
       const dateParams = `${sd}${ed}`;
+      
+      try {
+        const alertsRes = await fetch('/api/alerts/active');
+        if (alertsRes.ok) setAlerts(await alertsRes.json());
+      } catch (e) { console.error("Could not fetch alerts", e); }
 
       if (dataSource === 'cortexcart') {
         try {
@@ -125,6 +132,8 @@ export default function DashboardPage() {
     fetchData();
   }, [dateRange.startDate, dateRange.endDate, siteId, session, status, router, dataSource]);
 
+  // --- THIS IS THE FIX ---
+  // This useEffect hook fetches the live visitor count periodically.
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
     if (!session) { return; }
@@ -147,6 +156,12 @@ export default function DashboardPage() {
 
   return (
     <Layout>
+      <div className="space-y-4 mb-6">
+        {alerts.map((alert) => (
+            <AlertBanner key={alert.id} title={alert.title} message={alert.message} type={alert.type} />
+        ))}
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-4">
             <h2 className="text-3xl font-bold">Dashboard</h2>
@@ -180,7 +195,6 @@ export default function DashboardPage() {
                   <RecentEventsTable events={recentEvents} />
                 </ChartContainer>
               </div>
-              {/* --- THIS IS THE CORRECTED GRID --- */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <ChartContainer title="Top Pages">
                     <TopPagesList pages={topPages} />
@@ -194,7 +208,7 @@ export default function DashboardPage() {
                   <TopReferrersList referrers={topReferrers} />
                 </ChartContainer>
               </div>
-              <ChartContainer title="Page Speed Score (Mobile)" description="Powered by Google Lighthouse, this score reflects your homepage's performance on a mobile device.">
+              <ChartContainer title="Page Speed Score (Mobile)">
                   {performanceData ? (
                       <div className="h-64 flex items-center justify-center">
                           <PerformanceScore {...performanceData} />
