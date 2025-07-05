@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const [locationData, setLocationData] = useState([]);
   const [deviceData, setDeviceData] = useState([]);
   const [performanceData, setPerformanceData] = useState(null);
+  const [performanceError, setPerformanceError] = useState('');
   const [alerts, setAlerts] = useState([]);
   
   // State for GA4 data
@@ -93,14 +94,13 @@ export default function DashboardPage() {
             fetch(`/api/stats/locations?siteId=${siteId}${dateParams}`),
             fetch(`/api/site-settings?siteId=${siteId}`),
             fetch(`/api/stats/device-types?siteId=${siteId}${dateParams}`),
-            fetch('/api/performance/get-speed')
           ]);
 
           for (const res of responses) {
             if (!res.ok) throw new Error(`A data fetch failed: ${res.statusText}`);
           }
           
-          const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData, perfData] = await Promise.all(responses.map(res => res.json()));
+          const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData] = await Promise.all(responses.map(res => res.json()));
           
           setStats(statsData);
           setChartApiData(chartData);
@@ -110,7 +110,6 @@ export default function DashboardPage() {
           setLocationData(locationsData);
           setSiteSettings(settingsData);
           setDeviceData(deviceTypesData);
-          setPerformanceData(perfData);
 
         } catch (err) { setError(err.message); }
       } else { // Fetch from GA4
@@ -131,12 +130,36 @@ export default function DashboardPage() {
     
     fetchData();
   }, [dateRange.startDate, dateRange.endDate, siteId, session, status, router, dataSource]);
-
-  // --- THIS IS THE FIX ---
-  // This useEffect hook fetches the live visitor count periodically.
+  
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
     if (!session) { return; }
+
+    async function fetchPerformanceData() {
+        setPerformanceError('');
+        try {
+            const res = await fetch('/api/performance/get-speed');
+            const data = await res.json();
+            
+            if (!res.ok) {
+                if (res.status === 429) {
+                    setPerformanceError(data.message || "You've reached the daily limit. Showing last available score.");
+                    if (data.score) {
+                      setPerformanceData(data);
+                    }
+                } else {
+                    throw new Error(data.message || `Failed to fetch score: ${res.statusText}`);
+                }
+            } else {
+                setPerformanceData(data);
+            }
+        } catch (err) {
+            setPerformanceError(err.message);
+        }
+    }
+    
+    fetchPerformanceData();
+
     const interval = setInterval(() => {
       fetch(`/api/stats/live-visitors?siteId=${siteId}`)
         .then(res => res.json())
@@ -209,13 +232,19 @@ export default function DashboardPage() {
                 </ChartContainer>
               </div>
               <ChartContainer title="Page Speed Score (Mobile)">
-                  {performanceData ? (
-                      <div className="h-64 flex items-center justify-center">
-                          <PerformanceScore {...performanceData} />
-                      </div>
-                  ) : (
-                      <p className="text-center text-gray-500">Loading score...</p>
-                  )}
+                {performanceError && <p className="text-center text-sm text-yellow-600 mb-2">{performanceError}</p>}
+                
+                {performanceData ? (
+                    <div className="h-64 flex items-center justify-center">
+                        <PerformanceScore {...performanceData} />
+                    </div>
+                ) : (
+                    <div className="h-64 flex items-center justify-center">
+                        <p className="text-center text-gray-500">
+                          {performanceError ? 'No cached score available.' : 'Loading score...'}
+                        </p>
+                    </div>
+                )}
               </ChartContainer>
             </div>
           ) : (

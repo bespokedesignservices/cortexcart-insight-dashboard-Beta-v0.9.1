@@ -1,87 +1,75 @@
+// src/lib/auth.js
 import GoogleProvider from 'next-auth/providers/google';
 import TwitterProvider from 'next-auth/providers/twitter';
 import FacebookProvider from "next-auth/providers/facebook";
 import db from './db';
-import { encrypt } from './crypto';
 
 export const authOptions = {
- providers: [
+  providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
-
     TwitterProvider({
       clientId: process.env.X_CLIENT_ID,
       clientSecret: process.env.X_CLIENT_SECRET,
       version: "2.0",
-      authorization: {
-        params: {
-          scope: "tweet.read tweet.write users.read offline.access"
-        }
-      }
     }),
-
-    // --- ADD THIS NEW PROVIDER ---
     FacebookProvider({
-        clientId: process.env.FACEBOOK_CLIENT_ID,
-        clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-        authorization: {
-            params: {
-                scope: 'email,pages_show_list,instagram_basic,instagram_content_publish,pages_read_engagement,pages_manage_posts'
-            }
-        }
-    })
-],
-  events: {
-    async accountLinked({ user, account }) {
-      if (user.email && account.provider === 'twitter') {
-        try {
-          const query = `
-            INSERT INTO social_connections (user_email, platform, access_token_encrypted, refresh_token_encrypted, expires_at)
-            VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-              access_token_encrypted = VALUES(access_token_encrypted),
-              refresh_token_encrypted = VALUES(refresh_token_encrypted),
-              expires_at = VALUES(expires_at);
-          `;
-          
-          const encryptedAccessToken = encrypt(account.access_token);
-          const encryptedRefreshToken = account.refresh_token ? encrypt(account.refresh_token) : null;
-          const expiresAt = account.expires_at ? new Date(account.expires_at * 1000) : null;
-
-          await db.query(query, [ user.email, account.provider, encryptedAccessToken, encryptedRefreshToken, expiresAt ]);
-        } catch (error) {
-          console.error('Failed to save social connection tokens:', error);
-        }
-      }
-    }
-  },
-
+      clientId: process.env.FACEBOOK_CLIENT_ID,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+    }),
+  ],
   callbacks: {
+    async signIn({ user, account }) {
+      const { email, name } = user;
+      const { provider } = account;
+
+      if (!email) {
+        console.error("Auth Error: No email returned from provider.");
+        return false; // Prevent sign-in if no email
+      }
+
+      const connection = await db.getConnection();
+      try {
+        // Find or create the primary user record in the 'sites' table
+        const [userResult] = await connection.query('SELECT * FROM sites WHERE user_email = ?', [email]);
+        if (userResult.length === 0) {
+          console.log(`Creating new user site for: ${email}`);
+          await connection.query('INSERT INTO sites (user_email, site_name) VALUES (?, ?)', [email, `${name}'s Site`]);
+        }
+        
+        // This is a good place for any logic related to social connections if needed
+        console.log(`User ${email} signed in with ${provider}.`);
+
+      } catch (error) {
+        console.error('Database Error during sign-in:', error);
+        return false; // Prevent sign-in if there's a database error
+      } finally {
+        connection.release();
+      }
+      
+      return true; // Allow the sign-in to proceed
+    },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+      if (session.user) {
+        // Add the user's role to the session
+        const [admins] = await db.query('SELECT role FROM admins WHERE email = ?', [session.user.email]);
+        session.user.role = admins.length > 0 ? admins[0].role : 'user';
+        // Add the user ID from the token to the session
+        session.user.id = token.sub; 
       }
       return session;
     },
     async jwt({ token, user }) {
-      if (user) {
-        try {
-          const [admins] = await db.query('SELECT role FROM admins WHERE email = ?', [user.email]);
-          if (admins.length > 0) {
-            token.role = admins[0].role;
-          } else {
-            token.role = 'user';
-          }
-          token.id = user.id;
-        } catch (error) {
-          console.error("Error fetching user role:", error);
-          token.role = 'user';
+        if (user) {
+            token.id = user.id;
         }
-      }
-      return token;
+        return token;
     }
   },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };

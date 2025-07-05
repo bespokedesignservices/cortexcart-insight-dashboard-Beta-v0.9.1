@@ -8,11 +8,10 @@ const CountryViewsList = ({ locationData = [] }) => {
   }
 
   return (
-    // --- FIX: Added h-full and overflow-y-auto to make the list scrollable ---
     <div className="flow-root h-full overflow-y-auto">
       <ul role="list" className="divide-y divide-gray-200">
-        {locationData.map((loc) => (
-          <li key={loc.id || loc.name} className="py-3 sm:py-4">
+        {locationData.map((loc, index) => (
+          <li key={`${loc.id || loc.name}-${index}`} className="py-3 sm:py-4">
             <div className="flex items-center space-x-4">
               <div className="flex-1 min-w-0">
                 <p title={loc.id || loc.name} className="text-sm font-medium text-gray-900 truncate">
