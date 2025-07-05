@@ -1,31 +1,38 @@
-import db from '../../../../lib/db';
+import db from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { simpleCache } from '@/lib/cache';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const siteId = searchParams.get('siteId');
-  const startDate = searchParams.get('startDate'); // e.g., '2025-06-01'
-  const endDate = searchParams.get('endDate');     // e.g., '2025-06-13'
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate'); // This line was corrected
 
   if (!siteId) {
     return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
   }
 
-  // Build the WHERE clause for the date range
+  const cacheKey = `stats-${siteId}-${startDate}-${endDate}`;
+  const cachedData = simpleCache.get(cacheKey);
+
+  if (cachedData) {
+    console.log(`[Cache] HIT for key: ${cacheKey}`);
+    return NextResponse.json(cachedData, { status: 200 });
+  }
+
+  console.log(`[Cache] MISS for key: ${cacheKey}`);
+
   let dateFilter = '';
   const queryParams = [siteId];
 
   if (startDate && endDate) {
-    // Add 1 day to the end date to include the entire day
     const inclusiveEndDate = new Date(endDate);
     inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
-
     dateFilter = 'AND created_at BETWEEN ? AND ?';
     queryParams.push(startDate, inclusiveEndDate.toISOString().split('T')[0]);
   }
 
   try {
-    // Dynamically add the date filter to each query
     const pageviewsQuery = `SELECT COUNT(*) as count FROM events WHERE site_id = ? AND event_name = 'pageview' ${dateFilter};`;
     const salesQuery = `SELECT COUNT(*) as count FROM events WHERE site_id = ? AND event_name = 'sale' ${dateFilter};`;
     const revenueQuery = `SELECT SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.amount')) AS DECIMAL(10,2))) as total FROM events WHERE site_id = ? AND event_name = 'sale' ${dateFilter};`;
@@ -36,14 +43,15 @@ export async function GET(request) {
         db.query(revenueQuery, queryParams)
     ]);
 
-    // **THE FIX IS HERE**
-    // We now use optional chaining (?.) and provide a fallback of 0.
-    // This prevents an error if pageviewsResult[0] is undefined for a new user.
-    return NextResponse.json({
+    const statsData = {
       pageviews: pageviewsResult[0]?.count || 0,
       sales: salesResult[0]?.count || 0,
       totalRevenue: revenueResult[0]?.total || 0,
-    }, { status: 200 });
+    };
+
+    simpleCache.set(cacheKey, statsData, 600); // Cache for 10 minutes
+
+    return NextResponse.json(statsData, { status: 200 });
 
   } catch (error) {
     console.error('Error fetching stats:', error);

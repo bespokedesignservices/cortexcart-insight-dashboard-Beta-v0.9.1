@@ -104,9 +104,9 @@ const TopNav = () => {
 const Footer = () => {
     const footerLinks = [
         { name: 'About', href: '/about' }, 
-	{ name: 'Contact', href: '/contact' },
+	    { name: 'Contact', href: '/contact' },
         { name: 'Terms of Service', href: '/terms' }, 
-	{ name: 'Privacy Policy', href: '/privacy' },
+	    { name: 'Privacy Policy', href: '/privacy' },
     ];
     return (
         <footer className="bg-white border-t border-gray-200">
@@ -116,12 +116,13 @@ const Footer = () => {
                         <div key={link.name} className="px-5 py-2"><a href={link.href} className="text-sm text-gray-500 hover:text-gray-900">{link.name}</a></div>
                     ))}
                 </nav>
-                <p className="mt-6 text-center text-xs text-gray-400">&copy; 2025 CortexCart v0.9.1 Beta. All rights reserved.</p>
+                <p className="mt-6 text-center text-xs text-gray-400">
+                    &copy; 2025 CortexCart v{process.env.NEXT_PUBLIC_APP_VERSION} Beta. All rights reserved.
+                </p>
             </div>
         </footer>
     );
 };
-
 // --- Sub-component: Sidebar Content ---
 // In src/app/components/Layout.jsx
 

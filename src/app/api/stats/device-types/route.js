@@ -1,5 +1,6 @@
 import db from '../../../../../lib/db'; 
 import { NextResponse } from 'next/server';
+import { simpleCache } from '@/lib/cache'; // <-- Import our new cache module
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -10,6 +11,15 @@ export async function GET(request) {
   if (!siteId) {
     return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
   }
+const cacheKey = `stats-${siteId}-${startDate}-${endDate}`;
+  const cachedData = simpleCache.get(cacheKey);
+
+  if (cachedData) {
+    console.log(`[Cache] HIT for key: ${cacheKey}`);
+    return NextResponse.json(cachedData, { status: 200 });
+  }
+
+  console.log(`[Cache] MISS for key: ${cacheKey}`);
 
   let dateFilter = '';
   const queryParams = [siteId];
@@ -36,6 +46,9 @@ export async function GET(request) {
     `;
     
     const [results] = await db.query(query, queryParams);
+//Add cache for 10 mins
+simpleCache.set(cacheKey, statsData, 600);
+
     return NextResponse.json(results, { status: 200 });
   } catch (error) {
     console.error('Error fetching device data:', error);

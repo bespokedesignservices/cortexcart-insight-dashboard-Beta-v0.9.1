@@ -9,6 +9,8 @@ import {
     ArrowRightEndOnRectangleIcon,
     WrenchScrewdriverIcon, // New Icon for SEO
     MapIcon,
+    MegaphoneIcon,
+    LifebuoyIcon
 } from '@heroicons/react/24/outline';
 
 const adminNavLinks = [
@@ -20,6 +22,8 @@ const adminNavLinks = [
     { name: 'Subscription Plans', href: '/admin/plans', icon: CreditCardIcon },
     { name: 'SEO', href: '/admin/seo', icon: WrenchScrewdriverIcon }, // New Link
     { name: 'Roadmap', href: '/admin/roadmap', icon: MapIcon }, // You will need to import MapIcon from heroicons
+    { name: 'Alert Banners', href: '/admin/alerts', icon: MegaphoneIcon }, // <-- alert banners admin
+    { name: 'Support Tickets', href: '/admin/support', icon: LifebuoyIcon }, // <-- Admin support tickets users
 ];
 
 export default function AdminLayout({ children }) {

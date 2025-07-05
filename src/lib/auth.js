@@ -1,41 +1,56 @@
 import GoogleProvider from 'next-auth/providers/google';
 import TwitterProvider from 'next-auth/providers/twitter';
+import FacebookProvider from "next-auth/providers/facebook";
 import db from './db';
+import { encrypt } from './crypto';
 
 export const authOptions = {
-  providers: [
+ providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-authorization: {
-  params: {
-scope: 'openid email profile https://www.googleapis.com/auth/analytics.readonly',
-    access_type: 'offline',
-    prompt: 'consent',
-  },
-},
     }),
+
     TwitterProvider({
       clientId: process.env.X_CLIENT_ID,
       clientSecret: process.env.X_CLIENT_SECRET,
-      version: "2.0", 
+      version: "2.0",
+      authorization: {
+        params: {
+          scope: "tweet.read tweet.write users.read offline.access"
+        }
+      }
     }),
-  ],
 
+    // --- ADD THIS NEW PROVIDER ---
+    FacebookProvider({
+        clientId: process.env.FACEBOOK_CLIENT_ID,
+        clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+        authorization: {
+            params: {
+                scope: 'email,pages_show_list,instagram_basic,instagram_content_publish,pages_read_engagement,pages_manage_posts'
+            }
+        }
+    })
+],
   events: {
     async accountLinked({ user, account }) {
-      if (user.email && account.provider !== 'google') {
+      if (user.email && account.provider === 'twitter') {
         try {
           const query = `
-            INSERT INTO social_connections (user_email, platform, access_token, refresh_token, token_expires_at)
+            INSERT INTO social_connections (user_email, platform, access_token_encrypted, refresh_token_encrypted, expires_at)
             VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
-              access_token = VALUES(access_token),
-              refresh_token = VALUES(refresh_token),
-              token_expires_at = VALUES(token_expires_at);
+              access_token_encrypted = VALUES(access_token_encrypted),
+              refresh_token_encrypted = VALUES(refresh_token_encrypted),
+              expires_at = VALUES(expires_at);
           `;
+          
+          const encryptedAccessToken = encrypt(account.access_token);
+          const encryptedRefreshToken = account.refresh_token ? encrypt(account.refresh_token) : null;
           const expiresAt = account.expires_at ? new Date(account.expires_at * 1000) : null;
-          await db.query(query, [ user.email, account.provider, account.access_token, account.refresh_token, expiresAt ]);
+
+          await db.query(query, [ user.email, account.provider, encryptedAccessToken, encryptedRefreshToken, expiresAt ]);
         } catch (error) {
           console.error('Failed to save social connection tokens:', error);
         }

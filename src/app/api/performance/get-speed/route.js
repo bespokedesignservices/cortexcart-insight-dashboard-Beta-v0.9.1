@@ -5,6 +5,21 @@ import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+const [lastReport] = await db.query(
+    `SELECT created_at FROM analysis_reports WHERE user_email = ? AND report_type = 'page_speed' ORDER BY created_at DESC LIMIT 1`,
+    [session.user.email]
+);
+
+if (lastReport.length > 0 && new Date(lastReport[0].created_at) > twentyFourHoursAgo) {
+    return NextResponse.json({ message: 'You can run a Page Speed test once per day.' }, { status: 429 });
+}
+
+// After a successful API call, log it:
+await db.query(
+    'INSERT INTO analysis_reports (user_email, report_type) VALUES (?, ?)',
+    [session.user.email, 'page_speed']
+);
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });

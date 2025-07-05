@@ -83,15 +83,14 @@ export default function HeatmapPage() {
             </div>
             
             {/* Container for the heatmap and iframe */}
-            <div className="mt-8 relative" style={{ width: '100%', height: '1200px' }}>
-                <div id="heatmap-container" className="absolute top-0 left-0 w-full h-full pointer-events-none"></div>
-                {urlToAnalyze && (
-                    <iframe
-                        src={urlToAnalyze}
-                        className="w-full h-full border-2 border-gray-300 rounded-lg"
-                        title="Website Preview"
-                    ></iframe>
-                )}
+<div className="mt-8 relative grid" style={{ width: '100%', height: '1200px' }}>
+               <div id="heatmap-container" className="relative w-full h-full pointer-events-none" style={{ gridArea: '1 / 1' }}></div>
+<iframe
+    src={urlToAnalyze}
+    className="w-full h-full border-2 border-gray-300 rounded-lg"
+    title="Website Preview"
+    style={{ gridArea: '1 / 1' }}
+></iframe>
             </div>
         </Layout>
     );

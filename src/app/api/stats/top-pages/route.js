@@ -1,5 +1,6 @@
-import db from '../../../../../lib/db'; // Make sure this alias is correct for your setup
+import db from '../../../../../lib/db';
 import { NextResponse } from 'next/server';
+import { simpleCache } from '@/lib/cache'; // 1. Import the cache
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -11,6 +12,15 @@ export async function GET(request) {
     return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
   }
 
+  // --- 2. Check the Cache First ---
+  const cacheKey = `top-pages-${siteId}-${startDate}-${endDate}`;
+  const cachedData = simpleCache.get(cacheKey);
+  if (cachedData) {
+    console.log(`[Cache] HIT for key: ${cacheKey}`);
+    return NextResponse.json(cachedData, { status: 200 });
+  }
+  console.log(`[Cache] MISS for key: ${cacheKey}`);
+
   // Build the WHERE clause for the date range
   let dateFilter = '';
   const queryParams = [siteId];
@@ -18,14 +28,11 @@ export async function GET(request) {
   if (startDate && endDate) {
     const inclusiveEndDate = new Date(endDate);
     inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
-
     dateFilter = 'AND created_at BETWEEN ? AND ?';
     queryParams.push(startDate, inclusiveEndDate.toISOString().split('T')[0]);
   }
 
   try {
-    // This query counts pageviews, groups them by the page path,
-    // and returns the top 7 most viewed pages.
     const query = `
       SELECT 
         JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.path')) as page, 
@@ -41,6 +48,10 @@ export async function GET(request) {
     `;
     
     const [results] = await db.query(query, queryParams);
+
+    // --- 3. Save the Database Result to the Cache ---
+    simpleCache.set(cacheKey, results, 600); // Cache for 10 minutes
+
     return NextResponse.json(results, { status: 200 });
 
   } catch (error) {
