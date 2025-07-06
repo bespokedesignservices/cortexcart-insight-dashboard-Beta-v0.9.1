@@ -1,6 +1,6 @@
 // src/app/api/social/credentials/route.js
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Corrected import
+import { authOptions } from '@/lib/auth';
 import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 import { encrypt } from '@/lib/crypto'; // Import our new encryption function

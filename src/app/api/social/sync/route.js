@@ -1,6 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-//import { decrypt } from '../../../../lib/crypto';
+import { authOptions } from '@/lib/auth';
 import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 

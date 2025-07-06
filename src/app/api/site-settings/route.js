@@ -1,7 +1,7 @@
 // src/app/api/site-settings/route.js
 
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Corrected import
+import { authOptions } from '@/lib/auth';
 import db from '../../../../lib/db';
 import { NextResponse } from 'next/server';
 

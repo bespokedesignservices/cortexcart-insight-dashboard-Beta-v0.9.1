@@ -1,6 +1,7 @@
-import db from '../../../../../lib/db'; // Corrected import path
+// src/app/api/stats/locations/route.js
+import db from '../../../../../lib/db';
 import { NextResponse } from 'next/server';
-import { simpleCache } from '@/lib/cache'; // 1. Import the cache
+import { simpleCache } from '@/lib/cache';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -11,11 +12,13 @@ export async function GET(request) {
   if (!siteId) {
     return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
   }
- const cacheKey = `locations-${siteId}-${startDate}-${endDate}`;
+
+  const cacheKey = `locations-${siteId}-${startDate}-${endDate}`;
   const cachedData = simpleCache.get(cacheKey);
   if (cachedData) {
     return NextResponse.json(cachedData, { status: 200 });
   }
+
   let dateFilter = '';
   const queryParams = [siteId];
 
@@ -27,26 +30,29 @@ export async function GET(request) {
   }
 
   try {
+    // --- THIS IS THE CORRECTED QUERY ---
+    // The ${dateFilter} variable is now included in the WHERE clause
     const query = `
       SELECT 
-        JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) as id, 
+        JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) as name,
         COUNT(*) as value
       FROM events
       WHERE
         site_id = ? 
         AND event_name = 'pageview' 
         AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) IS NOT NULL
+        AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) != ''
         ${dateFilter}
       GROUP BY 
-        id
+        name
+      HAVING
+        name IS NOT NULL
       ORDER BY 
         value DESC;
     `;
     
     const [results] = await db.query(query, queryParams);
-
-    simpleCache.set(cacheKey, results, 600); // Cache for 10 minutes
-
+    simpleCache.set(cacheKey, results, 600);
     return NextResponse.json(results, { status: 200 });
 
   } catch (error) {

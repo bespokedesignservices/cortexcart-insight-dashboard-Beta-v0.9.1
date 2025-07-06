@@ -6,7 +6,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const siteId = searchParams.get('siteId');
   const startDate = searchParams.get('startDate');
-  const endDate = searchParams.get('endDate'); // This line was corrected
+  const endDate = searchParams.get('endDate');
 
   if (!siteId) {
     return NextResponse.json({ message: 'Site ID is required' }, { status: 400 });
@@ -16,11 +16,8 @@ export async function GET(request) {
   const cachedData = simpleCache.get(cacheKey);
 
   if (cachedData) {
-    console.log(`[Cache] HIT for key: ${cacheKey}`);
     return NextResponse.json(cachedData, { status: 200 });
   }
-
-  console.log(`[Cache] MISS for key: ${cacheKey}`);
 
   let dateFilter = '';
   const queryParams = [siteId];
@@ -33,6 +30,8 @@ export async function GET(request) {
   }
 
   try {
+    // --- THIS IS THE FIX ---
+    // The ${dateFilter} variable has been added to all three queries.
     const pageviewsQuery = `SELECT COUNT(*) as count FROM events WHERE site_id = ? AND event_name = 'pageview' ${dateFilter};`;
     const salesQuery = `SELECT COUNT(*) as count FROM events WHERE site_id = ? AND event_name = 'sale' ${dateFilter};`;
     const revenueQuery = `SELECT SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.amount')) AS DECIMAL(10,2))) as total FROM events WHERE site_id = ? AND event_name = 'sale' ${dateFilter};`;

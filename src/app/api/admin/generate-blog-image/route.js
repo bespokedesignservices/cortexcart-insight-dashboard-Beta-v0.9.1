@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'; // Corrected import
+import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 // Note: In a real implementation, you would use the official Google AI SDK.
 // For this environment, we will simulate the call.

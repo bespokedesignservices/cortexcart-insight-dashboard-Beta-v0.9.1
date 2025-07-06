@@ -194,6 +194,8 @@ export default function HomePageClient({ content, plans, recentPost }: HomePageC
      			 <Link href="/terms"><span className="px-3 hover:underline cursor-pointer">Terms of Service</span></Link>
                         <span className="text-gray-500">|</span>
                         <Link href="/privacy"><span className="px-3 hover:underline cursor-pointer">Privacy Policy</span></Link>    
+		        <span className="text-gray-500">|</span>
+                        <Link href="/data-protection"><span className="px-3 hover:underline cursor-pointer">Data Protection</span></Link>    
                     </div>
                 </div>
             </footer>

@@ -5,19 +5,20 @@ import { useSession, signOut, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
-import Placeholder from '@/app/components/Placeholder';
-import { ShareIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
+
 const tabs = [
     { name: 'General', href: '#' },
     { name: 'Integrations', href: '#' },
+    { name: 'Social Connections', href: '#' },
     { name: 'Widget Settings', href: '#' },
     { name: 'Billing', href: '#' },
     { name: 'Danger Zone', href: '#' },
-    { name: 'Social Connections', href: '#' },
 ];
 
-// --- Sub-component for General Settings ---
+// --- General Settings Component ---
 const GeneralTabContent = () => {
+    // ... (This component remains unchanged)
     const [siteName, setSiteName] = useState('');
     const [siteUrl, setSiteUrl] = useState('');
     const [currency, setCurrency] = useState('USD');
@@ -90,30 +91,19 @@ const GeneralTabContent = () => {
     );
 };
 
-// --- Sub-component for Integrations Settings ---
+// --- Integrations Settings Component ---
 const IntegrationsTabContent = () => {
+    // ... (This component remains unchanged)
     const [ga4PropertyId, setGa4PropertyId] = useState('');
     const [formMessage, setFormMessage] = useState({ text: '', isError: false });
     const [isSaving, setIsSaving] = useState(false);
     
-    // New state to hold the connection statuses
-    const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false });
-
     useEffect(() => {
-        // Fetch GA4 Settings
         async function fetchGA4Settings() {
             const res = await fetch('/api/ga4-connections');
             if (res.ok) setGa4PropertyId((await res.json()).ga4_property_id || '');
         }
-        
-        // Fetch Social Connection Statuses
-        async function fetchConnectionStatuses() {
-            const res = await fetch('/api/social/connections/status');
-            if (res.ok) setConnectionStatus(await res.json());
-        }
-
         fetchGA4Settings();
-        fetchConnectionStatuses();
     }, []);
 
     const handleSaveGA4Settings = async (e) => {
@@ -137,11 +127,9 @@ const IntegrationsTabContent = () => {
 
     return (
         <div className="max-w-3xl space-y-8">
-            {/* Google Analytics Section */}
             <div>
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Google Analytics Integration</h3>
                 <form onSubmit={handleSaveGA4Settings} className="mt-6 space-y-6">
-                    {/* GA4 Form content */}
                     <div>
                         <label htmlFor="ga4PropertyId" className="block text-sm font-medium text-gray-700">GA4 Property ID</label>
                         <input type="text" id="ga4PropertyId" value={ga4PropertyId} onChange={(e) => setGa4PropertyId(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 123456789" />
@@ -152,10 +140,27 @@ const IntegrationsTabContent = () => {
                     </div>
                 </form>
             </div>
+        </div>
+    );
+};
 
-            {/* Social Connections Section */}
-            <div className="border-t pt-8">
+// --- UPDATED Social Connections Component ---
+const SocialConnectionsTabContent = () => {
+    // --- THIS IS THE CHANGE ---
+    // Set a flag to disable the feature. Change this to 'true' when ready to re-enable.
+    const isSocialEnabled = false;
+
+    return (
+        <div className="max-w-3xl space-y-8">
+            <div>
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Social Connections</h3>
+                <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable posting and analytics.</p>
+                
+                {!isSocialEnabled && (
+                    <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400">
+                        <p className="text-sm text-yellow-700">This feature is currently under development and is temporarily disabled. It will be available in a future update.</p>
+                    </div>
+                )}
                 
                 {/* X (Twitter) Connection */}
                 <div className="mt-6 p-4 border rounded-lg flex items-center justify-between">
@@ -163,11 +168,14 @@ const IntegrationsTabContent = () => {
                         <p className="font-semibold">X (Twitter)</p>
                         <p className="text-sm text-gray-500">Connect your X account to allow posting and scheduling.</p>
                     </div>
-                    {connectionStatus.x ? (
-                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Connected</span>
-                    ) : (
-                        <button onClick={() => signIn('twitter')} className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800">Connect to X</button>
-                    )}
+                    <button 
+                        onClick={() => signIn('twitter')} 
+                        // --- THIS IS THE CHANGE ---
+                        disabled={!isSocialEnabled}
+                        className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Connect to X
+                    </button>
                 </div>
 
                 {/* Facebook & Instagram Connection */}
@@ -176,17 +184,23 @@ const IntegrationsTabContent = () => {
                         <p className="font-semibold">Facebook & Instagram</p>
                         <p className="text-sm text-gray-500">Connect your accounts to allow posting and scheduling.</p>
                     </div>
-                    {connectionStatus.facebook ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Connected</span>
-                    ) : (
-                        <button onClick={() => signIn('facebook')} className="px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-md hover:bg-blue-800">Connect with Facebook</button>
-                    )}
+                    <button 
+                        onClick={() => signIn('facebook')} 
+                        // --- THIS IS THE CHANGE ---
+                        disabled={!isSocialEnabled}
+                        className="px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-md hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Connect with Facebook
+                    </button>
                 </div>
             </div>
         </div>
     );
-};// --- Sub-component for Widget Settings ---
+};
+
+// --- Other components remain the same ---
 const WidgetSettingsTabContent = ({ siteId }) => {
+    // ... (This component remains unchanged)
     const [mainSnippet, setMainSnippet] = useState('');
     useEffect(() => {
         if (siteId) {
@@ -232,9 +246,8 @@ const WidgetSettingsTabContent = ({ siteId }) => {
         </div>
     );
 };
-
-// --- Sub-component for Billing ---
 const BillingTabContent = () => (
+    // ... (This component remains unchanged)
     <div className="max-w-3xl">
         <div className="flex items-center gap-x-3">
             <CheckCircleIcon className="h-6 w-6 text-green-500" aria-hidden="true" />
@@ -248,9 +261,8 @@ const BillingTabContent = () => (
         </div>
     </div>
 );
-
-// --- Sub-component for Danger Zone ---
 const DangerZoneTabContent = () => {
+    // ... (This component remains unchanged)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const handleAccountDelete = async () => {
@@ -290,8 +302,7 @@ const DangerZoneTabContent = () => {
     );
 };
 
-
-// --- Main Settings Page Component ---
+// --- Main Settings Page ---
 export default function SettingsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -313,18 +324,10 @@ export default function SettingsPage() {
             <div className="mt-8 bg-white p-8 rounded-lg shadow-md">
                 {activeTab === 'General' && <GeneralTabContent />}
                 {activeTab === 'Integrations' && <IntegrationsTabContent />}
+                {activeTab === 'Social Connections' && <SocialConnectionsTabContent />}
                 {activeTab === 'Widget Settings' && <WidgetSettingsTabContent siteId={session?.user?.email} />}
                 {activeTab === 'Billing' && <BillingTabContent />}
                 {activeTab === 'Danger Zone' && <DangerZoneTabContent />}
-                {activeTab === 'Social Connections' && (
-                    <div className="max-w-3xl">
-                        <Placeholder 
-                            title="Connect Social Accounts"
-                            description="This feature is coming soon."
-                            icon={ShareIcon}
-                        />
-                    </div>
-                )}
             </div>
         </Layout>
     );
