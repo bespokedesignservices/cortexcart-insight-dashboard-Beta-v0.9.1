@@ -7,10 +7,11 @@ import {
     ChartBarIcon,
     CreditCardIcon,
     ArrowRightEndOnRectangleIcon,
-    WrenchScrewdriverIcon, // New Icon for SEO
+    WrenchScrewdriverIcon,
     MapIcon,
     MegaphoneIcon,
-    LifebuoyIcon
+    LifebuoyIcon,
+    QuestionMarkCircleIcon // --- 1. Import the icon for FAQs ---
 } from '@heroicons/react/24/outline';
 
 const adminNavLinks = [
@@ -20,10 +21,12 @@ const adminNavLinks = [
     { name: 'Blog', href: '/admin/blog', icon: PencilSquareIcon },
     { name: 'User Stats', href: '/admin/stats', icon: ChartBarIcon },
     { name: 'Subscription Plans', href: '/admin/plans', icon: CreditCardIcon },
-    { name: 'SEO', href: '/admin/seo', icon: WrenchScrewdriverIcon }, // New Link
-    { name: 'Roadmap', href: '/admin/roadmap', icon: MapIcon }, // You will need to import MapIcon from heroicons
-    { name: 'Alert Banners', href: '/admin/alerts', icon: MegaphoneIcon }, // <-- alert banners admin
-    { name: 'Support Tickets', href: '/admin/support', icon: LifebuoyIcon }, // <-- Admin support tickets users
+    { name: 'SEO', href: '/admin/seo', icon: WrenchScrewdriverIcon },
+    { name: 'Roadmap', href: '/admin/roadmap', icon: MapIcon },
+    { name: 'Alert Banners', href: '/admin/alerts', icon: MegaphoneIcon },
+    { name: 'Support Tickets', href: '/admin/support', icon: LifebuoyIcon },
+    // --- 2. Add the new link with its icon ---
+    { name: 'FAQs', href: '/admin/faqs', icon: QuestionMarkCircleIcon },
 ];
 
 export default function AdminLayout({ children }) {

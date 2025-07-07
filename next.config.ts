@@ -2,9 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // This new line allows remote SVGs
     dangerouslyAllowSVG: true,
-    
     remotePatterns: [
       {
         protocol: 'https',
@@ -26,11 +24,11 @@ const nextConfig: NextConfig = {
         hostname: 'upload.wikimedia.org',
         pathname: '/**',
       },
-	{
-	  protocol: 'https',
-	  hostname: 'pbs.twimg.com',
-	  pathname: '/**',
-	}
+      {
+	      protocol: 'https',
+	      hostname: 'pbs.twimg.com',
+	      pathname: '/**',
+	    }
     ],
   },
 };

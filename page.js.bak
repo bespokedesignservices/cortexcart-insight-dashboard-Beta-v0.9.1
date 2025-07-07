@@ -7,57 +7,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-// --- NEW: Toggle Switch Component ---
-const BetaModeToggle = () => {
-    const [isActive, setIsActive] = useState(true);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchStatus = async () => {
-            try {
-                const res = await fetch('/api/admin/settings/beta-mode');
-                const data = await res.json();
-                setIsActive(data.isActive);
-            } catch (error) {
-                console.error("Could not fetch beta status", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchStatus();
-    }, []);
-
-    const handleToggle = async (newStatus) => {
-        setIsActive(newStatus);
-        await fetch('/api/admin/settings/beta-mode', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: newStatus }),
-        });
-    };
-
-    if (isLoading) {
-        return <div className="h-6 w-12 rounded-full bg-gray-200"></div>;
-    }
-
-    return (
-        <button
-            type="button"
-            onClick={() => handleToggle(!isActive)}
-            className={`relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${isActive ? 'bg-blue-600' : 'bg-gray-200'}`}
-            role="switch"
-            aria-checked={isActive}
-        >
-            <span className="sr-only">Toggle Beta Mode</span>
-            <span
-                aria-hidden="true"
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isActive ? 'translate-x-6' : 'translate-x-0'}`}
-            ></span>
-        </button>
-    );
-};
-
-
 const StatCard = ({ title, value, icon: Icon }) => (
     <div className="bg-white p-6 rounded-lg shadow-md flex items-center justify-between">
       <div>
@@ -116,13 +65,7 @@ export default function AdminDashboardPage() {
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard CortexCart</h1>
-                <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-700">Beta Mode</span>
-                    <BetaModeToggle />
-                </div>
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard CortexCart</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard title="Total Registered Users" value={stats?.totalUsers.toLocaleString() || '0'} icon={UsersIcon} />
