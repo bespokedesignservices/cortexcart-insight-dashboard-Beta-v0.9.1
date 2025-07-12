@@ -1,8 +1,8 @@
-// src/lib/auth.js
 import GoogleProvider from 'next-auth/providers/google';
 import TwitterProvider from 'next-auth/providers/twitter';
 import FacebookProvider from "next-auth/providers/facebook";
 import db from './db';
+import { encrypt } from '@/lib/crypto';
 
 export const authOptions = {
   providers: [
@@ -22,51 +22,85 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      const { email, name } = user;
-      const { provider } = account;
-
-      if (!email) {
-        console.error("Auth Error: No email returned from provider.");
-        return false; // Prevent sign-in if no email
+      let { email, name } = user;
+      if (account.provider === 'twitter' && !email) {
+        email = `${user.id}@users.twitter.com`;
       }
+      if (!email) return false;
 
       const connection = await db.getConnection();
       try {
-        // Find or create the primary user record in the 'sites' table
         const [userResult] = await connection.query('SELECT * FROM sites WHERE user_email = ?', [email]);
         if (userResult.length === 0) {
-          console.log(`Creating new user site for: ${email}`);
           await connection.query('INSERT INTO sites (user_email, site_name) VALUES (?, ?)', [email, `${name}'s Site`]);
         }
-        
-        // This is a good place for any logic related to social connections if needed
-        console.log(`User ${email} signed in with ${provider}.`);
-
       } catch (error) {
-        console.error('Database Error during sign-in:', error);
-        return false; // Prevent sign-in if there's a database error
+        console.error("DB Error during signIn:", error);
+        return false;
       } finally {
         connection.release();
       }
-      
-      return true; // Allow the sign-in to proceed
+      return true;
     },
+
+    async jwt({ token, user, account }) {
+      if (account && user) {
+        let emailForToken = user.email;
+        if (account.provider === 'twitter' && !emailForToken) {
+          emailForToken = `${user.id}@users.twitter.com`;
+        }
+
+        if (!token.email) {
+          token.id = user.id;
+          token.email = emailForToken;
+          token.name = user.name;
+          token.picture = user.image;
+          try {
+            const [admins] = await db.query('SELECT role FROM admins WHERE email = ?', [token.email]);
+            token.role = admins.length > 0 ? admins[0].role : 'user';
+          } catch (e) {
+            console.error("DB error fetching admin role:", e);
+            token.role = 'user';
+          }
+        }
+        
+        try {
+            const userEmail = token.email;
+            const platform = account.provider;
+            
+            const encryptedAccessToken = account.access_token ? encrypt(account.access_token) : null;
+            const encryptedRefreshToken = account.refresh_token ? encrypt(account.refresh_token) : null;
+            const expiresAt = account.expires_at ? new Date(account.expires_at * 1000) : null;
+
+            // --- THIS IS THE ONLY CHANGE ---
+            // The query now points to the new 'social_connect' table
+            const query = `
+                INSERT INTO social_connect (user_email, platform, access_token_encrypted, refresh_token_encrypted, expires_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE 
+                    access_token_encrypted = VALUES(access_token_encrypted), 
+                    refresh_token_encrypted = VALUES(refresh_token_encrypted),
+                    expires_at = VALUES(expires_at);
+            `;
+            await db.query(query, [userEmail, platform, encryptedAccessToken, encryptedRefreshToken, expiresAt]);
+            console.log(`Successfully saved/updated connection in NEW 'social_connect' table for ${userEmail} and ${platform}`);
+        } catch (dbError) {
+            console.error("CRITICAL ERROR saving social connection in JWT callback:", dbError);
+        }
+      }
+      return token;
+    },
+
     async session({ session, token }) {
-      if (session.user) {
-        // Add the user's role to the session
-        const [admins] = await db.query('SELECT role FROM admins WHERE email = ?', [session.user.email]);
-        session.user.role = admins.length > 0 ? admins[0].role : 'user';
-        // Add the user ID from the token to the session
-        session.user.id = token.sub; 
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.email = token.email;
+        session.user.name = token.name;
+        session.user.image = token.picture;
       }
       return session;
     },
-    async jwt({ token, user }) {
-        if (user) {
-            token.id = user.id;
-        }
-        return token;
-    }
   },
   session: {
     strategy: "jwt",

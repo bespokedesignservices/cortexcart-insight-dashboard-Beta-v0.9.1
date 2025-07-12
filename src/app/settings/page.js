@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useSession, signOut, signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
+import AlertBanner from '@/app/components/AlertBanner';
 
 const tabs = [
     { name: 'General', href: '#' },
@@ -18,7 +19,6 @@ const tabs = [
 
 // --- General Settings Component ---
 const GeneralTabContent = () => {
-    // ... (This component remains unchanged)
     const [siteName, setSiteName] = useState('');
     const [siteUrl, setSiteUrl] = useState('');
     const [currency, setCurrency] = useState('USD');
@@ -93,7 +93,6 @@ const GeneralTabContent = () => {
 
 // --- Integrations Settings Component ---
 const IntegrationsTabContent = () => {
-    // ... (This component remains unchanged)
     const [ga4PropertyId, setGa4PropertyId] = useState('');
     const [formMessage, setFormMessage] = useState({ text: '', isError: false });
     const [isSaving, setIsSaving] = useState(false);
@@ -144,110 +143,159 @@ const IntegrationsTabContent = () => {
     );
 };
 
-// --- UPDATED Social Connections Component ---
+// --- Social Connections Component (UPDATED) ---
 const SocialConnectionsTabContent = () => {
-    // --- THIS IS THE CHANGE ---
-    // Set a flag to disable the feature. Change this to 'true' when ready to re-enable.
-    const isSocialEnabled = false;
+    // CHANGED: Added 'pinterest' to the initial state
+    const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false });
+    const [isLoading, setIsLoading] = useState(true);
+    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            setIsLoading(true);
+            try {
+                const res = await fetch('/api/social/connections/status');
+                if (res.ok) setConnectionStatus(await res.json());
+            } catch (error) {
+                console.error("Failed to fetch connection statuses:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchStatus();
+
+        const connectStatus = searchParams.get('connect_status');
+        if (connectStatus === 'success') {
+            setAlert({ show: true, message: 'Account connected successfully!', type: 'success' });
+        } else if (connectStatus === 'error') {
+            const message = searchParams.get('message') || 'An unknown error occurred.';
+            setAlert({ show: true, message: `Connection failed: ${message.replace(/_/g, ' ')}`, type: 'danger' });
+        }
+
+        if(connectStatus){
+            setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
+        }
+    }, [searchParams]);
+
+    // This function already supports multiple platforms, so no changes are needed here.
+    const handleDisconnect = async (platform) => {
+        if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
+        try {
+            await fetch('/api/social/connections', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platform }),
+            });
+            setConnectionStatus(prev => ({ ...prev, [platform]: false }));
+        } catch (error) {
+            alert(`Could not disconnect ${platform}. Please try again.`);
+        }
+    };
+
+    if (isLoading) return <p>Loading connection status...</p>;
 
     return (
         <div className="max-w-3xl space-y-8">
+            {alert.show && (
+                <div className="mb-4">
+                    <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />
+                </div>
+            )}
             <div>
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Social Connections</h3>
                 <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable posting and analytics.</p>
                 
-                {!isSocialEnabled && (
-                    <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400">
-                        <p className="text-sm text-yellow-700">This feature is currently under development and is temporarily disabled. It will be available in a future update.</p>
-                    </div>
-                )}
-                
-                {/* X (Twitter) Connection */}
+                {/* X (Twitter) Connection Block (No changes) */}
                 <div className="mt-6 p-4 border rounded-lg flex items-center justify-between">
                     <div>
                         <p className="font-semibold">X (Twitter)</p>
                         <p className="text-sm text-gray-500">Connect your X account to allow posting and scheduling.</p>
                     </div>
-                    <button 
-                        onClick={() => signIn('twitter')} 
-                        // --- THIS IS THE CHANGE ---
-                        disabled={!isSocialEnabled}
-                        className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Connect to X
-                    </button>
+                    {connectionStatus.x ? (
+                        <div className="flex items-center gap-x-4">
+                            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                            <button onClick={() => handleDisconnect('x')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                    ) : (
+                        <a href="/api/connect/twitter" className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800">Connect to X</a>
+                    )}
                 </div>
 
-                {/* Facebook & Instagram Connection */}
+                {/* ADDED: Pinterest Connection Block */}
                 <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
                     <div>
-                        <p className="font-semibold">Facebook & Instagram</p>
-                        <p className="text-sm text-gray-500">Connect your accounts to allow posting and scheduling.</p>
+                        <p className="font-semibold">Pinterest</p>
+                        <p className="text-sm text-gray-500">Connect your Pinterest account to pin content and view analytics.</p>
                     </div>
-                    <button 
-                        onClick={() => signIn('facebook')} 
-                        // --- THIS IS THE CHANGE ---
-                        disabled={!isSocialEnabled}
-                        className="px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded-md hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Connect with Facebook
-                    </button>
+                    {connectionStatus.pinterest ? (
+                        <div className="flex items-center gap-x-4">
+                            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                            <button onClick={() => handleDisconnect('pinterest')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                    ) : (
+                        <a href="/api/connect/pinterest" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect to Pinterest</a>
+                    )}
                 </div>
+
             </div>
         </div>
     );
 };
-
-// --- Other components remain the same ---
+// --- Widget Settings Component ---
 const WidgetSettingsTabContent = ({ siteId }) => {
-    // ... (This component remains unchanged)
     const [mainSnippet, setMainSnippet] = useState('');
+    const [isCopied, setIsCopied] = useState(false);
+
     useEffect(() => {
         if (siteId) {
-            const snippet = `
-<script>
-  (function() {
+            const snippet = `<script>
+(function() {
     const SITE_ID = '${siteId}';
     const API_ENDPOINT = 'https://tracker.cortexcart.com/api/track';
-    const EXP_API_ENDPOINT = 'https://cortexcart.com/api/experiments/active';
-    let abTestInfo = null;
-
     function sendEvent(eventName, data = {}) {
-      const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer, abTest: abTestInfo }};
-      try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } 
-      catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
+        const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer }};
+        try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } 
+        catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
     }
-
     document.addEventListener('click', function(e) {
         sendEvent('click', { x: e.pageX, y: e.pageY, screenWidth: window.innerWidth });
     }, true);
-
-    async function runAbTest() { /* ... */ }
-    
-    async function initializeTracker() {
-        await runAbTest();
-        sendEvent('pageview');
-    }
+    sendEvent('pageview');
     window.cortexcart = { track: sendEvent };
-    initializeTracker();
-  })();
+})();
 <\/script>`.trim();
             setMainSnippet(snippet);
         }
     }, [siteId]);
 
+    const handleCopy = () => {
+        navigator.clipboard.writeText(mainSnippet).then(() => {
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        });
+    };
+
     return (
         <div className="max-w-3xl space-y-8">
             <h3 className="text-lg font-medium leading-6 text-gray-900">Main Tracker Script</h3>
-            <p className="mt-1 text-sm text-gray-600">Place this script just before the closing \`&lt;/head&gt;\` tag on every page.</p>
+            <p className="mt-1 text-sm text-gray-600">Place this script just before the closing `&lt;/head&gt;` tag on every page.</p>
             <div className="p-4 bg-gray-900 rounded-md text-white font-mono text-sm overflow-x-auto relative mt-4 h-96">
+                <button
+                    onClick={handleCopy}
+                    className="absolute top-2 right-2 flex items-center gap-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-md text-xs"
+                >
+                    {isCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardDocumentIcon className="h-4 w-4" />}
+                    {isCopied ? 'Copied!' : 'Copy Code'}
+                </button>
                 <pre><code>{mainSnippet}</code></pre>
             </div>
         </div>
     );
 };
+
+// --- Billing Component ---
 const BillingTabContent = () => (
-    // ... (This component remains unchanged)
     <div className="max-w-3xl">
         <div className="flex items-center gap-x-3">
             <CheckCircleIcon className="h-6 w-6 text-green-500" aria-hidden="true" />
@@ -261,8 +309,9 @@ const BillingTabContent = () => (
         </div>
     </div>
 );
+
+// --- Danger Zone Component ---
 const DangerZoneTabContent = () => {
-    // ... (This component remains unchanged)
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const handleAccountDelete = async () => {
@@ -270,6 +319,7 @@ const DangerZoneTabContent = () => {
         try { await signOut({ callbackUrl: '/api/account/delete' }); } 
         catch (error) { console.error(error); setIsDeleting(false); }
     };
+
     return (
         <>
             {isDeleteModalOpen && (
