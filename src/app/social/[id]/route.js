@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '../../../../../../lib/db';
+import db from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // PUT handler to update a scheduled post (e.g., when dragged on the calendar)
@@ -10,12 +10,12 @@ export async function PUT(request, { params }) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
     const userEmail = session.user.email;
-    const { id } = params;
+    const { id } = await params;
 
     try {
         const { scheduled_at } = await request.json();
         if (!scheduled_at) {
-            return NextResponse.json({ message: 'Scheduled time is required.' }, { status: 400 });
+            return NextResponse.json({ message: 'Scheduled time is required.' }, { status: 422 });
         }
 
         await db.query(
@@ -36,7 +36,7 @@ export async function DELETE(request, { params }) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
     const userEmail = session.user.email;
-    const { id } = params;
+    const { id } = await params;
 
     try {
         await db.query(

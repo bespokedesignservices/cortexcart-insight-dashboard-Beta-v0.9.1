@@ -169,15 +169,27 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         </div>
                         <div className="bg-white p-6 rounded-lg shadow-md border">
                             <h3 className="font-semibold text-lg mb-4">Upcoming Posts</h3>
-                            <div className="space-y-4 max-h-96 overflow-y-auto">
-                                {scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => (
-                                    <div key={post.id} className="text-sm p-2 bg-gray-50 rounded-md">
-                                        <p className="font-semibold">{PLATFORMS[post.platform]?.name}</p>
-                                        <p className="text-gray-600 truncate">{post.content}</p>
-                                        <p className="text-xs text-blue-500 mt-1">{moment(post.scheduled_at).format('MMM D, h:mm a')}</p>
+                            <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {scheduledPosts && scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => {
+                            const platform = PLATFORMS[post.resource.platform];
+                            const Icon = platform?.icon;
+                            return (
+                                <div key={post.id} className={`p-3 bg-gray-50 rounded-lg border-l-4 ${platform?.color || 'border-gray-400'}`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            {Icon && <Icon className="h-4 w-4 text-gray-600" />}
+                                            <span className="font-semibold text-sm text-gray-800">{platform?.name}</span>
+                                        </div>
+                                        <span className="text-xs text-blue-600 font-medium">{moment(post.start).format('MMM D, h:mm a')}</span>
                                     </div>
-                                )) : <p className="text-sm text-center text-gray-500 py-4">No posts scheduled.</p>}
-                            </div>
+                                    <p className="text-sm text-gray-600 truncate mt-1">{post.title.split(': ')[1]}</p>
+                                </div>
+                            );
+                        }) : (
+                            <p className="text-sm text-center text-gray-500 py-4">No posts scheduled.</p>
+                        )}
+                    
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -269,32 +281,62 @@ const AnalyticsTabContent = () => {
         </div>
     );
 };
-const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts }) => {
-    const eventPropGetter = useCallback(
-        (event) => {
-            const platform = event.resource?.platform;
-            let style = {
-                borderRadius: '5px',
-                border: 'none',
-                color: 'white',
-                display: 'block'
-            };
-            if (platform === 'x') {
-                style.backgroundColor = '#1DA1F2'; // Twitter Blue
-            } else if (platform === 'pinterest') {
-                style.backgroundColor = '#E60023'; // Pinterest Red
-            } else {
-                style.backgroundColor = '#6B7280'; // Gray
-            }
-            return { style };
-        },
-        []
-    );
+const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView }) => {
+    const onEventDrop = useCallback(async ({ event, start }) => {
+        if (moment(start).isBefore(moment())) {
+            alert("Cannot move events to a past date.");
+            return;
+        }
 
-    const onEventDrop = useCallback(async ({ event, start, end }) => {
-        // Handle event drop logic here, e.g., update the event in your backend
+        const originalEvents = [...scheduledPosts];
+        const updatedEvents = scheduledPosts.map(e => 
+            e.id === event.id ? { ...e, start, end: moment(start).add(1, 'hour').toDate() } : e
+        );
+        setScheduledPosts(updatedEvents);
+
+        try {
+            const res = await fetch(`/api/social/schedule/${event.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scheduled_at: start.toISOString() }),
+            });
+            if (!res.ok) throw new Error('Failed to update on server');
+        } catch (error) {
+            console.error("Failed to update schedule:", error);
+            alert('Failed to update schedule. Reverting changes.');
+            setScheduledPosts(originalEvents);
+        }
+    }, [scheduledPosts, setScheduledPosts, fetchScheduledPosts]);
+
+    const eventPropGetter = useCallback((event) => ({
+        style: { 
+            backgroundColor: PLATFORMS[event.resource?.platform]?.name === 'X (Twitter)' ? '#1DA1F2' : '#E60023', 
+            borderRadius: '5px', 
+            border: 'none', 
+            color: 'white' 
+        }
+    }), []);
+
+    const dayPropGetter = useCallback((date) => {
+        if (moment(date).isBefore(moment(), 'day')) {
+            return {
+                className: 'rbc-off-range-bg-disabled',
+                style: {
+                    backgroundColor: '#f3f4f6', 
+                    cursor: 'not-allowed',
+                },
+            };
+        }
+        return {};
     }, []);
 
+    const handleNavigate = (newDate) => setCalendarDate(newDate);
+    const handleView = (newView) => {
+        setView(newView);
+        if (newView === 'day') {
+            setCalendarDate(moment().add(1, 'day').toDate());
+        }
+    };
     return (
         <div className="bg-white p-6 rounded-lg shadow-md border" style={{ height: '80vh' }}>
             <DragAndDropCalendar

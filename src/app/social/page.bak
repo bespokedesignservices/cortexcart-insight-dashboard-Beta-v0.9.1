@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
-import { SparklesIcon, CalendarIcon, PaperAirplaneIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, CheckIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { SparklesIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, CheckIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -169,15 +169,26 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         </div>
                         <div className="bg-white p-6 rounded-lg shadow-md border">
                             <h3 className="font-semibold text-lg mb-4">Upcoming Posts</h3>
-                            <div className="space-y-4 max-h-96 overflow-y-auto">
-                                {scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => (
-                                    <div key={post.id} className="text-sm p-2 bg-gray-50 rounded-md">
-                                        <p className="font-semibold">{PLATFORMS[post.platform]?.name}</p>
-                                        <p className="text-gray-600 truncate">{post.content}</p>
-                                        <p className="text-xs text-blue-500 mt-1">{moment(post.scheduled_at).format('MMM D, h:mm a')}</p>
+                           < className="space-y-3 max-h-96 overflow-y-auto">
+                        {scheduledPosts && scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => {
+                            const platform = PLATFORMS[post.resource.platform];
+                            const Icon = platform?.icon;
+                            return (
+                                <div key={post.id} className={`p-3 bg-gray-50 rounded-lg border-l-4 ${platform?.color || 'border-gray-400'}`}>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            {Icon && <Icon className="h-4 w-4 text-gray-600" />}
+                                            <span className="font-semibold text-sm text-gray-800">{platform?.name}</span>
+                                        </div>
+                                        <span className="text-xs text-blue-600 font-medium">{moment(post.start).format('MMM D, h:mm a')}</span>
                                     </div>
-                                )) : <p className="text-sm text-center text-gray-500 py-4">No posts scheduled.</p>}
-                            </div>
+                                    <p className="text-sm text-gray-600 truncate mt-1">{post.title.split(': ')[1]}</p>
+                                </div>
+                            );
+                        }) : (
+                            <p className="text-sm text-center text-gray-500 py-4">No posts scheduled.</p>
+                        )}
+                    
                         </div>
                     </div>
                 </div>
@@ -189,130 +200,86 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
 };
 
 const AnalyticsTabContent = () => {
-    // Dummy data for analytics
-    const dummyAnalyticsData = {
-        totalPosts: 125,
-        totalReach: '1.2M',
-        engagementRate: '5.2%',
-        topPerformingPost: {
-            id: 1,
-            content: 'Our new summer collection is here! Shop now...',
-            platform: 'pinterest',
-            reach: '250K',
-            engagement: '8.1%',
-            image: '/images/dummy-product-1.jpg'
-        },
-        platformBreakdown: [
-            { platform: 'x', posts: 50, reach: '500K', engagement: '4.5%' },
-            { platform: 'pinterest', posts: 40, reach: '400K', engagement: '6.0%' },
-            { platform: 'facebook', posts: 35, reach: '300K', engagement: '5.0%' },
-        ],
-        dailyReach: [
-            { date: '2023-10-26', reach: 15000 },
-            { date: '2023-10-27', reach: 17000 },
-            { date: '2023-10-28', reach: 20000 },
-            { date: '2023-10-29', reach: 18000 },
-            { date: '2023-10-30', reach: 22000 },
-            { date: '2023-10-31', reach: 25000 },
-            { date: '2023-11-01', reach: 23000 },
-        ],
-        engagementByPlatform: {
-            labels: ['X (Twitter)', 'Pinterest', 'Facebook'],
-            datasets: [
-                {
-                    label: 'Engagement Rate (%)',
-                    data: [4.5, 6.0, 5.0],
-                    backgroundColor: [
-                        'rgba(29, 161, 242, 0.7)', // X Blue
-                        'rgba(230, 0, 35, 0.7)', // Pinterest Red
-                        'rgba(24, 119, 242, 0.7)', // Facebook Blue
-                    ],
-                    borderColor: [
-                        'rgba(29, 161, 242, 1)', 'rgba(230, 0, 35, 1)', 'rgba(24, 119, 242, 1)',
-                    ],
-                    borderWidth: 1,
-                },
-            ],
-        },
+    const [data, setData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                const res = await fetch('/api/social/analytics');
+                if (!res.ok) throw new Error('Failed to load analytics data.');
+                setData(await res.json());
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchAnalytics();
+    }, []);
+
+    if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
+    if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
+    if (!data) return <p className="text-center p-8">No analytics data available.</p>;
+
+    const { stats, dailyReach, platformStats } = data;
+
+    const reachChartData = dailyReach.map(item => ({
+        date: item.date,
+        pageviews: item.reach,
+        conversions: 0 // Not used for this chart
+    }));
+
+    const postsByPlatformData = platformStats.map(item => ({
+        date: PLATFORMS[item.platform]?.name || item.platform,
+        total_sales: item.postCount,
+    }));
+    
+    const engagementByPlatformData = {
+        labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
+        datasets: [{
+            label: 'Engagement Rate (%)',
+            data: platformStats.map(item => parseFloat(item.engagementRate).toFixed(2)),
+            backgroundColor: platformStats.map(item => PLATFORMS[item.platform]?.color || '#6B7280'),
+        }]
     };
 
     return ( 
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Social Media Analytics Overview</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-blue-50 p-5 rounded-lg shadow-sm">
+        <div className="bg-white p-6 rounded-lg shadow-md border space-y-8">
+            <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-blue-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-blue-600">Total Posts</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{dummyAnalyticsData.totalPosts}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPosts || 0}</p>
                 </div>
-                <div className="bg-green-50 p-5 rounded-lg shadow-sm">
+                <div className="bg-green-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-green-600">Total Reach</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{dummyAnalyticsData.totalReach}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{(stats.totalReach || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-purple-50 p-5 rounded-lg shadow-sm">
+                <div className="bg-purple-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-purple-600">Engagement Rate</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{dummyAnalyticsData.engagementRate}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{parseFloat(stats.engagementRate || 0).toFixed(2)}%</p>
                 </div>
             </div>
 
-            {/* Line Chart for Daily Reach */}
-            <div className="mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach Over Time</h4>
-                <div className="h-80">
-                    <Ga4LineChart data={dummyAnalyticsData.dailyReach.map(item => ({
-                        date: item.date,
-                        pageviews: item.reach, // Re-using pageviews for reach
-                        conversions: 0 // No conversions in this dummy data
-                    }))} />
-                </div>
+            <div>
+                <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach (Last 30 Days)</h4>
+                <div className="h-80"><Ga4LineChart data={reachChartData} /></div>
             </div>
 
-            {/* Bar Chart for Platform Breakdown (Posts) */}
-            <div className="mb-8">
+            <div>
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Posts by Platform</h4>
-                <div className="h-80">
-                    <SalesBarChart apiData={dummyAnalyticsData.platformBreakdown.map(item => ({
-                        date: item.platform, // Re-using date for platform name
-                        total_sales: item.posts // Re-using total_sales for posts count
-                    }))} currencySymbol="" locale="en-US" />
-                </div>
+                <div className="h-80"><SalesBarChart apiData={postsByPlatformData} currencySymbol="" /></div>
             </div>
 
-            {/* Doughnut Chart for Engagement by Platform */}
-            <div className="mb-8">
+            <div>
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
-                <div className="h-80 flex justify-center items-center">
-                    <div className="w-full max-w-md">
-                        <AnalyticsChart data={dummyAnalyticsData.engagementByPlatform} options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            if (context.parsed !== null) {
-                                                label += context.parsed + '%';
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                }
-                            },
-                        }} />
-                    </div>
-                </div>
+                <div className="h-80 flex justify-center"><AnalyticsChart data={engagementByPlatformData} /></div>
             </div>
         </div>
     );
 };
-
 const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts }) => {
     const eventPropGetter = useCallback(
         (event) => {
@@ -410,9 +377,8 @@ export default function SocialMediaManagerPage() {
                     setScheduledPosts={setScheduledPosts} 
                     fetchScheduledPosts={fetchScheduledPosts}
                 />
-            )}
-            
-            
+            )
+            }
         </Layout>
     );
 }
