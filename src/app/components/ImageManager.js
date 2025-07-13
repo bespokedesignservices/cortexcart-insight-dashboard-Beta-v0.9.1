@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 
+
 // A new component for a single draggable image
 function DraggableImage({ image }) {
     const { attributes, listeners, setNodeRef, transform,  isDragging } = useDraggable({
