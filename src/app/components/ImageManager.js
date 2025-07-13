@@ -2,18 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
+import { XCircleIcon } from '@heroicons/react/24/solid';
 
-
-// A new component for a single draggable image
+// A new component for a single draggable image with error handling
 function DraggableImage({ image }) {
-    const { attributes, listeners, setNodeRef, transform,  isDragging } = useDraggable({
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: image.id,
-        data: { image }, // Pass the entire image object in a data property
+        data: { image },
     });
+    
+    // State to track if the image URL is broken
+    const [imageError, setImageError] = useState(false);
 
     const style = transform ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 100,
     } : undefined;
+
+    const handleError = () => {
+        setImageError(true);
+    };
 
     return (
         <div 
@@ -21,13 +29,20 @@ function DraggableImage({ image }) {
             style={style} 
             {...listeners} 
             {...attributes}
-            className={`relative aspect-square bg-gray-white rounded-md touch-none ${isDragging ? 'opacity-50' : ''}`}
+            className={`relative aspect-square bg-gray-200 rounded-md touch-none overflow-hidden ${isDragging ? 'opacity-50' : ''}`}
         >
-            <img
-                src={image.image_url}
-                alt={image.filename || 'User image'}
-                className="w-full h-full object-cover rounded-md"
-            />
+            {imageError ? (
+                <div className="flex items-center justify-center h-full w-full bg-red-100 text-red-600">
+                    <XCircleIcon className="h-8 w-8" />
+                </div>
+            ) : (
+                <img
+                    src={image.image_url}
+                    alt={image.filename || 'User image'}
+                    className="w-full h-full object-cover"
+                    onError={handleError} // This is the key change to catch broken images
+                />
+            )}
         </div> 
     );
 }
@@ -92,7 +107,7 @@ export default function ImageManager() {
             {isLoading ? (
                 <p>Loading images...</p>
             ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 max-h-96 overflow-y-auto">
                     {images.map(image => (
                         <DraggableImage key={image.id} image={image} />
                     ))}

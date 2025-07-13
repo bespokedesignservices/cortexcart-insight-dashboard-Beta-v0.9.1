@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
-import { SparklesIcon, CalendarIcon, InformationCircleIcon, PaperAirplaneIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, CheckIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { SparklesIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, CheckIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
@@ -13,7 +14,6 @@ import Ga4LineChart from '@/app/components/Ga4LineChart';
 import AnalyticsChart from '@/app/components/AnalyticsChart';
 import { DndContext, DragOverlay, useDroppable, pointerWithin } from '@dnd-kit/core';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 
 // Register Chart.js and set up calendar localizer
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
@@ -189,140 +189,87 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
 };
 
 const AnalyticsTabContent = () => {
-    // Dummy data for analytics
-    const dummyAnalyticsData = {
-        totalPosts: 125,
-        totalReach: '1.2M',
-        engagementRate: '5.2%',
-        topPerformingPost: {
-            id: 1,
-            content: 'Our new summer collection is here! Shop now...',
-            platform: 'pinterest',
-            reach: '250K',
-            engagement: '8.1%',
-            image: '/images/dummy-product-1.jpg'
-        },
-        platformBreakdown: [
-            { platform: 'x', posts: 50, reach: '500K', engagement: '4.5%' },
-            { platform: 'pinterest', posts: 40, reach: '400K', engagement: '6.0%' },
-            { platform: 'facebook', posts: 35, reach: '300K', engagement: '5.0%' },
-        ],
-        dailyReach: [
-            { date: '2023-10-26', reach: 15000 },
-            { date: '2023-10-27', reach: 17000 },
-            { date: '2023-10-28', reach: 20000 },
-            { date: '2023-10-29', reach: 18000 },
-            { date: '2023-10-30', reach: 22000 },
-            { date: '2023-10-31', reach: 25000 },
-            { date: '2023-11-01', reach: 23000 },
-        ],
-        engagementByPlatform: {
-            labels: ['X (Twitter)', 'Pinterest', 'Facebook'],
-            datasets: [
-                {
-                    label: 'Engagement Rate (%)',
-                    data: [4.5, 6.0, 5.0],
-                    backgroundColor: [
-                        'rgba(29, 161, 242, 0.7)', // X Blue
-                        'rgba(230, 0, 35, 0.7)', // Pinterest Red
-                        'rgba(24, 119, 242, 0.7)', // Facebook Blue
-                    ],
-                    borderColor: [
-                        'rgba(29, 161, 242, 1)', 'rgba(230, 0, 35, 1)', 'rgba(24, 119, 242, 1)',
-                    ],
-                    borderWidth: 1,
-                },
-            ],
-        },
+    const [data, setData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchAnalytics = async () => {
+            try {
+                const res = await fetch('/api/social/analytics');
+                if (!res.ok) throw new Error('Failed to load analytics data.');
+                setData(await res.json());
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchAnalytics();
+    }, []);
+
+    if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
+    if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
+    if (!data) return <p className="text-center p-8">No analytics data available.</p>;
+
+    const { stats, dailyReach, platformStats } = data;
+
+    const reachChartData = dailyReach.map(item => ({
+        date: item.date,
+        pageviews: item.reach,
+        conversions: 0 // Not used for this chart
+    }));
+
+    const postsByPlatformData = platformStats.map(item => ({
+        date: PLATFORMS[item.platform]?.name || item.platform,
+        total_sales: item.postCount,
+    }));
+    
+    const engagementByPlatformData = {
+        labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
+        datasets: [{
+            label: 'Engagement Rate (%)',
+            data: platformStats.map(item => parseFloat(item.engagementRate).toFixed(2)),
+            backgroundColor: platformStats.map(item => PLATFORMS[item.platform]?.color || '#6B7280'),
+        }]
     };
 
     return ( 
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-            <h3 className="text-2xl font-bold mb-6 text-gray-800">Social Media Analytics Overview</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-blue-50 p-5 rounded-lg shadow-sm">
+        <div className="bg-white p-6 rounded-lg shadow-md border space-y-8">
+            <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-blue-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-blue-600">Total Posts</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{dummyAnalyticsData.totalPosts}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPosts || 0}</p>
                 </div>
-                <div className="bg-green-50 p-5 rounded-lg shadow-sm">
+                <div className="bg-green-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-green-600">Total Reach</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{dummyAnalyticsData.totalReach}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{(stats.totalReach || 0).toLocaleString()}</p>
                 </div>
-                <div className="bg-purple-50 p-5 rounded-lg shadow-sm">
+                <div className="bg-purple-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-purple-600">Engagement Rate</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{dummyAnalyticsData.engagementRate}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{parseFloat(stats.engagementRate || 0).toFixed(2)}%</p>
                 </div>
             </div>
 
-            {/* Line Chart for Daily Reach */}
-            <div className="mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach Over Time</h4>
-                <div className="h-80">
-                    <Ga4LineChart data={dummyAnalyticsData.dailyReach.map(item => ({
-                        date: item.date,
-                        pageviews: item.reach, // Re-using pageviews for reach
-                        conversions: 0 // No conversions in this dummy data
-                    }))} />
-                </div>
+            <div>
+                <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach (Last 30 Days)</h4>
+                <div className="h-80"><Ga4LineChart data={reachChartData} /></div>
             </div>
 
-            {/* Bar Chart for Platform Breakdown (Posts) */}
-            <div className="mb-8">
+            <div>
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Posts by Platform</h4>
-                <div className="h-80">
-                    <SalesBarChart apiData={dummyAnalyticsData.platformBreakdown.map(item => ({
-                        date: item.platform, // Re-using date for platform name
-                        total_sales: item.posts // Re-using total_sales for posts count
-                    }))} currencySymbol="" locale="en-US" />
-                </div>
+                <div className="h-80"><SalesBarChart apiData={postsByPlatformData} currencySymbol="" /></div>
             </div>
 
-            {/* Doughnut Chart for Engagement by Platform */}
-            <div className="mb-8">
+            <div>
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
-                <div className="h-80 flex justify-center items-center">
-                    <div className="w-full max-w-md">
-                        <AnalyticsChart data={dummyAnalyticsData.engagementByPlatform} options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            if (context.parsed !== null) {
-                                                label += context.parsed + '%';
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                }
-                            },
-                        }} />
-                    </div>
-                </div>
+                <div className="h-80 flex justify-center"><AnalyticsChart data={engagementByPlatformData} /></div>
             </div>
         </div>
     );
 };
-// --- NEW: Custom component to render events in the calendar ---//
-const CustomEvent = ({ event }) => {
-    return (
-        <div className="flex flex-col text-xs">
-            <strong className="font-semibold">{moment(event.start).format('h:mm a')}</strong>
-            <span className="truncate">{event.title}</span>
-        </div>
-    );
-};
-
-const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView, newView }) => {
+const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts }) => {
     const eventPropGetter = useCallback(
         (event) => {
             const platform = event.resource?.platform;
@@ -344,71 +291,11 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
         []
     );
 
-    const onEventDrop = useCallback(async ({ event, start }) => {
-       if (moment(start).isBefore(moment())) {
-            alert("Cannot move events to a past date.");
-            return;
-       }
-        const originalEvents = [...scheduledPosts];
-        const updatedEvents = scheduledPosts.map(e => 
-            e.id === event.id ? { ...e, start, end: moment(start).add(1, 'hour').toDate() } : e
-        );
-        setScheduledPosts(updatedEvents);
-
-        try {
-            const res = await fetch(`/api/social/schedule/${event.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ scheduled_at: start.toISOString() }),
-            });
-            if (!res.ok) throw new Error('Failed to update on server');
-        } catch (error) {
-            console.error("Failed to update schedule:", error);
-            alert('Failed to update schedule. Reverting changes.');
-            setScheduledPosts(originalEvents);
-        }
-    }, [scheduledPosts, setScheduledPosts, fetchScheduledPosts]);
-
-    // --- NEW: Function to style past dates ---
-    const dayPropGetter = useCallback((date) => {
-        if (moment(date).isBefore(moment(), 'day')) {
-            return {
-                className: 'rbc-off-range-bg-disabled',
-                style: {
-                    backgroundColor: '#f3f4f6', // A light gray color
-                    cursor: 'not-allowed',
-                },
-            };
-        }
-        return {};
+    const onEventDrop = useCallback(async ({ event, start, end }) => {
+        // Handle event drop logic here, e.g., update the event in your backend
     }, []);
 
-    // Handle the nav buttons on the calendar
-    const handleNavigate = (newDate) => {
-        setCalendarDate(newDate);
-    };
-    // Handle the view tabs of calender
-       const handleView = (newView) => setView(newView);
-        // If the user clicks the "Day" button, set the calendar to tomorrow's date
-        if (newView === 'day') {
-            setCalendarDate(moment().add(1, 'day').toDate());
-        };
-
     return (
-        <>
-        <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">
-                <div className="flex">
-                    <div className="flex-shrink-0">
-                        <InformationCircleIcon className="h-5 w-5 text-blue-500" aria-hidden="true" />
-                    </div>
-                    <div className="ml-3">
-                        <p className="text-sm">
-                            You can drag and drop scheduled posts to new dates to quickly reschedule them.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
         <div className="bg-white p-6 rounded-lg shadow-md border" style={{ height: '80vh' }}>
             <DragAndDropCalendar
                 localizer={localizer}
@@ -416,21 +303,11 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
                 startAccessor="start"
                 endAccessor="end"
                 style={{ height: '100%' }}
-                resizable
-                dayPropGetter={dayPropGetter} // <-- Apply the new day styler
                 eventPropGetter={eventPropGetter}
                 onEventDrop={onEventDrop} // Add this for drag and drop functionality
                 views={['month', 'week', 'day']}
-                components={{
-                    event: CustomEvent, // Use our custom component for events
-                }}
-                date={calendarDate}
-                onNavigate={handleNavigate}
-                view={view}
-                onView={handleView}
             />
         </div>
-        </>
     );
 };
 
@@ -438,8 +315,7 @@ export default function SocialMediaManagerPage() {
     const { status } = useSession();
     const [activeTab, setActiveTab] = useState('Composer');
     const [scheduledPosts, setScheduledPosts] = useState([]);
-    const [calendarDate, setCalendarDate] = useState(new Date());
-    const [view, setView] = useState(Views.MONTH); // Default view is Month
+    
     // Lifted State
     const [postContent, setPostContent] = useState('');
     const [selectedPlatform, setSelectedPlatform] = useState('x');
@@ -452,7 +328,7 @@ export default function SocialMediaManagerPage() {
                 id: post.id,
                 title: `${PLATFORMS[post.platform]?.name || 'Post'}: ${post.content.substring(0, 30)}...`,
                 start: new Date(post.scheduled_at),
-                end: moment(post.scheduled_at).add(1, 'hour').toDate(),
+                end: moment(post.scheduled_at).add(30, 'minutes').toDate(),
                 resource: { platform: post.platform },
             }));
             setScheduledPosts(formattedEvents);
@@ -489,14 +365,9 @@ export default function SocialMediaManagerPage() {
                     scheduledPosts={scheduledPosts} 
                     setScheduledPosts={setScheduledPosts} 
                     fetchScheduledPosts={fetchScheduledPosts}
-                    calendarDate={calendarDate}
-                    setCalendarDate={setCalendarDate}
-                    view={view}
-                    setView={setView}
                 />
-            )}
-            
-            
+            )
+            }
         </Layout>
     );
 }

@@ -1,0 +1,65 @@
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import db from '../../../../../lib/db';
+import { NextResponse } from 'next/server';
+
+export async function GET() {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+        return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+    }
+    const userEmail = session.user.email;
+
+    try {
+        const connection = await db.getConnection();
+
+        // Aggregate Stats (Total Posts, Reach, Engagement)
+        const [generalStats] = await connection.query(
+            `SELECT
+                COUNT(*) as totalPosts,
+                SUM(impressions) as totalReach,
+                (SUM(likes + shares) / SUM(impressions)) * 100 as engagementRate
+             FROM scheduled_posts
+             WHERE user_email = ? AND status = 'posted'`,
+            [userEmail]
+        );
+
+        // Daily Reach Over Time
+        const [dailyReach] = await connection.query(
+            `SELECT
+                DATE(scheduled_at) as date,
+                SUM(impressions) as reach
+             FROM scheduled_posts
+             WHERE user_email = ? AND status = 'posted' AND scheduled_at >= NOW() - INTERVAL 30 DAY
+             GROUP BY DATE(scheduled_at)
+             ORDER BY date ASC`,
+            [userEmail]
+        );
+
+        // Posts and Engagement by Platform
+        const [platformStats] = await connection.query(
+            `SELECT
+                platform,
+                COUNT(*) as postCount,
+                (SUM(likes + shares) / SUM(impressions)) * 100 as engagementRate
+             FROM scheduled_posts
+             WHERE user_email = ? AND status = 'posted'
+             GROUP BY platform`,
+            [userEmail]
+        );
+
+        connection.release();
+
+        const responseData = {
+            stats: generalStats[0],
+            dailyReach: dailyReach,
+            platformStats: platformStats,
+        };
+
+        return NextResponse.json(responseData, { status: 200 });
+
+    } catch (error) {
+        console.error('Error fetching social analytics:', error);
+        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+    }
+}
