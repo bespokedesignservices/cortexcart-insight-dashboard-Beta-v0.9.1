@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
 import { SparklesIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, CheckIcon, XCircleIcon } from '@heroicons/react/24/solid';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
+import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
@@ -281,6 +281,13 @@ const AnalyticsTabContent = () => {
         </div>
     );
 };
+const CustomEvent = ({ event }) => (
+    <div className="flex flex-col text-xs">
+        <strong className="font-semibold">{moment(event.start).format('h:mm a')}</strong>
+        <span className="truncate">{event.title}</span>
+    </div>
+);
+
 const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView }) => {
     const onEventDrop = useCallback(async ({ event, start }) => {
         if (moment(start).isBefore(moment())) {
@@ -331,13 +338,10 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
     }, []);
 
     const handleNavigate = (newDate) => setCalendarDate(newDate);
-    const handleView = (newView) => {
-        setView(newView);
-        if (newView === 'day') {
-            setCalendarDate(moment().add(1, 'day').toDate());
-        }
-    };
+    const handleView = (newView) => setView(newView);
+
     return (
+         <>
         <div className="bg-white p-6 rounded-lg shadow-md border" style={{ height: '80vh' }}>
             <DragAndDropCalendar
                 localizer={localizer}
@@ -346,21 +350,39 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
                 endAccessor="end"
                 style={{ height: '100%' }}
                 eventPropGetter={eventPropGetter}
+                dayPropGetter={dayPropGetter}
                 onEventDrop={onEventDrop} // Add this for drag and drop functionality
-                views={['month', 'week', 'day']}
+                views={['month', 'week', 'day', 'agenda']}
+                date={calendarDate}
+                view={view}
+                onNavigate={handleNavigate}
+                onView={handleView}
+                style={{ height: '100%' }}
+                resizable
+                components={{ event: CustomEvent }}
+
             />
         </div>
+        </>
     );
 };
 
 export default function SocialMediaManagerPage() {
-    const { status } = useSession();
+     const { status } = useSession();
     const [activeTab, setActiveTab] = useState('Composer');
     const [scheduledPosts, setScheduledPosts] = useState([]);
     
-    // Lifted State
+    // --- LIFTED STATE ---
     const [postContent, setPostContent] = useState('');
+    const [postImages, setPostImages] = useState([]);
     const [selectedPlatform, setSelectedPlatform] = useState('x');
+    const [userImages, setUserImages] = useState([]);
+    const [isLoadingImages, setIsLoadingImages] = useState(true);
+    const [activeDragId, setActiveDragId] = useState(null);
+
+    // --- Calendar State ---
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [view, setView] = useState(Views.MONTH);
 
     const fetchScheduledPosts = useCallback(async () => {
         try {
@@ -399,14 +421,18 @@ export default function SocialMediaManagerPage() {
                     setPostContent={setPostContent} // Pass setPostContent
                     selectedPlatform={selectedPlatform}
                     setSelectedPlatform={setSelectedPlatform}
-                />
+                    />
             )}
             {activeTab === 'Analytics' && <AnalyticsTabContent />}
             {activeTab === 'Schedule' && (
                 <ScheduleTabContent 
                     scheduledPosts={scheduledPosts} 
                     setScheduledPosts={setScheduledPosts} 
-                    fetchScheduledPosts={fetchScheduledPosts}
+                    fetchScheduledPosts={fetchScheduledPosts} // Pass fetchScheduledPosts
+                    calendarDate={new Date()}
+                    setCalendarDate={setCalendarDate}
+                    view={view}
+                    setView={setView}
                 />
             )
             }

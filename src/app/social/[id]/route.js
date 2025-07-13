@@ -36,7 +36,7 @@ export async function DELETE(request, { params }) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
     const userEmail = session.user.email;
-    const { id } = await params;
+    const { id } = params;
 
     try {
         await db.query(

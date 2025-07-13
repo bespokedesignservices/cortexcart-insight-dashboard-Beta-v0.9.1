@@ -15,7 +15,7 @@ export async function PUT(request, { params }) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
     const userEmail = session.user.email;
-    const { id } = params;
+    const { id } = await params;
 
     try {
         const { scheduled_at } = await request.json();
