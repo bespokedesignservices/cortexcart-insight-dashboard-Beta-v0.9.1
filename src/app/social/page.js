@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, getSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
-import { SparklesIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -289,7 +289,9 @@ const CustomEvent = ({ event }) => (
     </div>
 );
 
-const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView }) => {
+const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView, optimalTimes }) => {
+       console.log('Optimal times received by calendar:', optimalTimes);
+
     const onEventDrop = useCallback(async ({ event, start }) => {
         if (moment(start).isBefore(moment())) {
             alert("Cannot move events to a past date.");
@@ -326,6 +328,10 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
     }), []);
 
     const dayPropGetter = useCallback((date) => {
+           // Get the day of the week as a number (0=Sun, 1=Mon, etc.)
+       const dayOfWeekNumber = moment(date).day(); // This gets the day as a number (0-6)
+       const isOptimal = optimalTimes.some(time => time.optimal_day === dayOfWeekNumber);
+
         if (moment(date).isBefore(moment(), 'day')) {
             return {
                 className: 'rbc-off-range-bg-disabled',
@@ -333,23 +339,50 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
                     backgroundColor: '#f3f4f6', 
                     cursor: 'not-allowed',
                 },
+            }
+        }
+        if (isOptimal) {
+            return {
+                style: {
+                    backgroundColor: '#ecfdf5', // A light green color
+                },
             };
         }
+
         return {};
-    }, []);
+    }, [optimalTimes]); // Add optimalTimes as a dependency
+
 
     const handleNavigate = (newDate) => setCalendarDate(newDate);
-    
-    const handleView = (newView) => setView(newView);
+
+    //const handleView = (newView) => setView(newView);
+    const handleView = (newView) => {
+    setView(newView);
+    if (newView === 'day') {
+        setCalendarDate(moment().add(1, 'day').toDate());
+    }
+};
 
     return (
-         <>
+ <>
         <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 mb-6" role="alert">
             <div className="flex">
                 <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3" />
                 <p className="text-sm">You can drag and drop your scheduled posts to a new time or date. For more information, see our FAQ's.</p>
             </div>
         </div>
+                    <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 text-green-800 rounded-r-lg">
+                <div className="flex">
+                    <div className="flex-shrink-0">
+                        <StarIcon className="h-5 w-5 text-green-500" aria-hidden="true" />
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-sm">
+                            We've highlighted the best days to post for your target audience in green.
+                        </p>
+                    </div>
+                </div>
+            </div>
         <div className="bg-white p-6 rounded-lg shadow-md border" style={{ height: '80vh' }}>
             <DragAndDropCalendar
                 localizer={localizer}
@@ -502,7 +535,8 @@ export default function SocialMediaManagerPage() {
      const { status } = useSession();
     const [activeTab, setActiveTab] = useState('Composer');
     const [scheduledPosts, setScheduledPosts] = useState([]);
-    
+    const [optimalTimes, setOptimalTimes] = useState([]);
+
     // --- LIFTED STATE ---
     const [postContent, setPostContent] = useState('');
     const [postImages, setPostImages] = useState([]);
@@ -530,9 +564,22 @@ export default function SocialMediaManagerPage() {
         } catch (error) { console.error("Failed to fetch posts:", error); }
     }, []);
 
+    const fetchOptimalTimes = useCallback(async () => {
+        try {
+            const res = await fetch('/api/social/optimal-times');
+            if (res.ok) { 
+                setOptimalTimes(await res.json() || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch optimal times:", error);
+        }
+    }, []);
     useEffect(() => {
-        if (status === 'authenticated') fetchScheduledPosts();
-    }, [status, fetchScheduledPosts]);
+        if (status === 'authenticated') {
+        fetchOptimalTimes();
+        }
+        fetchScheduledPosts();
+    }, [status, fetchScheduledPosts, fetchOptimalTimes]);
     
     if (status === 'loading') return <Layout><p>Loading...</p></Layout>;
 
@@ -572,6 +619,7 @@ export default function SocialMediaManagerPage() {
                     setCalendarDate={setCalendarDate}
                     view={view}
                     setView={setView}
+                    optimalTimes={optimalTimes}
                 />
             )
             }{activeTab === 'Demographics' && <DemographicsTabContent />}
