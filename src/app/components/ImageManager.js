@@ -47,7 +47,7 @@ function DraggableImage({ image }) {
     );
 }
 
-export default function ImageManager() {
+export default function ImageManager({ onImageAdd }) {
     const [images, setImages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -81,6 +81,7 @@ export default function ImageManager() {
             if (!response.ok) throw new Error('Failed to add image.');
             const newImage = await response.json();
             setImages(prevImages => [newImage, ...prevImages]); 
+            onImageAdd(newImage); // This is the new line that sends the image up
             setImageUrl(''); 
         } catch (err) {
             setError(err.message);

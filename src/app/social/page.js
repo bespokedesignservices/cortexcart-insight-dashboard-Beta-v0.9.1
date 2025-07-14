@@ -14,6 +14,7 @@ import Ga4LineChart from '@/app/components/Ga4LineChart';
 import AnalyticsChart from '@/app/components/AnalyticsChart';
 import { DndContext, DragOverlay, useDroppable, pointerWithin } from '@dnd-kit/core';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
+import Image from 'next/image'; 
 
 // Register Chart.js and set up calendar localizer
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
@@ -59,9 +60,31 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
 
     const { setNodeRef } = useDroppable({ id: 'post-composition-area' });
     const handleDragStart = (event) => setActiveDragId(event.active.id);
-    const handleDragEnd = (event) => { /* ... existing logic ... */ };
-    const handleRemoveImage = (imageId) => setPostImages(current => current.filter(image => image.id !== imageId));
+    const handleDragEnd = (event) => {
+    const { over, active } = event;
+    setActiveDragId(null); // Reset the active drag ID regardless of where it was dropped
 
+    // Check if the item was dropped over the composer area
+    if (over && over.id === 'post-composition-area') {
+        const draggedImage = active.data.current.image;
+
+        // Add the image to the postImages state, preventing duplicates
+        if (draggedImage && !postImages.some(img => img.id === draggedImage.id)) {
+            setPostImages(currentImages => [...currentImages, draggedImage]);
+        }
+    }
+};
+
+    // This function will be called by the ImageManager
+    const handleImageAdded = (newImage) => {
+        if (newImage && !postImages.some(img => img.id === newImage.id)) {
+            setPostImages(currentImages => [...currentImages, newImage]);
+        }
+    };
+
+   const handleRemoveImage = (imageId) => {
+    setPostImages(current => current.filter(image => image.id !== imageId));
+};
     const currentPlatform = PLATFORMS[selectedPlatform];
 
     const handleSchedulePost = async (e) => {
@@ -109,15 +132,31 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                                 );
                             })}
                         </div>
-                        <div ref={setNodeRef} className="mt-4 p-2 border-2 border-dashed rounded-lg min-h-[120px] flex items-center justify-center bg-gray-50 flex-wrap gap-2">
-                             {postImages.map(image => (
-                                <div key={image.id} className="relative w-24 h-24">
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={image.image_url} alt="Post preview" className="w-full h-full object-cover rounded-md" />
-                                    <button onClick={() => handleRemoveImage(image.id)} className="absolute -top-2 -right-2 bg-gray-700 text-white rounded-full p-0.5 hover:bg-red-600"><XCircleIcon className="h-5 w-5" /></button>
-                                </div>
-                            ))}
+                         {/* --- NEW LAYOUT: Grid for Text and Image Areas --- */}
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols- gap-4" style={{ minHeight: '250px' }}>
+                        
+                        <div className="w-full h-full border-2 border-dashed rounded-lg bg-gray-50 flex items-center justify-center relative overflow-hidden">
+                            {postImages.length > 0 ? (
+                                <>
+                                    <Image
+                                        src={postImages[0].image_url}
+                                        alt="Staged post preview"
+                                        layout="fill"
+                                        className="object-cover"
+                                    />
+                                    <button
+                                        onClick={() => handleRemoveImage(postImages[0].id)}
+                                        className="absolute top-2 right-2 bg-gray-900/50 text-white rounded-full p-1 hover:bg-red-600 z-10"
+                                    >
+                                        <XCircleIcon className="h-5 w-5" />
+                                    </button>
+                                </>
+                            ) : (
+                                <p className="text-sm text-gray-400">Your staged image will appear here</p>
+                            )}
                         </div>
+                    </div>
+                 
                         <textarea value={postContent} onChange={(e) => setPostContent(e.target.value)} placeholder={currentPlatform.placeholder} className="mt-4 w-full h-64 p-4 border border-gray-200 rounded-md"/>
                         <div className="mt-4 flex justify-between items-center">
                             <span className={`text-sm font-medium ${isOverLimit ? 'text-red-600' : 'text-gray-500'}`}>{postContent.length}/{currentPlatform.maxLength}</span>
@@ -194,7 +233,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         </div>
                     </div>
                 </div>
-                <ImageManager images={userImages} isLoading={isLoadingImages} />
+                <ImageManager onImageAdd={handleImageAdded} images={userImages} isLoading={isLoadingImages} />
                 <DragOverlay>{activeDragId && <div className="w-24 h-24 bg-gray-300 rounded-md shadow-lg" />}</DragOverlay>
             </DndContext>
         </>
