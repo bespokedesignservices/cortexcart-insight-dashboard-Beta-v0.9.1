@@ -175,6 +175,8 @@ const SocialConnectionsTabContent = () => {
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
     const searchParams = useSearchParams();
 
+    const [connectedPageId, setConnectedPageId] = useState(null);
+
     const fetchFacebookPages = useCallback(async () => {
         setIsLoadingPages(true);
         try {
@@ -192,6 +194,26 @@ const SocialConnectionsTabContent = () => {
             setIsLoadingPages(false);
         }
     }, []);
+
+    const fetchStatuses = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/social/connections/status');
+            if (res.ok) {
+                const statuses = await res.json();
+                setConnectionStatus(statuses);
+                // Set the connected page ID from the statuses
+                setConnectedPageId(statuses.page_id);
+                if (statuses.facebook) {
+                    fetchFacebookPages();
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch connection statuses:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [fetchFacebookPages]);
 
     useEffect(() => {
         const fetchStatus = async () => {
@@ -278,7 +300,7 @@ const SocialConnectionsTabContent = () => {
                                                 <img src={page.picture.data.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
                                                 <span className="text-sm font-medium text-gray-700">{page.name}</span>
                                             </div>
-                                            {connectionStatus.page_id === page.id ? 
+                                            {connectedPageId === page.id ? 
                                                 <span className="text-sm font-semibold text-green-600">Active</span> :
                                                 <button onClick={() => handleConnectPage(page.id, page.access_token)} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100">Connect</button>
                                             }

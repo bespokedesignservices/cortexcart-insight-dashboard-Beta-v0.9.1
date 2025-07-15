@@ -133,7 +133,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
         if (!postContent) return;
         
         const currentPlatform = PLATFORMS[selectedPlatform];
-        if (!currentPlatform || currentPlatform.disabled || !currentPlatform.apiEndpoint) {
+        if (!currentPlatform || currentPlatform.disabled) {
             setPostStatus({ message: 'This platform is not supported for direct posting.', type: 'error' });
             setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
             return;
@@ -142,10 +142,11 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
         setIsPosting(true);
         setPostStatus({ message: '', type: '' });
 
+        // The payload is now simpler
         const payload = {
-            platform: selectedPlatform,
             content: postContent,
             imageUrl: postImages[0]?.image_url,
+            platform: selectedPlatform, // We still send the platform name
         };
 
         try {
@@ -168,7 +169,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
             setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
         }
     };
-
+    
     const handleSchedulePost = async (e) => {
         e.preventDefault();
         setError('');

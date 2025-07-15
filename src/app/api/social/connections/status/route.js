@@ -4,7 +4,6 @@ import db from '../../../../../lib/db';
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
-// Handles GET requests to check connection status
 export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -15,26 +14,32 @@ export async function GET() {
     const supportedPlatforms = ['x', 'facebook', 'pinterest'];
 
     try {
-        const [connections] = await db.query(
-            'SELECT platform FROM social_connect WHERE user_email = ?',
+        // --- THIS IS THE FIX ---
+        // The query now also selects the page_id and page_access_token_encrypted
+            const [connections] = await db.query(
+            'SELECT platform, page_id FROM social_connect WHERE user_email = ?',
             [userEmail]
         );
 
         const status = {};
-        const connectedPlatforms = new Set(connections.map(c => c.platform.toLowerCase()));
+        const facebookConnection = connections.find(c => c.platform === 'facebook');
 
         supportedPlatforms.forEach(platform => {
-            status[platform] = connectedPlatforms.has(platform);
+            status[platform] = connections.some(c => c.platform === platform);
         });
 
-        return NextResponse.json(status, { status: 200 });
+        // Add the page_id to the response if it exists
+        if (facebookConnection) {
+            status.page_id = facebookConnection.page_id;
+        }
 
+        return NextResponse.json(status, { status: 200 });
+        
     } catch (error) {
         console.error('Error fetching social connection statuses:', error);
         return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
     }
 }
-
 // Handles DELETE requests to disconnect an account
 export async function DELETE(request) {
     const session = await getServerSession(authOptions);
