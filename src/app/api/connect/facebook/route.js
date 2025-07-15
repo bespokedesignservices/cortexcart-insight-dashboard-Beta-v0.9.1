@@ -11,7 +11,7 @@ export async function GET() {
         const callbackURL = `${process.env.NEXTAUTH_URL}/connect/callback/facebook`;
         
         // These are the permissions we configured earlier
-        const scopes = 'email,public_profile,pages_show_list,pages_read_engagement,pages_manage_posts';
+        const scopes = 'email,public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_manage_insights,instagram_content_publish';
 
         const params = new URLSearchParams({
             client_id: process.env.FACEBOOK_CLIENT_ID,
