@@ -132,8 +132,8 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                                 );
                             })}
                         </div>
-                         {/* --- NEW LAYOUT: Grid for Text and Image Areas --- */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols- gap-4" style={{ minHeight: '250px' }}>
+                        {/* --- NEW LAYOUT: Grid for Text and Image Areas --- */}
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-gap-8" style={{ minHeight: '250px' }}>
                         
                         <div className="w-full h-full border-2 border-dashed rounded-lg bg-gray-50 flex items-center justify-center relative overflow-hidden">
                             {postImages.length > 0 ? (
@@ -148,7 +148,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                                         onClick={() => handleRemoveImage(postImages[0].id)}
                                         className="absolute top-2 right-2 bg-gray-900/50 text-white rounded-full p-1 hover:bg-red-600 z-10"
                                     >
-                                        <XCircleIcon className="h-5 w-5" />
+                                        <XCircleIcon className="h-5 w-5 z-10" />
                                     </button>
                                 </>
                             ) : (
@@ -231,9 +231,10 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                     
                         </div>
                         </div>
+                <ImageManager onImageAdd={handleImageAdded} images={userImages} isLoading={isLoadingImages} />
+
                     </div>
                 </div>
-                <ImageManager onImageAdd={handleImageAdded} images={userImages} isLoading={isLoadingImages} />
                 <DragOverlay>{activeDragId && <div className="w-24 h-24 bg-gray-300 rounded-md shadow-lg" />}</DragOverlay>
             </DndContext>
         </>
