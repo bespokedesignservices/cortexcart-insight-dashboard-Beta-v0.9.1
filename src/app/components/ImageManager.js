@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { XCircleIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { XCircleIcon, TrashIcon, ArrowUpTrayIcon} from '@heroicons/react/24/solid';
 
 // Updated to include the onDelete function
 function DisplayImage({ image, onDelete, onSelect }) {
@@ -53,7 +53,38 @@ export default function ImageManager({ onImageAdd }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [imageUrl, setImageUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
 
+    const handleFileUpload = async () => {
+        if (!selectedFile) return;
+        setIsUploading(true);
+        setError('');
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch('/api/images/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.message || 'File upload failed.');
+            }
+
+            const newImage = await response.json();
+            setImages(prevImages => [newImage, ...prevImages]);
+            setSelectedFile(null); // Clear the file input
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    
     useEffect(() => {
         const fetchImages = async () => {
             try {
@@ -114,25 +145,47 @@ export default function ImageManager({ onImageAdd }) {
 
     return (
         <div className="p-4 border rounded-lg mt-8 bg-white">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Image Manager</h3>
-            <form onSubmit={handleAddImage} className="flex items-center gap-2 mb-4">
-                <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Add image by URL"
-                    className="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                    required
-                />
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
-                    Add Image
-                </button>
-            </form>
+            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-3">Image Manager</h3>
+            <p className="text-grey-200">Add an image to your post below..</p>
+            <hr className="mb-3 mt-3"></hr>
+            <div className="space-y-4 mb-4 mt-3">
+                <form onSubmit={handleAddImage} className="flex items-center gap-2">
+                    <input
+                        type="url"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        placeholder="Add image by URL"
+                        className="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+                    />
+                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 whitespace-nowrap">
+                        Add Image
+                    </button>
+                </form>
+
+                <div className="flex items-center gap-2">
+                    <label htmlFor="file-upload" className="flex-grow w-full cursor-pointer">
+                        <span className="block w-full text-sm text-gray-500 border border-gray-300 rounded-md shadow-sm px-3 py-2 bg-white">
+                           {selectedFile ? selectedFile.name : 'Choose File'}
+                        </span>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={(e) => setSelectedFile(e.target.files[0])} />
+                    </label>
+                    <button 
+                        onClick={handleFileUpload}
+                        disabled={!selectedFile || isUploading}
+                        className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:bg-gray-400 flex items-center whitespace-nowrap"
+                    >
+                        <ArrowUpTrayIcon className="h-5 w-5 mr-2"/>
+                        {isUploading ? 'Uploading...' : 'Upload'}
+                    </button>
+                </div>
+            </div>
+<hr className="mb-3"></hr>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
             {isLoading ? (
                 <p>Loading images...</p>
             ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 max-h-96 overflow-y-auto mt-4">
                     {images.map(image => (
                         <DisplayImage 
                             key={image.id} 
