@@ -9,17 +9,18 @@ import { encrypt } from '@/lib/crypto';
 
 export const runtime = 'nodejs';
 
-// --- THIS IS THE CORRECTED FUNCTION SIGNATURE ---
 export async function GET(request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
         return redirect('/api/auth/signin');
     }
 
-    // Get searchParams from the request object's URL
+    // --- THIS IS THE CORRECTED PART ---
+    // We create a new URL object from the request URL to access its parameters.
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
+    // --- END OF FIX ---
 
     const originalState = cookies().get('facebook_oauth_state')?.value;
 
@@ -28,23 +29,36 @@ export async function GET(request) {
     }
 
     try {
+        // Exchange the code for a short-lived token
         const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token`;
-        const params = new URLSearchParams({
+        const shortLivedTokenParams = new URLSearchParams({
             client_id: process.env.FACEBOOK_CLIENT_ID,
             client_secret: process.env.FACEBOOK_CLIENT_SECRET,
             redirect_uri: `${process.env.NEXTAUTH_URL}/connect/callback/facebook`,
             code: code,
         });
 
-        const tokenResponse = await fetch(`${tokenUrl}?${params.toString()}`);
-        const tokenData = await tokenResponse.json();
+        const shortLivedTokenResponse = await fetch(`${tokenUrl}?${shortLivedTokenParams.toString()}`);
+        const shortLivedTokenData = await shortLivedTokenResponse.json();
 
-        if (tokenData.error) {
-            throw new Error(tokenData.error.message);
-        }
+        if (shortLivedTokenData.error) throw new Error(shortLivedTokenData.error.message);
 
-        const { access_token, expires_in } = tokenData;
+        // Exchange the short-lived token for a long-lived token
+        const longLivedTokenParams = new URLSearchParams({
+            grant_type: 'fb_exchange_token',
+            client_id: process.env.FACEBOOK_CLIENT_ID,
+            client_secret: process.env.FACEBOOK_CLIENT_SECRET,
+            fb_exchange_token: shortLivedTokenData.access_token,
+        });
 
+        const longLivedTokenResponse = await fetch(`${tokenUrl}?${longLivedTokenParams.toString()}`);
+        const longLivedTokenData = await longLivedTokenResponse.json();
+
+        if (longLivedTokenData.error) throw new Error(longLivedTokenData.error.message);
+
+        const { access_token, expires_in } = longLivedTokenData;
+
+        // Save the long-lived token to the database
         const userEmail = session.user.email;
         const encryptedAccessToken = encrypt(access_token);
         const expiresAt = new Date(Date.now() + expires_in * 1000);

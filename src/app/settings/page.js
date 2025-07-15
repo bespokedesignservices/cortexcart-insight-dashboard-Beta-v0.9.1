@@ -246,7 +246,7 @@ const SocialConnectionsTabContent = () => {
     const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
         try {
-            await fetch('/api/social/connections', {
+            await fetch('/api/social/connections/status', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ platform }),
