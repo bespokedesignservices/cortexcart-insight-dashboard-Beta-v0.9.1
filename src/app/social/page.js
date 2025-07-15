@@ -23,8 +23,47 @@ const DragAndDropCalendar = withDragAndDrop(Calendar);
 
 // --- PLATFORMS CONFIGURATION ---
 const PLATFORMS = {
-    x: { name: 'X (Twitter)', maxLength: 280, icon: (props) => (<svg {...props} viewBox="0 0 1200 1227"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" fill="currentColor"/></svg>), placeholder: 'Whats happening?!', disabled: false },
-    pinterest: { name: 'Pinterest', maxLength: 500, icon: (props) => (<svg {...props} viewBox="0 0 24 24"><path fill="#E60023" d="M12 2C6.477 2 2 6.477 2 12c0 4.14 2.686 7.66 6.357 8.94.02-.19.03-.4.05-.61l.33-1.4a.12.12 0 0 1 .1-.1c.36-.18 1.15-.56 1.15-.56s-.3-.91-.25-1.79c.06-.9.65-2.12 1.46-2.12.68 0 1.2.51 1.2 1.12 0 .68-.43 1.7-.65 2.64-.18.78.38 1.42.92 1.42 1.58 0 2.63-2.1 2.63-4.22 0-1.8-.95-3.26-2.7-3.26-2.12 0-3.32 1.58-3.32 3.16 0 .6.22 1.25.5 1.62.03.04.04.05.02.13l-.15.65c-.05.2-.14.24-.32.08-1.05-.9-1.5-2.3-1.5-3.82 0-2.78 2.04-5.38 5.8-5.38 3.1 0 5.2 2.25 5.2 4.67 0 3.1-1.95 5.42-4.62 5.42-.9 0-1.75-.46-2.05-1l-.52 2.1c-.24 1-.92 2.25-.92 2.25s-.28.1-.32.08c-.46-.38-.68-1.2-.55-1.88l.38-1.68c.12-.55-.03-1.2-.5-1.52-1.32-.9-1.9-2.6-1.9-4.22 0-2.28 1.6-4.3 4.6-4.3 2.5 0 4.2 1.8 4.2 4.15 0 2.5-1.55 4.5-3.8 4.5-.75 0-1.45-.38-1.7-.82l-.28-.9c-.1-.4-.2-.8-.2-1.22 0-.9.42-1.68 1.12-1.68.9 0 1.5.8 1.5 1.88 0 .8-.25 1.88-.58 2.8-.25.7-.5 1.4-.5 1.4s-.3.12-.35.1c-.2-.1-.3-.2-.3-.4l.02-1.12z"/></svg>), placeholder: 'Add a Pin description...', disabled: false },
+    x: { 
+        name: 'X (Twitter)', 
+        maxLength: 280, 
+        icon: (props) => ( <svg {...props} fill="currentColor" viewBox="0 0 24 24">
+              <path d="M13.682 10.623 20.239 3h-1.64l-5.705 6.44L7.65 3H3l6.836 9.753L3 21h1.64l6.082-6.885L16.351 21H21l-7.318-10.377zM14.78 13.968l-.87-1.242L6.155 4.16h2.443l4.733 6.742.87 1.242 7.03 9.98h-2.443l-5.045-7.143z" />
+            </svg>), 
+        placeholder: 'What is happening?!', 
+        disabled: false,
+        // --- NEW PROPERTY ---
+        apiEndpoint: '/api/social/post' 
+    },
+    facebook: {
+        name: 'Facebook',
+        maxLength: 5000,
+        icon: (props) => (<svg {...props} fill="currentColor" viewBox="0 0 24 24">
+              <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.77-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
+            </svg>),
+        placeholder: "What's on your mind?",
+        disabled: false,
+        // --- NEW PROPERTY ---
+        apiEndpoint: '/api/social/facebook/create-post'
+    },
+    pinterest: { 
+        name: 'Pinterest', 
+        maxLength: 500, 
+        icon: (props) => (<svg {...props} fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12.017 0C5.396 0 .029 5.367.029 12c0 4.137 2.678 7.653 6.333 8.943.02-.19.029-.398.05-.61l.329-1.4a.123.123 0 0 1 .099-.1c.36-.18 1.15-.56 1.15-.56s-.299-.909-.249-1.79c.06-.9.649-2.12 1.459-2.12.68 0 1.2.51 1.2 1.12 0 .68-.43 1.7-.65 2.64-.179.78.379 1.42.919 1.42 1.58 0 2.63-2.1 2.63-4.22 0-1.8-1.12-3.44-3.03-3.44-2.28 0-3.52 1.68-3.52 3.32 0 .61.22 1.25.5 1.62.03.04.04.05.02.13l-.15.65c-.05.2-.14.24-.32.08-1.05-.9-1.5-2.3-1.5-3.82C6.18 5.76 8.35 3 12.33 3c3.22 0 5.59 2.38 5.59 4.91 0 3.22-1.95 5.61-4.79 5.61-.9 0-1.75-.47-2.05-1.02l-.52 2.1c-.24 1.01-1.04 2.45-1.04 2.45s-.28.1-.32.08c-.46-.38-.68-1.2-.55-1.88l.38-1.68c.12-.55-.03-1.2-.5-1.52-1.32-.9-1.9-2.6-1.9-4.22 0-2.28 1.6-4.3 4.6-4.3 2.5 0 4.2 1.8 4.2 4.15 0 2.5-1.55 4.5-3.8 4.5-.75 0-1.45-.38-1.7-.82l-.28-.9c-.1-.4-.2-.8-.2-1.22 0-.9.42-1.68 1.12-1.68.9 0 1.5.8 1.5 1.88 0 .8-.25 1.88-.58 2.8-.25.7-.5 1.4-.5 1.4s-.3.12-.35.1c-.2-.1-.3-.2-.3-.4l.02-1.12z" />
+            </svg>), 
+        placeholder: 'Add a Pin description...', 
+        // We leave this disabled and without an endpoint for now
+        disabled: true 
+    },
+    instagram: {
+        name: 'Instagram',
+        maxLength: 2200,
+        icon: (props) => (<svg {...props} fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2c1.74 0 2.28.01 3.07.05 1.07.05 1.81.22 2.42.46a4.88 4.88 0 0 1 1.76 1.15 4.88 4.88 0 0 1 1.15 1.76c.24.6.41 1.35.46 2.42.04.79.05 1.33.05 3.07s-.01 2.28-.05 3.07c-.05 1.07-.22 1.81-.46 2.42a4.88 4.88 0 0 1-1.15 1.76 4.88 4.88 0 0 1-1.76 1.15c-.6.24-1.35.41-2.42.46-.79.04-1.33.05-3.07.05s-2.28-.01-3.07-.05c-1.07-.05-1.81-.22-2.42-.46a4.88 4.88 0 0 1-1.76-1.15 4.88 4.88 0 0 1-1.15-1.76c-.24-.6-.41-1.35-.46-2.42a83.3 83.3 0 0 1-.05-3.07s.01-2.28.05-3.07c.05-1.07.22-1.81.46-2.42a4.88 4.88 0 0 1 1.15-1.76A4.88 4.88 0 0 1 6.5 2.51c.6-.24 1.35-.41 2.42-.46.79-.04 1.33-.05 3.07-.05M12 0C9.26 0 8.74.01 7.9.06 6.63.11 5.6.31 4.7.7a6.88 6.88 0 0 0-2.47 2.47c-.4 1-.6 1.93-.65 3.2-.04.84-.05 1.36-.05 4.1s.01 3.26.05 4.1c.05 1.27.25 2.2.65 3.2a6.88 6.88 0 0 0 2.47 2.47c1 .4 1.93.6 3.2.65.84.04 1.36.05 4.1.05s3.26-.01 4.1-.05c1.27-.05 2.2-.25 3.2-.65a6.88 6.88 0 0 0 2.47-2.47c.4-1 .6-1.93.65-3.2.04-.84.05-1.36.05-4.1s-.01-3.26-.05-4.1c-.05-1.27-.25-2.2-.65-3.2A6.88 6.88 0 0 0 19.3.7c-1-.4-1.93-.6-3.2-.65-.84-.04-1.36-.05-4.1-.05zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" />
+            </svg>),
+        placeholder: 'Write a caption...',
+        disabled: true
+    }
 };
 
 const SocialNav = ({ activeTab, setActiveTab }) => {
@@ -53,6 +92,9 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     const [scheduleTime, setScheduleTime] = useState('10:00');
     const [isLoadingImages, setIsLoadingImages] = useState(true);
     const [activeDragId, setActiveDragId] = useState(null);
+    const [isPosting, setIsPosting] = useState(false);
+    const [postStatus, setPostStatus] = useState({ message: '', type: '' });
+
 
     useEffect(() => {
         fetch('/api/images').then(res => res.json()).then(setUserImages).finally(() => setIsLoadingImages(false));
@@ -86,6 +128,46 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     setPostImages(current => current.filter(image => image.id !== imageId));
 };
     const currentPlatform = PLATFORMS[selectedPlatform];
+
+     const handlePostNow = async () => {
+        if (!postContent) return;
+        
+        const currentPlatform = PLATFORMS[selectedPlatform];
+        if (!currentPlatform || currentPlatform.disabled || !currentPlatform.apiEndpoint) {
+            setPostStatus({ message: 'This platform is not supported for direct posting.', type: 'error' });
+            setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
+            return;
+        }
+
+        setIsPosting(true);
+        setPostStatus({ message: '', type: '' });
+
+        const payload = {
+            platform: selectedPlatform,
+            content: postContent,
+            imageUrl: postImages[0]?.image_url,
+        };
+
+        try {
+            const res = await fetch(currentPlatform.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+
+            setPostStatus({ message: `Post published to ${currentPlatform.name} successfully!`, type: 'success' });
+            setPostContent('');
+            setPostImages([]);
+
+        } catch (err) {
+            setPostStatus({ message: err.message, type: 'error' });
+        } finally {
+            setIsPosting(false);
+            setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
+        }
+    };
 
     const handleSchedulePost = async (e) => {
         e.preventDefault();
@@ -162,9 +244,21 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                             <span className={`text-sm font-medium ${isOverLimit ? 'text-red-600' : 'text-gray-500'}`}>{postContent.length}/{currentPlatform.maxLength}</span>
                             <div className="flex items-center gap-x-2">
                                 <button onClick={() => { }} className="flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm bg-white text-gray-700 border-gray-300 hover:bg-gray-50"><ClipboardDocumentIcon className="h-5 w-5 mr-2" />Copy</button>
-                                <button onClick={() => { }} className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"><PaperAirplaneIcon className="h-5 w-5 mr-2" />Post Now</button>
+                                <button 
+                                onClick={handlePostNow}
+                                disabled={isPosting || !postContent || isOverLimit}
+                                className="flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300">
+                                <PaperAirplaneIcon className="h-5 w-5 mr-2" />
+                                {isPosting ? 'Posting...' : 'Post Now'}
+                            </button>
                             </div>
                         </div>
+                        {/* --- NEW STATUS MESSAGE AREA --- */}
+                    {postStatus.message && (
+                        <div className={`mt-4 text-sm p-2 rounded-md text-center ${postStatus.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {postStatus.message}
+                        </div>
+                    )}
                         {/* New Form for Scheduling */}
                         <form onSubmit={handleSchedulePost} className="mt-6 border-t pt-4">
                             <h4 className="text-lg font-semibold text-gray-800 mb-4">Schedule Post</h4>
@@ -228,7 +322,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         }) : (
                             <p className="text-sm text-center text-gray-500 py-4">No posts scheduled.</p>
                         )}
-                    
+
                         </div>
                         </div>
                 <ImageManager onImageAdd={handleImageAdded} images={userImages} isLoading={isLoadingImages} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut, signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/app/components/Layout';
@@ -8,6 +8,11 @@ import SettingsTabs from '@/app/components/SettingsTabs';
 import { CheckCircleIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
 import AlertBanner from '@/app/components/AlertBanner';
 
+const FacebookIcon = (props) => (
+  <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
+    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.77-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" />
+  </svg>
+);
 const tabs = [
     { name: 'General', href: '#' },
     { name: 'Integrations', href: '#' },
@@ -42,6 +47,23 @@ const GeneralTabContent = () => {
         }
         fetchSettings();
     }, []);
+
+    const handleConnectPage = async (pageId, pageAccessToken) => {
+        try {
+            const res = await fetch('/api/social/facebook/connect-page', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId, pageAccessToken })
+            });
+            if (!res.ok) throw new Error('Failed to connect page.');
+            setAlert({ show: true, message: `Page ${pageId} connected successfully!`, type: 'success' });
+            fetchStatuses(); // Refresh statuses and page list
+        } catch (error) {
+            setAlert({ show: true, message: error.message, type: 'danger' });
+        }
+    };
+
+
 
     const handleSaveSettings = async (e) => {
         e.preventDefault();
@@ -147,9 +169,29 @@ const IntegrationsTabContent = () => {
 const SocialConnectionsTabContent = () => {
     // CHANGED: Added 'pinterest' to the initial state
     const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false });
+    const [isLoadingPages, setIsLoadingPages] = useState(false);
+    const [facebookPages, setFacebookPages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
     const searchParams = useSearchParams();
+
+    const fetchFacebookPages = useCallback(async () => {
+        setIsLoadingPages(true);
+        try {
+            const res = await fetch('/api/social/facebook/pages');
+            const data = await res.json();
+            if (res.ok) {
+                setFacebookPages(data);
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error("Failed to fetch Facebook pages:", error);
+            setAlert({ show: true, message: error.message, type: 'danger' });
+        } finally {
+            setIsLoadingPages(false);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchStatus = async () => {
@@ -206,6 +248,48 @@ const SocialConnectionsTabContent = () => {
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Social Connections</h3>
                 <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable posting and analytics.</p>
                 
+                {/* Facebook Connection Block */}
+                <div className="mt-6 p-4 border rounded-lg">
+                    <div className="flex items-center justify-between">
+                         <div>
+                            <p className="font-semibold">Facebook</p>
+                            <p className="text-sm text-gray-500">Connect your Facebook account to manage your pages.</p>
+                        </div>
+                        {connectionStatus.facebook ? (
+                             <div className="flex items-center gap-x-4">
+                                <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                                <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                            </div>
+                        ) : (
+                            <a href="/api/connect/facebook" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center">
+        <FacebookIcon className="h-5 w-5 mr-2" /> Connect to Facebook
+    </a>
+                        )}
+                    </div>
+
+                    {connectionStatus.facebook && (
+                        <div className="mt-4 pt-4 border-t">
+                            <h4 className="text-base font-medium text-gray-800">Your Pages</h4>
+                            {isLoadingPages ? <p className="text-sm text-gray-500 mt-2">Loading pages...</p> : (
+                                <ul className="mt-2 space-y-2">
+                                    {facebookPages.map(page => (
+                                        <li key={page.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                            <div className="flex items-center">
+                                                <img src={page.picture.data.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
+                                                <span className="text-sm font-medium text-gray-700">{page.name}</span>
+                                            </div>
+                                            {connectionStatus.page_id === page.id ? 
+                                                <span className="text-sm font-semibold text-green-600">Active</span> :
+                                                <button onClick={() => handleConnectPage(page.id, page.access_token)} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100">Connect</button>
+                                            }
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                </div>
+
                 {/* X (Twitter) Connection Block (No changes) */}
                 <div className="mt-6 p-4 border rounded-lg flex items-center justify-between">
                     <div>

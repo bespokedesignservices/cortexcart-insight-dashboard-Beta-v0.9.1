@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import db from '../../../../../lib/db';
 import { decrypt, encrypt } from '@/lib/crypto';
-import { TwitterApi } from 'twitter-api-v2';
+const { TwitterApi } = require('twitter-api-v2');
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {

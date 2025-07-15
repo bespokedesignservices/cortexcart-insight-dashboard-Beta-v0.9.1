@@ -18,6 +18,7 @@ export const authOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
+      scope: 'email,public_profile,pages_show_list,pages_read_engagement,pages_manage_posts',
     }),
   ],
   callbacks: {
