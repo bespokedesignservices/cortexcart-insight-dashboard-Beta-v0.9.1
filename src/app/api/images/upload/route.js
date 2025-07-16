@@ -21,6 +21,12 @@ export async function POST(request) {
             return NextResponse.json({ message: 'No file uploaded.' }, { status: 400 });
         }
 
+        const fileExtension = path.extname(file.name).toLowerCase();
+        if (fileExtension !== '.jpeg' && fileExtension !== '.jpg') {
+            return NextResponse.json({ message: 'Only JPEG or JPG files are allowed.' }, { status: 400 });
+        }
+
+
         // Convert the file data to a Buffer
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);

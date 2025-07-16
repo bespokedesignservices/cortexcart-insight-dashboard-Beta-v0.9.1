@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, getSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
-import { SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowPathIcon, SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -238,6 +238,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                                 <p className="text-sm text-gray-400">Your staged image will appear here</p>
                             )}
                         </div>
+                        
                     </div>
                  
                         <textarea value={postContent} onChange={(e) => setPostContent(e.target.value)} placeholder={currentPlatform.placeholder} className="mt-4 w-full h-64 p-4 border border-gray-200 rounded-md"/>
@@ -340,7 +341,31 @@ const AnalyticsTabContent = () => {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncMessage, setSyncMessage] = useState('');
+    const [syncMessageType, setSyncMessageType] = useState('info'); // 'info', 'success', or 'error'
 
+    const fetchAnalytics = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch('/api/social/analytics');
+                    if (!res.ok) {
+                setSyncMessageType('error');
+                throw new Error(result.message || 'An unknown error occurred during sync.');
+            }
+            
+            setSyncMessageType('success');
+            setSyncMessage(result.message);
+            fetchAnalytics(); // Refresh analytics after successful sync
+            
+        } catch (err) {
+            // The error from the API will be caught here
+            setSyncMessageType('error');
+            setSyncMessage(err.message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
@@ -355,6 +380,22 @@ const AnalyticsTabContent = () => {
         };
         fetchAnalytics();
     }, []);
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        setSyncMessage('');
+        try {
+            const res = await fetch('/api/social/twitter/sync', { method: 'POST' });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message);
+            setSyncMessage(result.message);
+            fetchAnalytics(); // Refresh analytics after sync
+        } catch (err) {
+            setSyncMessage(err.message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
     if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
@@ -381,10 +422,32 @@ const AnalyticsTabContent = () => {
             backgroundColor: platformStats.map(item => PLATFORMS[item.platform]?.color || '#6B7280'),
         }]
     };
+    if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
+    if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
+    if (!data) return <p className="text-center p-8">No analytics data available.</p>;
+
 
     return ( 
         <div className="bg-white p-6 rounded-lg shadow-md border space-y-8">
             <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
+                            <button
+                    onClick={handleSync} 
+                    disabled={isSyncing}
+                    className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:bg-blue-400"
+                >
+                    <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`} />
+                    {isSyncing ? 'Syncing...' : 'Sync with X'}
+                </button>
+            
+           {syncMessage && (
+                <div className={`text-center text-sm p-2 rounded-md ${
+                    syncMessageType === 'success' ? 'bg-green-100 text-green-800' : 
+                    syncMessageType === 'error' ? 'bg-red-100 text-red-800' : 
+                    'bg-gray-100 text-gray-800'
+                }`}>
+                    {syncMessage}
+                </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-blue-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-blue-600">Total Posts</p>

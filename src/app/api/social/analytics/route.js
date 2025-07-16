@@ -1,3 +1,5 @@
+// File: src/app/api/social/analytics/route.js
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import db from '../../../../../lib/db';
@@ -13,39 +15,48 @@ export async function GET() {
     try {
         const connection = await db.getConnection();
 
-        // Aggregate Stats (Total Posts, Reach, Engagement)
+        // --- THIS IS THE CORRECTED QUERY ---
+        // We explicitly set the collation for the 'platform' column in both parts of the UNION
+        const allPostsQuery = `
+            SELECT platform COLLATE utf8mb4_unicode_ci AS platform, impressions, likes, shares, posted_at AS scheduled_at 
+            FROM historical_social_posts 
+            WHERE user_email = ?
+            
+            UNION ALL
+            
+            SELECT platform COLLATE utf8mb4_unicode_ci AS platform, impressions, likes, shares, scheduled_at 
+            FROM scheduled_posts 
+            WHERE user_email = ? AND status = 'posted'
+        `;
+
         const [generalStats] = await connection.query(
             `SELECT
                 COUNT(*) as totalPosts,
                 SUM(impressions) as totalReach,
-                (SUM(likes + shares) / SUM(impressions)) * 100 as engagementRate
-             FROM scheduled_posts
-             WHERE user_email = ? AND status = 'posted'`,
-            [userEmail]
+                (SUM(likes + shares) / NULLIF(SUM(impressions), 0)) * 100 as engagementRate
+             FROM (${allPostsQuery}) as all_posts`,
+            [userEmail, userEmail]
         );
 
-        // Daily Reach Over Time
         const [dailyReach] = await connection.query(
             `SELECT
                 DATE(scheduled_at) as date,
                 SUM(impressions) as reach
-             FROM scheduled_posts
-             WHERE user_email = ? AND status = 'posted' AND scheduled_at >= NOW() - INTERVAL 30 DAY
+             FROM (${allPostsQuery}) as all_posts
+             WHERE scheduled_at >= NOW() - INTERVAL 30 DAY
              GROUP BY DATE(scheduled_at)
              ORDER BY date ASC`,
-            [userEmail]
+            [userEmail, userEmail]
         );
 
-        // Posts and Engagement by Platform
         const [platformStats] = await connection.query(
             `SELECT
                 platform,
                 COUNT(*) as postCount,
-                (SUM(likes + shares) / SUM(impressions)) * 100 as engagementRate
-             FROM scheduled_posts
-             WHERE user_email = ? AND status = 'posted'
+                (SUM(likes + shares) / NULLIF(SUM(impressions), 0)) * 100 as engagementRate
+             FROM (${allPostsQuery}) as all_posts
              GROUP BY platform`,
-            [userEmail]
+            [userEmail, userEmail]
         );
 
         connection.release();

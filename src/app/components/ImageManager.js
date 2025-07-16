@@ -146,7 +146,7 @@ export default function ImageManager({ onImageAdd }) {
     return (
         <div className="p-4 border rounded-lg mt-8 bg-white">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-3">Image Manager</h3>
-            <p className="text-grey-200">Add an image to your post below..</p>
+            <p className="text-gray-400">Add an image to your post below..</p>
             <hr className="mb-3 mt-3"></hr>
             <div className="space-y-4 mb-4 mt-3">
                 <form onSubmit={handleAddImage} className="flex items-center gap-2">
@@ -177,10 +177,12 @@ export default function ImageManager({ onImageAdd }) {
                         <ArrowUpTrayIcon className="h-5 w-5 mr-2"/>
                         {isUploading ? 'Uploading...' : 'Upload'}
                     </button>
-                </div>
+                                   </div>
             </div>
 <hr className="mb-3"></hr>
-
+<div className="text-center text-xs text-gray-400 mt-2">
+                            Only JPEG and JPG images are supported for upload.
+                        </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             {isLoading ? (
                 <p>Loading images...</p>
@@ -194,8 +196,11 @@ export default function ImageManager({ onImageAdd }) {
                             onSelect={onImageAdd} 
                         />
                     ))}
+                    
                 </div>
             )}
         </div>
+        
     );
+    
 }
