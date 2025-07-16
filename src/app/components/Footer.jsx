@@ -6,6 +6,7 @@ export default function Footer() {
     { name: 'Contact', href: '/contact' },
     { name: 'Terms of Service', href: '/terms' },
     { name: 'Privacy Policy', href: '/privacy' },
+    { name: 'Licence', href: '/licence' },
   ];
 
   // --- NEW: Social media links array ---
