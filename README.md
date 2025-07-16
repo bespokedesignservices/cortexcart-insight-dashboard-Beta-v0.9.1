@@ -1,4 +1,4 @@
-<b>Welcome to CortexCart Version 0.9.1 Beta</b>
+<b>Welcome to CortexCart Version 0.9.3 Beta</b>
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
@@ -45,7 +45,7 @@ This project is built with a modern, robust tech stack including Next.js, React,
 
 <b>These limitations will be lifted in full release version 1.0 coming soon!</b>
 
-✨ <h3>Current Features (v0.9.1 Beta)</h3>
+✨ <h3>Current Features (v0.9.3 Beta)</h3>
 This beta version is packed with features to give you a comprehensive overview of your site's performance:
 
 Secure User Authentication: Simple and secure sign-in using Google accounts, managed by NextAuth.js.
@@ -97,6 +97,21 @@ Beta Feedback System: A floating button and modal for users to easily submit bug
 Dedicated placeholder pages for future features like Social Media, Install Guides, FAQ, and more.
 
 A public-facing Roadmap page to keep users informed of the project's progress.
+
+<h3>Updates in v0.9.3 (from v0.9.2)</h3>
+<ul>
+  <li>Improved real-time visitor count accuracy.</li>
+  <li>Enhanced date range filtering performance.</li>
+  <li>Minor UI/UX improvements across the dashboard.</li>
+  <li>Bug fixes related to data visualization rendering.</li>
+</ul>
+
+<h3>Known Bugs (as of v0.9.3)</h3>
+<ul>
+  <li>Map component for visitor location is still pending fix.</li>
+  <li>Occasional delays in AI report generation during peak times.</li>
+  <li>Some inconsistencies in date format display for specific locales.</li>
+</ul>
 
 🚀 <h5>Roadmap / Planned Features</h5>
 This is just the beginning! Here are some of the exciting features planned for future releases:
@@ -165,5 +180,3 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
