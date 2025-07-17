@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-// FIX: Removed unused 'getSession' from next-auth/react import
 import Layout from '@/app/components/Layout';
-// FIX: Removed unused 'AppleTouchIcon' from solid icons import
 import { SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
@@ -12,7 +10,6 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import ImageManager from '@/app/components/ImageManager';
 import Ga4LineChart from '@/app/components/Ga4LineChart';
-// FIX: Removed unused 'SalesBarChart' and 'AnalyticsChart' imports
 import { DndContext, DragOverlay, useDroppable, pointerWithin } from '@dnd-kit/core';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import Image from 'next/image';
@@ -335,7 +332,6 @@ const AnalyticsTabContent = () => {
     const [error, setError] = useState('');
     const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false });
     const [syncMessage, setSyncMessage] = useState('');
-    const [syncMessageType, setSyncMessageType] = useState('info');
 
     const fetchAnalytics = useCallback(async () => {
         setIsLoading(true);
@@ -510,7 +506,7 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
             alert('Failed to update schedule. Reverting changes.');
             setScheduledPosts(originalEvents);
         }
-    // FIX: Removed unnecessary dependency 'fetchScheduledPosts'
+   
     }, [scheduledPosts, setScheduledPosts]);
 
     const eventPropGetter = useCallback((event) => ({
@@ -827,7 +823,7 @@ export default function SocialMediaManagerPage() {
     const [postContent, setPostContent] = useState('');
     const [postImages, setPostImages] = useState([]);
     const [selectedPlatform, setSelectedPlatform] = useState('x');
-    // FIX: Removed unused 'setUserImages'
+
     const [userImages] = useState([]);
     const [isLoadingImages, setIsLoadingImages] = useState(true);
     const [activeDragId, setActiveDragId] = useState(null);
