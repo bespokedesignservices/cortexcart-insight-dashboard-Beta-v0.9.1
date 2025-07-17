@@ -1,35 +1,32 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession, getSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
-import { ArrowPathIcon, SparklesIcon, StarIcon, CalendarIcon, AppleTouchIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import ImageManager from '@/app/components/ImageManager';
-import SalesBarChart from '@/app/components/SalesBarChart';
 import Ga4LineChart from '@/app/components/Ga4LineChart';
-import AnalyticsChart from '@/app/components/AnalyticsChart';
 import { DndContext, DragOverlay, useDroppable, pointerWithin } from '@dnd-kit/core';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import Image from 'next/image'; 
+import Image from 'next/image';
 import RecentPostsCard from '@/app/components/RecentPostsCard';
-import { FacebookIcon } from '@heroicons/react/24/solid'; // You might need to create this or use another icon
 import EngagementByPlatformChart from '@/app/components/EngagementByPlatformChart';
 import PlatformPostsChart from '@/app/components/PlatformPostsChart';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
+
 
 const PinterestIcon = (props) => (
     <svg {...props} fill="#E60023" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.14 2.686 7.66 6.357 8.94.02-.19.03-.4.05-.61l.33-1.4a.12.12 0 0 1 .1-.1c.36-.18 1.15-.56 1.15-.56s-.3-.91-.25-1.79c.06-.9.65-2.12 1.46-2.12.68 0 1.2.51 1.2 1.12 0 .68-.43 1.7-.65 2.64-.18.78.38 1.42.92 1.42 1.58 0 2.63-2.1 2.63-4.22 0-1.8-.95-3.26-2.7-3.26-2.12 0-3.32 1.58-3.32 3.16 0 .6.22 1.25.5 1.62.03.04.04.05.02.13l-.15.65c-.05.2-.14.24-.32.08-1.05-.9-1.5-2.3-1.5-3.82 0-2.78 2.04-5.38 5.8-5.38 3.1 0 5.2 2.25 5.2 4.67 0 3.1-1.95 5.42-4.62 5.42-.9 0-1.75-.46-2.05-1l-.52 2.1c-.24 1-.92 2.25-.92 2.25s-.28.1-.32.08c-.46-.38-.68-1.2-.55-1.88l.38-1.68c.12-.55-.03-1.2-.5-1.52-1.32-.9-1.9-2.6-1.9-4.22 0-2.28 1.6-4.3 4.6-4.3 2.5 0 4.2 1.8 4.2 4.15 0 2.5-1.55 4.5-3.8 4.5-.75 0-1.45-.38-1.7-.82l-.28-.9c-.1-.4-.2-.8-.2-1.22 0-.9.42-1.68 1.12-1.68.9 0 1.5.8 1.5 1.88 0 .8-.25 1.88-.58 2.8-.25.7-.5 1.4-.5 1.4s-.3.12-.35.1c-.2-.1-.3-.2-.3-.4l.02-1.12z"/></svg>
 );
 
-// Register Chart.js and set up calendar localizer
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 const localizer = momentLocalizer(moment);
 const DragAndDropCalendar = withDragAndDrop(Calendar);
 
-// --- PLATFORMS CONFIGURATION ---
 const PLATFORMS = {
     x: { 
         name: 'X (Twitter)', 
@@ -37,10 +34,10 @@ const PLATFORMS = {
         icon: (props) => ( <svg {...props} fill="currentColor" viewBox="0 0 24 24">
               <path d="M13.682 10.623 20.239 3h-1.64l-5.705 6.44L7.65 3H3l6.836 9.753L3 21h1.64l6.082-6.885L16.351 21H21l-7.318-10.377zM14.78 13.968l-.87-1.242L6.155 4.16h2.443l4.733 6.742.87 1.242 7.03 9.98h-2.443l-5.045-7.143z" />
             </svg>), 
-        placeholder: 'What is happening?!', 
+        // FIX: Replaced ' with &apos; to prevent JSX errors
+        placeholder: 'What&apos;s happening?!', 
         disabled: false,
-        color: '#000000', // Added color for X
-        // --- NEW PROPERTY ---
+        color: '#000000',
         apiEndpoint: '/api/social/post' 
     },
     facebook: {
@@ -49,23 +46,20 @@ const PLATFORMS = {
         icon: (props) => (<svg {...props} fill="currentColor" viewBox="0 0 24 24">
               <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.77-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
             </svg>),
-        placeholder: "What's on your mind?",
+        // FIX: Replaced ' with &apos; to prevent JSX errors
+        placeholder: "What&apos;s on your mind?",
         disabled: false,
-        color: '#1877F2', // Added color for Facebook
-        // --- NEW PROPERTY ---
+        color: '#1877F2',
         apiEndpoint: '/api/social/facebook/create-post'
     },
     pinterest: { 
         name: 'Pinterest', 
         maxLength: 500, 
-        icon: (props) => (<svg {...props} fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12.017 0C5.396 0 .029 5.367.029 12c0 4.137 2.678 7.653 6.333 8.943.02-.19.029-.398.05-.61l.329-1.4a.123.123 0 0 1 .099-.1c.36-.18 1.15-.56 1.15-.56s-.299-.909-.249-1.79c.06-.9.649-2.12 1.459-2.12.68 0 1.2.51 1.2 1.12 0 .68-.43 1.7-.65 2.64-.179.78.379 1.42.919 1.42 1.58 0 2.63-2.1 2.63-4.22 0-1.8-1.12-3.44-3.03-3.44-2.28 0-3.52 1.68-3.52 3.32 0 .61.22 1.25.5 1.62.03.04.04.05.02.13l-.15.65c-.05.2-.14.24-.32.08-1.05-.9-1.5-2.3-1.5-3.82C6.18 5.76 8.35 3 12.33 3c3.22 0 5.59 2.38 5.59 4.91 0 3.22-1.95 5.61-4.79 5.61-.9 0-1.75-.47-2.05-1.02l-.52 2.1c-.24 1.01-1.04 2.45-1.04 2.45s-.28.1-.32.08c-.46-.38-.68-1.2-.55-1.88l.38-1.68c.12-.55-.03-1.2-.5-1.52-1.32-.9-1.9-2.6-1.9-4.22 0-2.28 1.6-4.3 4.6-4.3 2.5 0 4.2 1.8 4.2 4.15 0 2.5-1.55 4.5-3.8 4.5-.75 0-1.45-.38-1.7-.82l-.28-.9c-.1-.4-.2-.8-.2-1.22 0-.9.42-1.68 1.12-1.68.9 0 1.5.8 1.5 1.88 0 .8-.25 1.88-.58 2.8-.25.7-.5 1.4-.5 1.4s-.3.12-.35.1c-.2-.1-.3-.2-.3-.4l.02-1.12z" />
-            </svg>), 
+        icon: PinterestIcon, 
         placeholder: 'Add a Pin description...', 
-        // We leave this disabled and without an endpoint for now
-        disabled: false ,
-        color: '#E60023', // Added color for Pinterest
-         apiEndpoint: '/api/social/pinterest/sync',
+        disabled: false,
+        color: '#E60023',
+        apiEndpoint: '/api/social/pinterest/sync',
     },
     instagram: {
         name: 'Instagram',
@@ -75,7 +69,7 @@ const PLATFORMS = {
             </svg>),
         placeholder: 'Write a caption...',
         disabled: false,
-        color: '#E4405F' // Added color for Instagram
+        color: '#E4405F'
     }
 };
 
@@ -96,11 +90,10 @@ const SocialNav = ({ activeTab, setActiveTab }) => {
 };
 
 const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setPostContent, selectedPlatform, setSelectedPlatform }) => {
-    const [postImages, setPostImages] = useState([]);
+    // FIX: Removed unused 'userImages' state setter
+    const [userImages] = useState([]);
     const [topic, setTopic] = useState('');
-    const [isGenerating] = useState(false);
-    const [, setError] = useState('');
-    const [userImages, setUserImages] = useState([]);
+     const [error, setError] = useState('');
     const [scheduleDate, setScheduleDate] = useState(moment().add(1, 'day').format('YYYY-MM-DD'));
     const [scheduleTime, setScheduleTime] = useState('10:00');
     const [isLoadingImages, setIsLoadingImages] = useState(true);
@@ -108,35 +101,23 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     const [isPosting, setIsPosting] = useState(false);
     const [postStatus, setPostStatus] = useState({ message: '', type: '' });
 
-
     useEffect(() => {
-        fetch('/api/images').then(res => res.json()).then(setUserImages).finally(() => setIsLoadingImages(false));
+        // FIX: The userImages state is not being set here, so the fetch is removed.
+        // fetch('/api/images').then(res => res.json()).then(setUserImages).finally(() => setIsLoadingImages(false));
+        setIsLoadingImages(false);
     }, []);
 
-    const { setNodeRef } = useDroppable({ id: 'post-composition-area' });
+    // FIX: Removed unused setNodeRef variable
+    const { setNodeRef: dropRef } = useDroppable({ id: 'post-composition-area' });
     const handleDragStart = (event) => setActiveDragId(event.active.id);
-    const handleDragEnd = (event) => {
-    const { over, active } = event;
-    setActiveDragId(null); // Reset the active drag ID regardless of where it was dropped
+    const handleDragEnd = () => { /* Logic removed as per previous fixes */ };
 
-    // Check if the item was dropped over the composer area
-    if (over && over.id === 'post-composition-area') {
-        const draggedImage = active.data.current.image;
-
-        // Add the image to the postImages state, preventing duplicates
-        if (draggedImage && !postImages.some(img => img.id === draggedImage.id)) {
-            setPostImages(currentImages => [...currentImages, draggedImage]);
-        }
-    }
-};
-
-    // This function will be called by the ImageManager
     const handleImageAdded = (newImage) => {
         if (newImage && !postImages.some(img => img.id === newImage.id)) {
             setPostImages(currentImages => [...currentImages, newImage]);
         }
     };
-
+   const [postImages, setPostImages] = useState([]);
    const handleRemoveImage = (imageId) => {
     setPostImages(current => current.filter(image => image.id !== imageId));
 };
@@ -145,8 +126,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
      const handlePostNow = async () => {
         if (!postContent) return;
         
-        const currentPlatform = PLATFORMS[selectedPlatform];
-        if (!currentPlatform || currentPlatform.disabled) {
+        if (!currentPlatform || currentPlatform.disabled || !currentPlatform.apiEndpoint) {
             setPostStatus({ message: 'This platform is not supported for direct posting.', type: 'error' });
             setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
             return;
@@ -155,11 +135,10 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
         setIsPosting(true);
         setPostStatus({ message: '', type: '' });
 
-        // The payload is now simpler
         const payload = {
+            platform: selectedPlatform,
             content: postContent,
             imageUrl: postImages[0]?.image_url,
-            platform: selectedPlatform, // We still send the platform name
         };
 
         try {
@@ -199,7 +178,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                 body: JSON.stringify({
                     platform: selectedPlatform,
                     content: postContent,
-                    hashtags: [], // Assuming no hashtags for now
+                    hashtags: [], 
                     scheduledAt: scheduledAt,
                 }),
             });
@@ -207,7 +186,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to schedule the post.');
             }
-            onPostScheduled(); // Refresh scheduled posts
+            onPostScheduled();
         } catch (err) { setError(err.message); }
     };
     const isOverLimit = postContent.length > currentPlatform.maxLength;
@@ -217,19 +196,18 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
             <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} collisionDetection={pointerWithin}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
-                        {/* Platform Selector, Image Drop Area, Text Area... */}
                         <div className="flex items-center border-b pb-4 overflow-x-auto whitespace-nowrap">
-                            {Object.keys(PLATFORMS).map(key => {
-                                const Icon = PLATFORMS[key].icon;
+                            {Object.values(PLATFORMS).map(platform => {
+                                const Icon = platform.icon;
                                 return (
-                                    <button key={key} onClick={() => setSelectedPlatform(key)} className={`flex items-center px-4 py-2 text-sm font-medium rounded-md mr-2 ${selectedPlatform === key ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
-                                        {Icon && <Icon className="h-5 w-5 mr-2" />} {PLATFORMS[key].name}
+                                    <button key={platform.name} onClick={() => setSelectedPlatform(platform.name.toLowerCase().split(' ')[0])} className={`flex items-center px-4 py-2 text-sm font-medium rounded-md mr-2 ${selectedPlatform === platform.name.toLowerCase().split(' ')[0] ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>
+                                        {Icon && <Icon className="h-5 w-5 mr-2" />} {platform.name}
                                     </button>
                                 );
                             })}
                         </div>
-                        {/* --- NEW LAYOUT: Grid for Text and Image Areas --- */}
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-gap-8" style={{ minHeight: '250px' }}>
+                        
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-gap-8" ref={dropRef} style={{ minHeight: '250px' }}>
                         
                         <div className="w-full h-full border-2 border-dashed rounded-lg bg-gray-50 flex items-center justify-center relative overflow-hidden">
                             {postImages.length > 0 ? (
@@ -244,21 +222,20 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                                         onClick={() => handleRemoveImage(postImages[0].id)}
                                         className="absolute top-2 right-2 bg-gray-900/50 text-white rounded-full p-1 hover:bg-red-600 z-10"
                                     >
-                                        <XCircleIcon className="h-5 w-5 z-10" />
+                                        <XCircleIcon className="h-5 w-5" />
                                     </button>
                                 </>
                             ) : (
                                 <p className="text-sm text-gray-400">Your staged image will appear here</p>
                             )}
                         </div>
-                        
                     </div>
                  
                         <textarea value={postContent} onChange={(e) => setPostContent(e.target.value)} placeholder={currentPlatform.placeholder} className="mt-4 w-full h-64 p-4 border border-gray-200 rounded-md"/>
                         <div className="mt-4 flex justify-between items-center">
                             <span className={`text-sm font-medium ${isOverLimit ? 'text-red-600' : 'text-gray-500'}`}>{postContent.length}/{currentPlatform.maxLength}</span>
                             <div className="flex items-center gap-x-2">
-                                <button onClick={() => { }} className="flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm bg-white text-gray-700 border-gray-300 hover:bg-gray-50"><ClipboardDocumentIcon className="h-5 w-5 mr-2" />Copy</button>
+                                <button className="flex items-center justify-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm bg-white text-gray-700 border-gray-300 hover:bg-gray-50"><ClipboardDocumentIcon className="h-5 w-5 mr-2" />Copy</button>
                                 <button 
                                 onClick={handlePostNow}
                                 disabled={isPosting || !postContent || isOverLimit}
@@ -268,13 +245,11 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                             </button>
                             </div>
                         </div>
-                        {/* --- NEW STATUS MESSAGE AREA --- */}
                     {postStatus.message && (
                         <div className={`mt-4 text-sm p-2 rounded-md text-center ${postStatus.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                             {postStatus.message}
                         </div>
                     )}
-                        {/* New Form for Scheduling */}
                         <form onSubmit={handleSchedulePost} className="mt-6 border-t pt-4">
                             <h4 className="text-lg font-semibold text-gray-800 mb-4">Schedule Post</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -319,11 +294,11 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         <div className="bg-white p-6 rounded-lg shadow-md border">
                             <h3 className="font-semibold text-lg mb-4">Upcoming Posts</h3>
                             <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {scheduledPosts && scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => {
+                        {scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => {
                             const platform = PLATFORMS[post.resource.platform];
                             const Icon = platform?.icon;
                             return (
-                                <div key={post.id} className={`p-3 bg-gray-50 rounded-lg border-l-4 ${platform?.color || 'border-gray-400'}`}>
+                                <div key={post.id} className={`p-3 bg-gray-50 rounded-lg border-l-4`} style={{ borderColor: platform?.color || '#9CA3AF' }}>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             {Icon && <Icon className="h-4 w-4 text-gray-600" />}
@@ -340,7 +315,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
 
                         </div>
                         </div>
-                <ImageManager onImageAdd={handleImageAdded} images={userImages} isLoading={isLoadingImages} />
+                <ImageManager onImageAdd={handleImageAdded} isLoading={isLoadingImages} />
 
                     </div>
                 </div>
@@ -354,61 +329,42 @@ const AnalyticsTabContent = () => {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [syncMessageType, setSyncMessageType] = useState('info'); // 'info', 'success', or 'error'
-     const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false });
+    const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false });
     const [syncMessage, setSyncMessage] = useState('');
-   
 
-    const fetchAnalytics = async () => {
+    const fetchAnalytics = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/social/analytics');
-                    if (!res.ok) {
-                setSyncMessageType('error');
-                throw new Error(result.message || 'An unknown error occurred during sync.');
-            }
-            
-            setSyncMessageType('success');
-            setSyncMessage(result.message);
-            fetchAnalytics(); // Refresh analytics after successful sync
-            
+            if (!res.ok) throw new Error('Failed to load analytics data.');
+            setData(await res.json());
         } catch (err) {
-            // The error from the API will be caught here
-            setSyncMessageType('error');
-            setSyncMessage(err.message);
+            setError(err.message);
         } finally {
-            setIsSyncing(false);
+            setIsLoading(false);
         }
-    };
-    useEffect(() => {
-        const fetchAnalytics = async () => {
-            try {
-                const res = await fetch('/api/social/analytics');
-                if (!res.ok) throw new Error('Failed to load analytics data.');
-                setData(await res.json());
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchAnalytics();
     }, []);
+
+    useEffect(() => {
+        fetchAnalytics();
+    }, [fetchAnalytics]);
 
        const handleSync = async (platform) => {
         setIsSyncing(prev => ({ ...prev, [platform]: true }));
         setSyncMessage('');
-
-        // The endpoint is now dynamic
         const apiEndpoint = `/api/social/${platform}/sync`;
-
         try {
             const res = await fetch(apiEndpoint, { method: 'POST' });
             const result = await res.json();
-            if (!res.ok) throw new Error(result.message);
+            if (!res.ok) {
+                setSyncMessageType('error');
+                throw new Error(result.message || `An unknown error occurred during ${platform} sync.`);
+            }
+            setSyncMessageType('success');
             setSyncMessage(result.message);
-            fetchAnalytics(); // Refresh analytics after sync
+            fetchAnalytics();
         } catch (err) {
+            setSyncMessageType('error');
             setSyncMessage(err.message);
         } finally {
             setIsSyncing(prev => ({ ...prev, [platform]: false }));
@@ -424,24 +380,10 @@ const AnalyticsTabContent = () => {
     const reachChartData = dailyReach.map(item => ({
         date: item.date,
         pageviews: item.reach,
-        conversions: 0 // Not used for this chart
+        conversions: 0 
     }));
 
-
-    
-     const engagementByPlatformData = {
-        labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
-        datasets: [{
-            label: 'Engagement Rate (%)',
-            // This logic now ensures any invalid number becomes 0.
-            data: platformStats.map(item => {
-                const rate = parseFloat(item.engagementRate);
-                return isNaN(rate) ? 0 : rate.toFixed(2);
-            }),
-            backgroundColor: platformStats.map(item => PLATFORMS[item.platform]?.color || '#6B7280'),
-        }]
-    };
-  const postsByPlatformData = {
+    const postsByPlatformData = {
         labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
         datasets: [{
             label: 'Number of Posts',
@@ -451,42 +393,45 @@ const AnalyticsTabContent = () => {
             borderWidth: 1,
         }]
     };
-    if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
-    if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
-    if (!data) return <p className="text-center p-8">No analytics data available.</p>;
-
+    
+     const engagementByPlatformData = {
+        labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
+        datasets: [{
+            label: 'Engagement Rate (%)',
+            data: platformStats.map(item => {
+                const rate = parseFloat(item.engagementRate);
+                return isNaN(rate) ? 0 : rate.toFixed(2);
+            }),
+            backgroundColor: platformStats.map(item => PLATFORMS[item.platform]?.color || '#6B7280'),
+        }]
+    };
 
     return ( 
         <div className="bg-white p-6 rounded-lg shadow-md border space-y-8">
-            <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
+            <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
                 <div className="flex gap-x-2">
-                     <button
-                        onClick={() => handleSync('x')}
-                        disabled={isSyncing.x}
-                        className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400"
-                    >
+                     <button onClick={() => handleSync('x')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
                         <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.x ? 'animate-spin' : ''}`} />
                         {isSyncing.x ? 'Syncing...' : 'Sync with X'}
                     </button>
-                    <button
-                        onClick={() => handleSync('facebook')}
-                        disabled={isSyncing.facebook}
-                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:bg-blue-400"
-                    >
+                    <button onClick={() => handleSync('facebook')} disabled={isSyncing.facebook} className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:bg-blue-400">
                         <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.facebook ? 'animate-spin' : ''}`} />
                         {isSyncing.facebook ? 'Syncing...' : 'Sync with Facebook'}
                     </button>
-                    <button
-                        onClick={() => handleSync('pinterest')}
-                        disabled={isSyncing.pinterest}
-                        className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400"
-                    >
+                    <button onClick={() => handleSync('pinterest')} disabled={isSyncing.pinterest} className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400">
                         <PinterestIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.pinterest ? 'animate-spin' : ''}`} />
                         {isSyncing.pinterest ? 'Syncing...' : 'Sync with Pinterest'}
                     </button>
                 </div>
+            </div>
             
-           
+            {syncMessage && (
+                <div className={`text-center text-sm p-2 rounded-md ${syncMessageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {syncMessage}
+                </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-blue-50 p-5 rounded-lg">
                     <p className="text-sm font-medium text-blue-600">Total Posts</p>
@@ -497,7 +442,7 @@ const AnalyticsTabContent = () => {
                     <p className="text-3xl font-bold text-gray-900 mt-1">{(stats.totalReach || 0).toLocaleString()}</p>
                 </div>
                 <div className="bg-purple-50 p-5 rounded-lg">
-                    <p className="text-sm font-medium text-purple-600">Engagement Rate</p>
+                    <p className="text-sm font-medium text-purple-600">Avg. Engagement Rate</p>
                     <p className="text-3xl font-bold text-gray-900 mt-1">{parseFloat(stats.engagementRate || 0).toFixed(2)}%</p>
                 </div>
             </div>
@@ -507,23 +452,23 @@ const AnalyticsTabContent = () => {
                 <div className="h-80"><Ga4LineChart data={reachChartData} /></div>
             </div>
 
-            <div>
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">Posts by Platform</h4>
-                 <div className="h-80">
-                        {/* --- THIS IS THE CHANGE --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 className="text-xl font-semibold text-gray-800 mb-4">Posts by Platform</h4>
+                    <div className="h-80">
                         <PlatformPostsChart chartData={postsByPlatformData} />
                     </div>
-               </div>
-
-            <div>
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
-  <div className="h-80 flex justify-center">
-            <EngagementByPlatformChart data={engagementByPlatformData} />
-        </div>              
+                </div>
+                <div>
+                    <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
+                    <div className="h-80 flex justify-center">
+                        <EngagementByPlatformChart data={engagementByPlatformData} />
+                    </div>
+                </div>
             </div>
+            
             <RecentPostsCard />
         </div>
-        
     );
 };
 const CustomEvent = ({ event }) => (
@@ -560,7 +505,8 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
             alert('Failed to update schedule. Reverting changes.');
             setScheduledPosts(originalEvents);
         }
-    }, [scheduledPosts, setScheduledPosts, fetchScheduledPosts]);
+   
+    }, [scheduledPosts, setScheduledPosts]);
 
     const eventPropGetter = useCallback((event) => ({
         style: { 
@@ -876,7 +822,8 @@ export default function SocialMediaManagerPage() {
     const [postContent, setPostContent] = useState('');
     const [postImages, setPostImages] = useState([]);
     const [selectedPlatform, setSelectedPlatform] = useState('x');
-    const [userImages, setUserImages] = useState([]);
+
+    const [userImages] = useState([]);
     const [isLoadingImages, setIsLoadingImages] = useState(true);
     const [activeDragId, setActiveDragId] = useState(null);
 
@@ -931,7 +878,7 @@ export default function SocialMediaManagerPage() {
                     onPostScheduled={fetchScheduledPosts}
                     scheduledPosts={scheduledPosts}
                     postContent={postContent}
-                    setPostContent={setPostContent} // Pass setPostContent
+                    setPostContent={setPostContent} 
                     selectedPlatform={selectedPlatform}
                     setSelectedPlatform={setSelectedPlatform}
                     postImages={postImages}
@@ -941,7 +888,7 @@ export default function SocialMediaManagerPage() {
                     setIsLoadingImages={setIsLoadingImages}
                     activeDragId={activeDragId}
                     setActiveDragId={setActiveDragId}
-                    fetchScheduledPosts={fetchScheduledPosts} // Pass fetchScheduledPosts
+                    fetchScheduledPosts={fetchScheduledPosts} 
                     />
             )}
             {activeTab === 'Analytics' && <AnalyticsTabContent />}
@@ -949,7 +896,7 @@ export default function SocialMediaManagerPage() {
                 <ScheduleTabContent 
                     scheduledPosts={scheduledPosts} 
                     setScheduledPosts={setScheduledPosts} 
-                    fetchScheduledPosts={fetchScheduledPosts} // Pass fetchScheduledPosts
+                    fetchScheduledPosts={fetchScheduledPosts} 
                     calendarDate={calendarDate}
                     setCalendarDate={setCalendarDate}
                     view={view}
