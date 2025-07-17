@@ -4,7 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/app/components/AuthProvider"; // <-- 1. Import AuthProvider
 
 export const metadata: Metadata = {
-  title: "CortexCart Tracker",
+  title: "CortexCart Insight Dashboard v0.9.3",
   description: "Your statistics dashboard",
 };
 

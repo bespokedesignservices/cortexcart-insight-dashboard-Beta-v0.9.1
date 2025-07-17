@@ -19,7 +19,7 @@ export async function GET() {
         const callbackURL = `${process.env.NEXTAUTH_URL}/connect/callback/pinterest`;
         
         // Note the different scopes for Pinterest
-        const scopes = ['user_accounts:read', 'pins:read', 'pins:write'].join(' ');
+         const scopes = ['user_accounts:read', 'pins:read', 'pins:write', 'boards:read'].join(' ');
 
         const params = new URLSearchParams({
             response_type: 'code',

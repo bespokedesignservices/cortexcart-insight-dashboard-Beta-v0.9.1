@@ -240,7 +240,9 @@ export default function HomePageClient({ content, plans, recentPost }: HomePageC
                         <span className="text-gray-500">|</span>
                         <Link href="/privacy"><span className="px-3 hover:underline cursor-pointer">Privacy Policy</span></Link>    
 		        <span className="text-gray-500">|</span>
-                        <Link href="/data-protection"><span className="px-3 hover:underline cursor-pointer">Data Protection</span></Link>    
+                        <Link href="/data-protection"><span className="px-3 hover:underline cursor-pointer">Data Protection</span></Link>                   
+                    <span className="text-gray-500">|</span>
+                        <Link href="/license"><span className="px-3 hover:underline cursor-pointer">EULA License</span></Link>    
                     </div>
                     {/* NEW: Social Icons Section */}
                     <div className="flex justify-center space-x-6 mt-4">

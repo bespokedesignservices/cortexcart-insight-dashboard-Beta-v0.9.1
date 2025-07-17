@@ -1,16 +1,16 @@
 // File: src/app/api/connect/facebook/route.js
 
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request) {
     try {
         const state = crypto.randomBytes(16).toString('hex');
         const callbackURL = `${process.env.NEXTAUTH_URL}/connect/callback/facebook`;
         
-        // These are the permissions we configured earlier
         const scopes = 'email,public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_manage_insights,instagram_content_publish';
 
         const params = new URLSearchParams({
@@ -22,25 +22,25 @@ export async function GET() {
         });
 
         const facebookAuthUrl = `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
+        
+        // This response will redirect the user to Facebook
+        const response = NextResponse.redirect(facebookAuthUrl);
 
-        const response = new NextResponse(null, {
-            status: 307, // Temporary Redirect
-            headers: {
-                Location: facebookAuthUrl,
-            },
+        // We set a secure cookie with the state value to check against later
+        response.cookies.set('facebook_oauth_state', state, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            sameSite: 'lax',
         });
 
-        // Store the state in a secure, http-only cookie to prevent CSRF attacks
-        response.cookies.set('facebook_oauth_state', state, {
-    httpOnly: true,
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
-});
         return response;
 
     } catch (error) {
         console.error("Error in Facebook auth route:", error);
-        return NextResponse.json({ message: 'Error generating auth link.' }, { status: 500 });
+        const errorUrl = new URL('/settings', request.url);
+        errorUrl.searchParams.set('connect_status', 'error');
+        errorUrl.searchParams.set('message', 'Could not generate Facebook auth link.');
+        return NextResponse.redirect(errorUrl);
     }
 }

@@ -16,15 +16,25 @@ export async function GET() {
         const connection = await db.getConnection();
 
         // --- THIS IS THE CORRECTED QUERY ---
-        // We explicitly set the collation for the 'platform' column in both parts of the UNION
+        // We now explicitly define the type and collation for every column in the UNION.
         const allPostsQuery = `
-            SELECT platform COLLATE utf8mb4_unicode_ci AS platform, impressions, likes, shares, posted_at AS scheduled_at 
+            SELECT 
+                CAST(platform AS CHAR(255)) COLLATE utf8mb4_unicode_ci AS platform,
+                CAST(impressions AS SIGNED) AS impressions,
+                CAST(likes AS SIGNED) AS likes,
+                CAST(shares AS SIGNED) AS shares,
+                CAST(posted_at AS DATETIME) AS scheduled_at
             FROM historical_social_posts 
             WHERE user_email = ?
             
             UNION ALL
             
-            SELECT platform COLLATE utf8mb4_unicode_ci AS platform, impressions, likes, shares, scheduled_at 
+            SELECT 
+                CAST(platform AS CHAR(255)) COLLATE utf8mb4_unicode_ci AS platform,
+                CAST(impressions AS SIGNED) AS impressions,
+                CAST(likes AS SIGNED) AS likes,
+                CAST(shares AS SIGNED) AS shares,
+                CAST(scheduled_at AS DATETIME) AS scheduled_at
             FROM scheduled_posts 
             WHERE user_email = ? AND status = 'posted'
         `;
