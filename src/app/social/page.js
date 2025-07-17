@@ -93,8 +93,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     // FIX: Removed unused 'userImages' state setter
     const [userImages] = useState([]);
     const [topic, setTopic] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [error, setError] = useState('');
+     const [error, setError] = useState('');
     const [scheduleDate, setScheduleDate] = useState(moment().add(1, 'day').format('YYYY-MM-DD'));
     const [scheduleTime, setScheduleTime] = useState('10:00');
     const [isLoadingImages, setIsLoadingImages] = useState(true);

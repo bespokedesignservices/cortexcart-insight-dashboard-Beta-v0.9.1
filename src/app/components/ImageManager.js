@@ -28,8 +28,8 @@ function DisplayImage({ image, onDelete, onSelect }) {
                 </div>
             ) : (
                 <>
-                                // FIX: Added eslint-disable comment for the next line
-                // eslint-disable-next-line @next/next/no-img-element
+                                {// * FIX: Added eslint-disable comment for the next line *}
+                {// * eslint-disable-next-line @next/next/no-img-element *}
 
                     <img
                         src={image.image_url}
