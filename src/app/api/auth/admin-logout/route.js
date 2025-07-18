@@ -1,6 +1,4 @@
 // File: src/app/api/auth/admin-logout/route.js
-
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {

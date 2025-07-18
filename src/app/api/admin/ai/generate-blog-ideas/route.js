@@ -1,4 +1,4 @@
-imimport { verifyAdminSession } from '@/lib/admin-auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
