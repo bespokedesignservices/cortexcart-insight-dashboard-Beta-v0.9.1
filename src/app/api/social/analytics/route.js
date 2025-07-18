@@ -15,8 +15,8 @@ export async function GET() {
     try {
         const connection = await db.getConnection();
 
-        // --- THIS IS THE CORRECTED QUERY ---
-        // We now explicitly define the type and collation for every column in the UNION.
+        // --- THIS IS THE ROBUST QUERY FIX ---
+        // It explicitly defines the type and collation for every column in the UNION.
         const allPostsQuery = `
             SELECT 
                 CAST(platform AS CHAR(50)) COLLATE utf8mb4_unicode_ci AS platform,
@@ -71,10 +71,11 @@ export async function GET() {
 
         connection.release();
 
+        // Ensure we always return a valid object with empty arrays as fallbacks
         const responseData = {
-            stats: generalStats[0],
-            dailyReach: dailyReach,
-            platformStats: platformStats,
+            stats: generalStats[0] || {},
+            dailyReach: dailyReach || [],
+            platformStats: platformStats || [],
         };
 
         return NextResponse.json(responseData, { status: 200 });

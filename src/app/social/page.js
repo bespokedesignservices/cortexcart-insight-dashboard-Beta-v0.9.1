@@ -339,7 +339,7 @@ const AnalyticsTabContent = () => {
     const [syncMessage, setSyncMessage] = useState('');
     const [syncMessageType, setSyncMessageType] = useState('info');
 
-    const fetchAnalytics = useCallback(async () => {
+        const fetchAnalytics = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/social/analytics');
@@ -355,6 +355,10 @@ const AnalyticsTabContent = () => {
     useEffect(() => {
         fetchAnalytics();
     }, [fetchAnalytics]);
+    
+    if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
+    if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
+
 
        const handleSync = async (platform) => {
         setIsSyncing(prev => ({ ...prev, [platform]: true }));
@@ -382,11 +386,7 @@ const AnalyticsTabContent = () => {
     if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
     if (!data) return <p className="text-center p-8">No analytics data available.</p>;
  
-   if (!data || !data.stats || !data.dailyReach || !data.platformStats) {
-        return <p className="text-center p-8">No analytics data available to display.</p>;
-    }
-
-    const { stats, dailyReach, platformStats } = data;
+  const reachChartData = dailyReach.map(item => ({ date: item.date, pageviews: item.reach, conversions: 0 }));
 
     const reachChartData = dailyReach.map(item => ({
         date: item.date,
