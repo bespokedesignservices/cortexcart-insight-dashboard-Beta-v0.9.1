@@ -76,22 +76,28 @@ const SocialNav = ({ activeTab, setActiveTab }) => {
     );
 };
 
-const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setPostContent, selectedPlatform, setSelectedPlatform }) => {
+const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setPostContent, selectedPlatform, setSelectedPlatform }) => {
+    // FIX: All state is now correctly declared only once.
+    const [postImages, setPostImages] = useState([]);
     const [topic, setTopic] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
     const [scheduleDate, setScheduleDate] = useState(moment().add(1, 'day').format('YYYY-MM-DD'));
     const [scheduleTime, setScheduleTime] = useState('10:00');
-    const [isLoadingImages, setIsLoadingImages] = useState(true);
     const [isPosting, setIsPosting] = useState(false);
     const [postStatus, setPostStatus] = useState({ message: '', type: '' });
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [error, setError] = useState(''); 
 
+    const currentPlatform = PLATFORMS[selectedPlatform];
+    const isOverLimit = postContent.length > currentPlatform.maxLength;
 
-    useEffect(() => {
-        setIsLoadingImages(false);
-    }, []);
+    const handleImageAdded = (newImage) => {
+        setPostImages([newImage]);
+    };
 
-  const handleGeneratePost = async () => {
+    const handleRemoveImage = () => {
+        setPostImages([]);
+    };
+    
+    const handleGeneratePost = async () => {
         if (!topic.trim()) return;
         setIsGenerating(true);
         setError('');
@@ -107,10 +113,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.message || 'Failed to generate post.');
-            
-            // Set the composer's text with the AI-generated content
             setPostContent(result.postContent);
-
         } catch (err) {
             setError(err.message);
         } finally {
@@ -118,66 +121,39 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
         }
     };
 
-    const handleImageAdded = (newImage) => {
-        if (newImage && !postImages.some(img => img.id === newImage.id)) {
-            setPostImages(currentImages => [...currentImages, newImage]);
-        }
-    };
-   const [postImages, setPostImages] = useState([]);
-   const handleRemoveImage = (imageId) => {
-    setPostImages(current => current.filter(image => image.id !== imageId));
-};
-    const currentPlatform = PLATFORMS[selectedPlatform];
-
-     const handlePostNow = async () => {
-        if (!postContent) return;
-        
-        if (!currentPlatform || currentPlatform.disabled || !currentPlatform.apiEndpoint) {
-            setPostStatus({ message: 'This platform is not supported for direct posting.', type: 'error' });
-            setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
-            return;
-        }
-
+    const handlePostNow = async () => {
+        if (!postContent || !currentPlatform.apiEndpoint) return;
         setIsPosting(true);
         setPostStatus({ message: '', type: '' });
-
-        const payload = {
-            platform: selectedPlatform,
-            content: postContent,
-            imageUrl: postImages[0]?.image_url,
-        };
-
         try {
             const res = await fetch(currentPlatform.apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    content: postContent,
+                    imageUrl: postImages[0]?.image_url,
+                }),
             });
             const result = await res.json();
             if (!res.ok) throw new Error(result.message);
-
             setPostStatus({ message: `Post published to ${currentPlatform.name} successfully!`, type: 'success' });
             setPostContent('');
             setPostImages([]);
-
         } catch (err) {
             setPostStatus({ message: err.message, type: 'error' });
         } finally {
             setIsPosting(false);
-            setTimeout(() => setPostStatus({ message: '', type: '' }), 5000);
         }
     };
     
     const handleSchedulePost = async (e) => {
         e.preventDefault();
-        setError('');
-
+        setPostStatus({ message: '', type: '' });
         try {
             const scheduledAt = moment(`${scheduleDate}T${scheduleTime}`).toISOString();
             if (moment(scheduledAt).isBefore(moment())) {
                 throw new Error('You cannot schedule a post in the past.');
             }
-
             const response = await fetch('/api/social/schedule/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -192,11 +168,12 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to schedule the post.');
             }
+            setPostStatus({ message: `Post scheduled successfully!`, type: 'success' });
             onPostScheduled();
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setPostStatus({ message: err.message, type: 'error' });
+        }
     };
-    const isOverLimit = postContent.length > currentPlatform.maxLength;
-
     return (
         <>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -826,8 +803,6 @@ export default function SocialMediaManagerPage() {
     // This is the shared state for the different tabs
     const [scheduledPosts, setScheduledPosts] = useState([]);
     const [optimalTimes, setOptimalTimes] = useState([]);
-    const [postContent, setPostContent] = useState('');
-    const [selectedPlatform, setSelectedPlatform] = useState('x');
 
     const fetchScheduledPosts = useCallback(async () => {
         try {
