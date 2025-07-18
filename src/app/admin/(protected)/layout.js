@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import {
     HomeIcon,
     UsersIcon,
@@ -29,7 +30,13 @@ const adminNavLinks = [
     { name: 'FAQs', href: '/admin/faqs', icon: QuestionMarkCircleIcon },
 ];
 
-export default function AdminLayout({ children }) {
+export default async function AdminLayout({ children }) {
+        const adminSession = await verifyAdminSession();
+
+    if (!adminSession) {
+        redirect('/admin/login'); // Redirect to login if not authenticated
+    }
+
     return (
         <div className="flex h-screen bg-gray-100 font-sans">
             {/* Sidebar Navigation */}

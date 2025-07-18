@@ -2,10 +2,7 @@ import { verifyAdminSession } from '@/lib/admin-auth';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'superadmin') {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
+    
    const adminSession = await verifyAdminSession();
     if (!adminSession) {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
