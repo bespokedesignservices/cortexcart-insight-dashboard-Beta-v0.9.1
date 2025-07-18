@@ -84,6 +84,8 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     const [isPosting, setIsPosting] = useState(false);
     const [postStatus, setPostStatus] = useState({ message: '', type: '' });
     const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState(''); 
+
 
     useEffect(() => {
         setIsLoadingImages(false);

@@ -1,5 +1,3 @@
-// File: src/app/api/social/analytics/route.js
-
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import db from '../../../../../lib/db';
@@ -47,28 +45,6 @@ export async function GET() {
              FROM (${allPostsQuery}) as all_posts`,
             [userEmail, userEmail]
         );
-
-        const [dailyReach] = await connection.query(
-            `SELECT
-                DATE(scheduled_at) as date,
-                SUM(impressions) as reach
-             FROM (${allPostsQuery}) as all_posts
-             WHERE scheduled_at >= NOW() - INTERVAL 30 DAY
-             GROUP BY DATE(scheduled_at)
-             ORDER BY date ASC`,
-            [userEmail, userEmail]
-        );
-
-        const [platformStats] = await connection.query(
-            `SELECT
-                platform,
-                COUNT(*) as postCount,
-                (SUM(likes + shares) / NULLIF(SUM(impressions), 0)) * 100 as engagementRate
-             FROM (${allPostsQuery}) as all_posts
-             GROUP BY platform`,
-            [userEmail, userEmail]
-        );
-
         connection.release();
 
         // Ensure we always return a valid object with empty arrays as fallbacks
