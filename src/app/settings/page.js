@@ -144,7 +144,6 @@ const IntegrationsTabContent = () => {
     );
 };
 
-// --- Social Connections Component (UPDATED) ---
 const SocialConnectionsTabContent = () => {
     const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false });
     const [facebookPages, setFacebookPages] = useState([]);
@@ -154,7 +153,6 @@ const SocialConnectionsTabContent = () => {
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
     const searchParams = useSearchParams();
     
-    // FIX: Combined fetching logic into a single useCallback
     const fetchConnections = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -166,7 +164,6 @@ const SocialConnectionsTabContent = () => {
             setConnectedPageId(statuses.page_id);
 
             if (statuses.facebook) {
-                // Fetch pages and accounts only if Facebook is connected
                 const [pagesRes, igRes] = await Promise.all([
                     fetch('/api/social/facebook/pages'),
                     fetch('/api/social/instagram/accounts')
@@ -196,21 +193,21 @@ const SocialConnectionsTabContent = () => {
         }
     }, [searchParams, fetchConnections]);
 
-    const handleDisconnect = async (platform) => {
-        if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
-        try {
-            await fetch('/api/social/connections/status', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ platform }),
-            });
-            await fetchConnections(); // Refresh all data on disconnect
-        } catch (err) {
-            // FIX: Removed unused 'error' variable
-            alert(`Could not disconnect ${platform}. Please try again.`);
-        }
-    };
-
+const handleDisconnect = async (platform) => {
+    if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
+    try {
+        await fetch('/api/social/connections/status', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform }),
+        });
+        // We'll call fetchConnections to refresh the UI
+        fetchConnections();
+    } catch (err) { // FIX: Use the 'err' variable for logging
+        console.error(`Could not disconnect ${platform}:`, err);
+        alert(`Could not disconnect ${platform}. Please try again.`);
+    }
+};
     if (isLoading) return <p>Loading connection status...</p>;
 
     return (

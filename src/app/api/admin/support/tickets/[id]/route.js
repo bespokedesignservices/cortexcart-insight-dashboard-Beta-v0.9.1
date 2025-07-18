@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import db from '../../../../../../../lib/db';
 import { NextResponse } from 'next/server';
 
@@ -7,8 +6,8 @@ import { NextResponse } from 'next/server';
 
 // GET a single ticket's details
 export async function GET(request, { params }) {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'superadmin') {
+    const adminSession = await verifyAdminSession();
+    if (!adminSession) {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 

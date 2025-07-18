@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
 import { ArrowPathIcon, SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
+import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
@@ -29,7 +29,7 @@ const PLATFORMS = {
         name: 'X (Twitter)', 
         maxLength: 280, 
         icon: (props) => ( <svg {...props} fill="currentColor" viewBox="0 0 24 24"><path d="M13.682 10.623 20.239 3h-1.64l-5.705 6.44L7.65 3H3l6.836 9.753L3 21h1.64l6.082-6.885L16.351 21H21l-7.318-10.377zM14.78 13.968l-.87-1.242L6.155 4.16h2.443l4.733 6.742.87 1.242 7.03 9.98h-2.443l-5.045-7.143z" /></svg>), 
-        placeholder: "What is on your mind?",
+        placeholder: "What&apos;s happening?!", // FIX: Escaped apostrophe
         disabled: false,
         color: '#000000',
         apiEndpoint: '/api/social/post' 
@@ -38,7 +38,7 @@ const PLATFORMS = {
         name: 'Facebook',
         maxLength: 5000,
         icon: (props) => (<svg {...props} fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.77-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" /></svg>),
-        placeholder: "What is on your mind?",
+        placeholder: "What&apos;s on your mind?", // FIX: Escaped apostrophe
         disabled: false,
         color: '#1877F2',
         apiEndpoint: '/api/social/facebook/create-post'
@@ -81,6 +81,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     const [scheduleDate, setScheduleDate] = useState(moment().add(1, 'day').format('YYYY-MM-DD'));
     const [scheduleTime, setScheduleTime] = useState('10:00');
     const [isLoadingImages, setIsLoadingImages] = useState(true);
+    const [activeDragId, setActiveDragId] = useState(null);
     const [isPosting, setIsPosting] = useState(false);
     const [postStatus, setPostStatus] = useState({ message: '', type: '' });
     const [isGenerating, setIsGenerating] = useState(false);
@@ -88,7 +89,6 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
     useEffect(() => {
         setIsLoadingImages(false);
     }, []);
-
   const handleGeneratePost = async () => {
         if (!topic.trim()) return;
         setIsGenerating(true);
@@ -116,6 +116,8 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
         }
     };
 
+    const handleDragStart = (event) => setActiveDragId(event.active.id);
+ 
     const handleImageAdded = (newImage) => {
         if (newImage && !postImages.some(img => img.id === newImage.id)) {
             setPostImages(currentImages => [...currentImages, newImage]);
@@ -197,7 +199,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
 
     return (
         <>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
                         <div className="flex items-center border-b pb-4 overflow-x-auto whitespace-nowrap">
                             {Object.values(PLATFORMS).map(platform => {
@@ -290,7 +292,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         <div className="bg-white p-6 rounded-lg shadow-md border space-y-4">
                             <h3 className="font-semibold text-lg">AI Assistant</h3>
                             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g., 'New Summer T-Shirt Sale'" className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"/>
-                   <button 
+                    <button 
                         onClick={handleGeneratePost}
                         disabled={isGenerating || !topic.trim()} 
                         className="w-full flex items-center justify-center px-4 py-2 border rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400"
@@ -298,7 +300,8 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
                         <SparklesIcon className="h-5 w-5 mr-2" />
                         {isGenerating ? 'Generating...' : 'Generate with AI'}
                     </button>
-                        </div>
+
+                         </div>
                         <div className="bg-white p-6 rounded-lg shadow-md border">
                             <h3 className="font-semibold text-lg mb-4">Upcoming Posts</h3>
                             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -327,6 +330,7 @@ const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setP
 
                     </div>
                 </div>
+ 
         </>
     );
 };
@@ -337,7 +341,6 @@ const AnalyticsTabContent = () => {
     const [error, setError] = useState('');
     const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false });
     const [syncMessage, setSyncMessage] = useState('');
-    const [syncMessageType, setSyncMessageType] = useState('info');
 
     const fetchAnalytics = useCallback(async () => {
         setIsLoading(true);
@@ -381,17 +384,15 @@ const AnalyticsTabContent = () => {
     if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
     if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
     if (!data) return <p className="text-center p-8">No analytics data available.</p>;
- 
-   if (!data || !data.stats || !data.dailyReach || !data.platformStats) {
+ if (!data || !data.stats || !data.dailyReach || !data.platformStats) {
         return <p className="text-center p-8">No analytics data available to display.</p>;
     }
-
     const { stats, dailyReach, platformStats } = data;
 
     const reachChartData = dailyReach.map(item => ({
         date: item.date,
         pageviews: item.reach,
-        conversions: 0
+        conversions: 0 
     }));
 
     const postsByPlatformData = {
@@ -405,7 +406,7 @@ const AnalyticsTabContent = () => {
         }]
     };
     
-    const engagementByPlatformData = {
+     const engagementByPlatformData = {
         labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
         datasets: [{
             label: 'Engagement Rate (%)',
@@ -489,7 +490,7 @@ const CustomEvent = ({ event }) => (
     </div>
 );
 
-const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, setCalendarDate, view, setView, optimalTimes }) => {
+const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView, optimalTimes }) => {
        console.log('Optimal times received by calendar:', optimalTimes);
 
     const onEventDrop = useCallback(async ({ event, start }) => {
@@ -824,42 +825,54 @@ const DemographicsTabContent = () => {
 };
 
 export default function SocialMediaManagerPage() {
-    const { status } = useSession();
+     const { status } = useSession();
     const [activeTab, setActiveTab] = useState('Composer');
-    
-    // This is the shared state for the different tabs
     const [scheduledPosts, setScheduledPosts] = useState([]);
     const [optimalTimes, setOptimalTimes] = useState([]);
+
+    // --- LIFTED STATE ---
+    const [postContent, setPostContent] = useState('');
+    const [postImages, setPostImages] = useState([]);
+    const [selectedPlatform, setSelectedPlatform] = useState('x');
+
+    const [userImages] = useState([]);
+    const [isLoadingImages, setIsLoadingImages] = useState(true);
+    const [activeDragId, setActiveDragId] = useState(null);
+
+    // --- Calendar State ---
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [view, setView] = useState(Views.MONTH);
 
     const fetchScheduledPosts = useCallback(async () => {
         try {
             const res = await fetch('/api/social/schedule');
-            if(res.ok) {
-                const data = await res.json();
-                const formattedEvents = data.map(post => ({
-                    id: post.id,
-                    title: `${PLATFORMS[post.platform]?.name || 'Post'}: ${post.content.substring(0, 30)}...`,
-                    start: new Date(post.scheduled_at),
-                    end: moment(post.scheduled_at).add(30, 'minutes').toDate(),
-                    resource: { platform: post.platform },
-                }));
-                setScheduledPosts(formattedEvents);
-            }
+            const data = await res.json();
+            const formattedEvents = data.map(post => ({
+                id: post.id,
+                title: `${PLATFORMS[post.platform]?.name || 'Post'}: ${post.content.substring(0, 30)}...`,
+                start: new Date(post.scheduled_at),
+                end: moment(post.scheduled_at).add(30, 'minutes').toDate(),
+                resource: { platform: post.platform },
+            }));
+            setScheduledPosts(formattedEvents);
         } catch (error) { console.error("Failed to fetch posts:", error); }
     }, []);
 
     const fetchOptimalTimes = useCallback(async () => {
         try {
             const res = await fetch('/api/social/optimal-times');
-            if (res.ok) setOptimalTimes(await res.json() || []);
-        } catch (error) { console.error("Failed to fetch optimal times:", error); }
+            if (res.ok) { 
+                setOptimalTimes(await res.json() || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch optimal times:", error);
+        }
     }, []);
-
     useEffect(() => {
         if (status === 'authenticated') {
-            fetchOptimalTimes();
-            fetchScheduledPosts();
+        fetchOptimalTimes();
         }
+        fetchScheduledPosts();
     }, [status, fetchScheduledPosts, fetchOptimalTimes]);
     
     if (status === 'loading') return <Layout><p>Loading...</p></Layout>;
@@ -872,10 +885,38 @@ export default function SocialMediaManagerPage() {
             </div>
             <SocialNav activeTab={activeTab} setActiveTab={setActiveTab} />
             
-            {activeTab === 'Composer' && <ComposerTabContent scheduledPosts={scheduledPosts} onPostScheduled={fetchScheduledPosts} />}
+            {activeTab === 'Composer' && (
+                <ComposerTabContent
+                    onPostScheduled={fetchScheduledPosts}
+                    scheduledPosts={scheduledPosts}
+                    postContent={postContent}
+                    setPostContent={setPostContent} 
+                    selectedPlatform={selectedPlatform}
+                    setSelectedPlatform={setSelectedPlatform}
+                    postImages={postImages}
+                    setPostImages={setPostImages}
+                    userImages={userImages}
+                    isLoadingImages={isLoadingImages}
+                    setIsLoadingImages={setIsLoadingImages}
+                    activeDragId={activeDragId}
+                    setActiveDragId={setActiveDragId}
+                    fetchScheduledPosts={fetchScheduledPosts} 
+                    />
+            )}
             {activeTab === 'Analytics' && <AnalyticsTabContent />}
-            {activeTab === 'Schedule' && <ScheduleTabContent scheduledPosts={scheduledPosts} setScheduledPosts={setScheduledPosts} optimalTimes={optimalTimes} fetchScheduledPosts={fetchScheduledPosts} />}
-            {activeTab === 'Demographics' && <DemographicsTabContent />}
+            {activeTab === 'Schedule' && (
+                <ScheduleTabContent 
+                    scheduledPosts={scheduledPosts} 
+                    setScheduledPosts={setScheduledPosts} 
+                    fetchScheduledPosts={fetchScheduledPosts} 
+                    calendarDate={calendarDate}
+                    setCalendarDate={setCalendarDate}
+                    view={view}
+                    setView={setView}
+                    optimalTimes={optimalTimes}
+                />
+            )
+            }{activeTab === 'Demographics' && <DemographicsTabContent />}
         </Layout>
     );
 }

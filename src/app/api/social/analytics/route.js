@@ -19,7 +19,7 @@ export async function GET() {
         // We now explicitly define the type and collation for every column in the UNION.
         const allPostsQuery = `
             SELECT 
-                CAST(platform AS CHAR(255)) COLLATE utf8mb4_unicode_ci AS platform,
+                CAST(platform AS CHAR(50)) COLLATE utf8mb4_unicode_ci AS platform,
                 CAST(impressions AS SIGNED) AS impressions,
                 CAST(likes AS SIGNED) AS likes,
                 CAST(shares AS SIGNED) AS shares,
@@ -30,7 +30,7 @@ export async function GET() {
             UNION ALL
             
             SELECT 
-                CAST(platform AS CHAR(255)) COLLATE utf8mb4_unicode_ci AS platform,
+                CAST(platform AS CHAR(50)) COLLATE utf8mb4_unicode_ci AS platform,
                 CAST(impressions AS SIGNED) AS impressions,
                 CAST(likes AS SIGNED) AS likes,
                 CAST(shares AS SIGNED) AS shares,

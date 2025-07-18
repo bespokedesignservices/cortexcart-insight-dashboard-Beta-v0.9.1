@@ -1,11 +1,10 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import db from '../../../../../src/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'superadmin') {
+    const adminSession = await verifyAdminSession();
+    if (!adminSession) {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 

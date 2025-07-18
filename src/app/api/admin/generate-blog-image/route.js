@@ -1,12 +1,11 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import { NextResponse } from 'next/server';
 // Note: In a real implementation, you would use the official Google AI SDK.
 // For this environment, we will simulate the call.
 
 export async function POST(request) {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'superadmin') {
+   const adminSession = await verifyAdminSession();
+    if (!adminSession) {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 

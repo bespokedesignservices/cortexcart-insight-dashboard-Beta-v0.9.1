@@ -1,13 +1,13 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import { NextResponse } from 'next/server';
 
 // Note: We have removed the unused imports for fs, path, and GoogleGenerativeAI
 // because the code that uses them is currently commented out.
 
 export async function POST(request) {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'superadmin') {
+  
+    const adminSession = await verifyAdminSession();
+    if (!adminSession) {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 

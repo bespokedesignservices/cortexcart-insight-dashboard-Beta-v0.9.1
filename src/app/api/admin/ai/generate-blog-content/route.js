@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
@@ -7,7 +6,10 @@ export async function POST(request) {
     if (session?.user?.role !== 'superadmin') {
         return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
-
+   const adminSession = await verifyAdminSession();
+    if (!adminSession) {
+        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    }
     try {
         const { title, type } = await request.json();
         if (!title || !type) {

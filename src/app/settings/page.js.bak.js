@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession, signOut} from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
@@ -146,123 +146,81 @@ const IntegrationsTabContent = () => {
 
 // --- Social Connections Component (UPDATED) ---
 const SocialConnectionsTabContent = () => {
-    // CHANGED: Added 'pinterest' to the initial state
     const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false });
-    const [isLoadingPages, setIsLoadingPages] = useState(false);
     const [facebookPages, setFacebookPages] = useState([]);
+    const [instagramAccounts, setInstagramAccounts] = useState([]);
+    const [connectedPageId, setConnectedPageId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
     const searchParams = useSearchParams();
-    const [instagramAccounts, setInstagramAccounts] = useState([]);
-    const [isLoadingIg, setIsLoadingIg] = useState(false);
-
-    const [connectedPageId, setConnectedPageId] = useState(null);
-
-    const fetchFacebookPages = useCallback(async () => {
-        setIsLoadingPages(true);
+    
+    // FIX: Combined fetching logic into a single useCallback
+    const fetchConnections = useCallback(async () => {
+        setIsLoading(true);
         try {
-            const res = await fetch('/api/social/facebook/pages');
-            const data = await res.json();
-            if (res.ok) {
-                setFacebookPages(data);
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error("Failed to fetch Facebook pages:", error);
-            setAlert({ show: true, message: error.message, type: 'danger' });
-        } finally {
-            setIsLoadingPages(false);
-        }
-    }, []);
+            const statusRes = await fetch('/api/social/connections/status');
+            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
+            
+            const statuses = await statusRes.json();
+            setConnectionStatus(statuses);
+            setConnectedPageId(statuses.page_id);
 
-           setIsLoading(true);
-        try {
-            const res = await fetch('/api/social/connections/status');
-            if (res.ok) {
-                const statuses = await res.json();
-                setConnectionStatus(statuses);
-                setConnectedPageId(statuses.page_id);
-                if (statuses.facebook) {
-                    fetchFacebookPages();
-                    fetchInstagramAccounts(); // Also fetch IG accounts
-                }
+            if (statuses.facebook) {
+                // Fetch pages and accounts only if Facebook is connected
+                const [pagesRes, igRes] = await Promise.all([
+                    fetch('/api/social/facebook/pages'),
+                    fetch('/api/social/instagram/accounts')
+                ]);
+
+                if (pagesRes.ok) setFacebookPages(await pagesRes.json());
+                if (igRes.ok) setInstagramAccounts(await igRes.json());
             }
-        } catch (error) { // ...
+        } catch (err) {
+            console.error("Failed to fetch connection data:", err);
+            setAlert({ show: true, message: err.message, type: 'danger' });
         } finally {
             setIsLoading(false);
-        }
-    }, [fetchFacebookPages]); // fetchInstagramAccounts will be memoized too
-
-const fetchInstagramAccounts = useCallback(async () => {
-        setIsLoadingIg(true);
-        try {
-            const res = await fetch('/api/social/instagram/accounts');
-            const data = await res.json();
-            if (res.ok) {
-                setInstagramAccounts(data);
-            } else {
-                throw new Error(data.message);
-            }
-        } catch (error) {
-            console.error("Failed to fetch Instagram accounts:", error.message);
-        } finally {
-            setIsLoadingIg(false);
         }
     }, []);
 
     useEffect(() => {
-        const fetchStatus = async () => {
-            setIsLoading(true);
-            try {
-                const res = await fetch('/api/social/connections/status');
-                if (res.ok) setConnectionStatus(await res.json());
-            } catch (error) {
-                console.error("Failed to fetch connection statuses:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchStatus();
+        fetchConnections();
 
         const connectStatus = searchParams.get('connect_status');
-        if (connectStatus === 'success') {
-            setAlert({ show: true, message: 'Account connected successfully!', type: 'success' });
-        } else if (connectStatus === 'error') {
-            const message = searchParams.get('message') || 'An unknown error occurred.';
-            setAlert({ show: true, message: `Connection failed: ${message.replace(/_/g, ' ')}`, type: 'danger' });
-        }
-
-        if(connectStatus){
+        if (connectStatus) {
+            const message = connectStatus === 'success' 
+                ? 'Account connected successfully!' 
+                : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
+            setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
             setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
         }
-    }, [searchParams]);
+    }, [searchParams, fetchConnections]);
 
-    // This function already supports multiple platforms, so no changes are needed here.
-    const handleDisconnect = async (platform) => {
-        if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
-        try {
-            await fetch('/api/social/connections/status', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ platform }),
-            });
-            setConnectionStatus(prev => ({ ...prev, [platform]: false }));
-        } catch (error) {
-            alert(`Could not disconnect ${platform}. Please try again.`);
-        }
-    };
+ const handleDisconnect = async (platform) => {
+    if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
+    try {
+        await fetch('/api/social/connections/status', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform }),
+        });
+        // We'll call fetchConnections to refresh the UI
+        fetchConnections();
+    } catch (err) { // FIX: Use the 'err' variable for logging
+        console.error(`Could not disconnect ${platform}:`, err);
+        alert(`Could not disconnect ${platform}. Please try again.`);
+    }
+};
 
     if (isLoading) return <p>Loading connection status...</p>;
 
-  return (
+    return (
         <div className="max-w-3xl space-y-4">
             {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
             <div>
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Social Connections</h3>
                 <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable posting and analytics.</p>
                 
-                {/* --- FACEBOOK SECTION --- */}
                 <div className="mt-6 p-4 border rounded-lg">
                     <div className="flex items-center justify-between">
                          <div>
@@ -284,29 +242,29 @@ const fetchInstagramAccounts = useCallback(async () => {
                         <>
                             <div className="mt-4 pt-4 border-t">
                                 <h4 className="text-base font-medium text-gray-800">Your Facebook Pages</h4>
-                                {isLoadingPages ? <p className="text-sm text-gray-500 mt-2">Loading pages...</p> : (
+                                {facebookPages.length > 0 ? (
                                     <ul className="mt-2 space-y-2">
-                                        {facebookPages.length > 0 ? facebookPages.map(page => (
+                                        {facebookPages.map(page => (
                                             <li key={page.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                                 <div className="flex items-center">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={page.picture.data.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
+                                                    <img src={page.picture?.data?.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
                                                     <span className="text-sm font-medium text-gray-700">{page.name}</span>
                                                 </div>
                                                 {connectedPageId === page.id ? 
                                                     <span className="text-sm font-semibold text-green-600">Active</span> :
-                                                    <button onClick={() => handleConnectPage(page.id, page.access_token)} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100">Connect</button>
+                                                    <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100">Connect</button>
                                                 }
                                             </li>
-                                        )) : <p className="text-sm text-gray-500 mt-2">No pages found.</p>}
+                                        ))}
                                     </ul>
-                                )}
+                                ) : <p className="text-sm text-gray-500 mt-2">No pages found.</p>}
                             </div>
                             <div className="mt-4 pt-4 border-t">
                                 <h4 className="text-base font-medium text-gray-800">Your Instagram Accounts</h4>
-                                {isLoadingIg ? <p className="text-sm text-gray-500 mt-2">Loading Instagram accounts...</p> : (
+                                {instagramAccounts.length > 0 ? (
                                     <ul className="mt-2 space-y-2">
-                                        {instagramAccounts.length > 0 ? instagramAccounts.map(ig => (
+                                        {instagramAccounts.map(ig => (
                                             <li key={ig.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                                 <div className="flex items-center">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -315,15 +273,14 @@ const fetchInstagramAccounts = useCallback(async () => {
                                                 </div>
                                                 <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>Connect</button>
                                             </li>
-                                        )) : <p className="text-sm text-gray-500 mt-2">No Instagram Business accounts found.</p>}
+                                        ))}
                                     </ul>
-                                )}
+                                ) : <p className="text-sm text-gray-500 mt-2">No Instagram Business accounts found.</p>}
                             </div>
                         </>
                     )}
                 </div>
 
-                {/* --- X (TWITTER) SECTION - RESTORED --- */}
                 <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
                     <div>
                         <p className="font-semibold">X (Twitter)</p>
@@ -339,7 +296,6 @@ const fetchInstagramAccounts = useCallback(async () => {
                     )}
                 </div>
 
-                {/* --- PINTEREST SECTION - RESTORED --- */}
                 <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
                     <div>
                         <p className="font-semibold">Pinterest</p>
@@ -359,6 +315,7 @@ const fetchInstagramAccounts = useCallback(async () => {
         </div>
     );
 };
+
 // --- Widget Settings Component ---
 const WidgetSettingsTabContent = ({ siteId }) => {
     const [mainSnippet, setMainSnippet] = useState('');
@@ -434,7 +391,7 @@ const DangerZoneTabContent = () => {
     const handleAccountDelete = async () => {
         setIsDeleting(true);
         try { await signOut({ callbackUrl: '/api/account/delete' }); } 
-        catch (error) { console.error(error); setIsDeleting(false); }
+        catch { setIsDeleting(false); } // FIX: Removed unused 'error' variable
     };
 
     return (

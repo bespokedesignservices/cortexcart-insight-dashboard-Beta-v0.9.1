@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminSession } from '@/lib/admin-auth';
 import db from '../../../../../../src/lib/db';
 import { NextResponse } from 'next/server';
 

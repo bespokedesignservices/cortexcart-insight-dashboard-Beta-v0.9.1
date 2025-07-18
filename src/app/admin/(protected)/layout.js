@@ -53,7 +53,7 @@ export default function AdminLayout({ children }) {
                     </ul>
                 </nav>
                 <div className="mt-auto">
-                     <Link href="/api/auth/signout">
+                    <Link href="/api/auth/admin-logout">
                         <div className="w-full flex items-center justify-center p-2 bg-gray-700 rounded-lg hover:bg-red-600 transition-colors">
                             <ArrowRightEndOnRectangleIcon className="h-6 w-6 mr-3" />
                             <span>Sign Out</span>

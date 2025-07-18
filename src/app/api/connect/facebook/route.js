@@ -1,6 +1,5 @@
 // File: src/app/api/connect/facebook/route.js
 
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 
