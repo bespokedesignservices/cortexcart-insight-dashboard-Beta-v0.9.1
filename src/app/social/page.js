@@ -388,12 +388,6 @@ const AnalyticsTabContent = () => {
  
   const reachChartData = dailyReach.map(item => ({ date: item.date, pageviews: item.reach, conversions: 0 }));
 
-    const reachChartData = dailyReach.map(item => ({
-        date: item.date,
-        pageviews: item.reach,
-        conversions: 0
-    }));
-
     const postsByPlatformData = {
         labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
         datasets: [{
@@ -830,6 +824,8 @@ export default function SocialMediaManagerPage() {
     // This is the shared state for the different tabs
     const [scheduledPosts, setScheduledPosts] = useState([]);
     const [optimalTimes, setOptimalTimes] = useState([]);
+    const [postContent, setPostContent] = useState('');
+    const [selectedPlatform, setSelectedPlatform] = useState('x');
 
     const fetchScheduledPosts = useCallback(async () => {
         try {
