@@ -45,7 +45,7 @@ export default async function AdminLayout({ children }) {
                     <h1 className="text-2xl font-bold">CortexCart</h1>
                     <span className="text-sm text-gray-400">Super Admin Panel</span>
                 </div>
-                <nav className="flex-grow">
+                <nav className="flex-grow  overflow-y-auto">
                     <ul className="space-y-2">
                         {adminNavLinks.map((link) => (
                             <li key={link.name}>
