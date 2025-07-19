@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { XCircleIcon, TrashIcon } from '@heroicons/react/24/solid';
+import { XCircleIcon, TrashIcon, ArrowUpTrayIcon } from '@heroicons/react/24/solid';
 
 // This sub-component is for displaying a single image
 function DisplayImage({ image, onDelete, onSelect }) {
@@ -38,6 +38,9 @@ export default function ImageManager({ onImageAdd }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [imageUrl, setImageUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+
 
     const fetchImages = useCallback(async () => {
         setIsLoading(true);
@@ -94,6 +97,39 @@ export default function ImageManager({ onImageAdd }) {
             setError(err.message);
         }
     };
+    const handleFileUpload = async () => {
+        if (!selectedFile) return;
+        setIsUploading(true);
+        setError('');
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const response = await fetch('/api/images/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.message || 'File upload failed.');
+            }
+
+            const newImage = await response.json();
+            setImages(prevImages => [newImage, ...prevImages]);
+            setSelectedFile(null);
+            
+            // This clears the file input visually after upload
+            const fileInput = document.getElementById('file-upload');
+            if (fileInput) fileInput.value = '';
+
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
 return (
         <div className="p-6 bg-white border rounded-lg mt-8">
@@ -103,6 +139,23 @@ return (
                     <input type="url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Add image by URL" className="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
                     <button type="submit" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 whitespace-nowrap">Add Image</button>
                 </form>
+                  <div className="flex items-center gap-2">
+                    <input
+                        id="file-upload"
+                        type="file"
+                        accept="image/png, image/jpeg, image/gif, image/webp"
+                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                        className="flex-grow w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <button 
+                        onClick={handleFileUpload}
+                        disabled={!selectedFile || isUploading}
+                        className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:bg-gray-400 flex items-center whitespace-nowrap"
+                    >
+                        <ArrowUpTrayIcon className="h-5 w-5 mr-2"/>
+                        {isUploading ? 'Uploading...' : 'Upload'}
+                    </button>
+                </div>
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             {isLoading ? <p>Loading images...</p> : (
