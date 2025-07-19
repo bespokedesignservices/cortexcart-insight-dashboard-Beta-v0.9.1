@@ -35,7 +35,7 @@ const PLATFORMS = {
               <path d="M13.682 10.623 20.239 3h-1.64l-5.705 6.44L7.65 3H3l6.836 9.753L3 21h1.64l6.082-6.885L16.351 21H21l-7.318-10.377zM14.78 13.968l-.87-1.242L6.155 4.16h2.443l4.733 6.742.87 1.242 7.03 9.98h-2.443l-5.045-7.143z" />
             </svg>), 
         // FIX: Replaced ' with &apos; to prevent JSX errors
-        placeholder: 'What&apos;s happening?!', 
+        placeholder: 'What is happening?!', 
         disabled: false,
         color: '#000000',
         apiEndpoint: '/api/social/post' 
@@ -47,7 +47,7 @@ const PLATFORMS = {
               <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.77-1.63 1.562V12h2.773l-.443 2.89h-2.33v7.028C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
             </svg>),
         // FIX: Replaced ' with &apos; to prevent JSX errors
-        placeholder: "What&apos;s on your mind?",
+        placeholder: "What is on your mind?",
         disabled: false,
         color: '#1877F2',
         apiEndpoint: '/api/social/facebook/create-post'
@@ -90,14 +90,10 @@ const SocialNav = ({ activeTab, setActiveTab }) => {
 };
 
 const ComposerTabContent = ({ onPostScheduled, scheduledPosts, postContent, setPostContent, selectedPlatform, setSelectedPlatform }) => {
-    // FIX: Removed unused 'userImages' state setter
-    const [userImages] = useState([]);
     const [topic, setTopic] = useState('');
-     const [error, setError] = useState('');
     const [scheduleDate, setScheduleDate] = useState(moment().add(1, 'day').format('YYYY-MM-DD'));
     const [scheduleTime, setScheduleTime] = useState('10:00');
     const [isLoadingImages, setIsLoadingImages] = useState(true);
-    const [isGenerating, setIsGenerating] = useState(false); // Added isGenerating state
     const [activeDragId, setActiveDragId] = useState(null);
     const [isPosting, setIsPosting] = useState(false);
     const [postStatus, setPostStatus] = useState({ message: '', type: '' });
@@ -479,7 +475,7 @@ const CustomEvent = ({ event }) => (
     </div>
 );
 
-const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledPosts, calendarDate, setCalendarDate, view, setView, optimalTimes }) => {
+const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, setCalendarDate, view, setView, optimalTimes }) => {
        console.log('Optimal times received by calendar:', optimalTimes);
 
     const onEventDrop = useCallback(async ({ event, start }) => {
@@ -559,7 +555,7 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
         <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 mb-6" role="alert">
             <div className="flex">
                 <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3" />
-                <p className="text-sm">You can drag and drop your scheduled posts to a new time or date. For more information, see our FAQ's.</p>
+                <p className="text-sm">You can drag and drop your scheduled posts to a new time or date. For more information, see our FAQs.</p>
             </div>
         </div>
                     <div className="mb-4 p-4 bg-green-50 border-l-4 border-green-400 text-green-800 rounded-r-lg">
@@ -569,7 +565,7 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, fetchScheduledP
                     </div>
                     <div className="ml-3">
                         <p className="text-sm">
-                            We've highlighted the best days to post for your target audience in green.
+                            We have highlighted the best days to post for your target audience in green.
                         </p>
                     </div>
                 </div>
