@@ -17,6 +17,7 @@
     "chart.js": "^4.4.9",
     "d3-scale": "^4.0.2",
     "disqus-react": "^1.1.6",
+    "dotenv": "^17.2.0",
     "formidable": "^3.5.4",
     "heatmap.js": "^2.0.5",
     "leaflet": "^1.9.4",
