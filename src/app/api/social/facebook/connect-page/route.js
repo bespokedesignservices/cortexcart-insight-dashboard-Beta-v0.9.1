@@ -17,20 +17,15 @@ export async function POST(request) {
         if (!pageId || !pageAccessToken) {
             return NextResponse.json({ message: 'Page ID and Page Access Token are required.' }, { status: 400 });
         }
-
-        // Encrypt the long-lived page access token before storing it
+        
         const encryptedPageAccessToken = encrypt(pageAccessToken);
 
-        // Update the existing row for this user's Facebook connection
         await db.query(
-            `UPDATE social_connect 
-             SET page_id = ?, page_access_token_encrypted = ? 
-             WHERE user_email = ? AND platform = 'facebook'`,
+            `UPDATE social_connect SET page_id = ?, page_access_token_encrypted = ? WHERE user_email = ? AND platform = 'facebook'`,
             [pageId, encryptedPageAccessToken, session.user.email]
         );
 
         return NextResponse.json({ message: 'Page connected successfully!' }, { status: 200 });
-
     } catch (error) {
         console.error('Error connecting Facebook page:', error);
         return NextResponse.json({ message: `Failed to connect page: ${error.message}` }, { status: 500 });

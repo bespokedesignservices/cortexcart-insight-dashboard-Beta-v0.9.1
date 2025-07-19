@@ -208,6 +208,23 @@ const handleDisconnect = async (platform) => {
         alert(`Could not disconnect ${platform}. Please try again.`);
     }
 };
+  const handleConnectPage = async (pageId, pageAccessToken) => {
+        setAlert({ show: false, message: '', type: 'info' });
+        try {
+            const res = await fetch('/api/social/facebook/connect-page', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId, pageAccessToken })
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.message || 'Failed to connect page.');
+            
+            setAlert({ show: true, message: `Page connected successfully!`, type: 'success' });
+            fetchConnections(); // Refresh statuses and page list
+        } catch (error) {
+            setAlert({ show: true, message: error.message, type: 'danger' });
+        }
+    };
     if (isLoading) return <p>Loading connection status...</p>;
 
     return (
@@ -249,7 +266,12 @@ const handleDisconnect = async (platform) => {
                                                 </div>
                                                 {connectedPageId === page.id ? 
                                                     <span className="text-sm font-semibold text-green-600">Active</span> :
-                                                    <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100">Connect</button>
+                                                                     <button 
+                                    onClick={() => handleConnectPage(page.id, page.access_token)} 
+                                    className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100"
+                                >
+                                    Connect
+                                </button>
                                                 }
                                             </li>
                                         ))}
