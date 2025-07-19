@@ -322,8 +322,9 @@ const AnalyticsTabContent = () => {
     const [error, setError] = useState('');
     const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false });
     const [syncMessage, setSyncMessage] = useState('');
+    const [syncMessageType, setSyncMessageType] = useState('info');
 
-    const fetchAnalytics = useCallback(async () => {
+     const fetchAnalytics = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch('/api/social/analytics');
@@ -340,12 +341,11 @@ const AnalyticsTabContent = () => {
         fetchAnalytics();
     }, [fetchAnalytics]);
 
-       const handleSync = async (platform) => {
+    const handleSync = async (platform) => {
         setIsSyncing(prev => ({ ...prev, [platform]: true }));
         setSyncMessage('');
-        const apiEndpoint = `/api/social/${platform}/sync`;
         try {
-            const res = await fetch(apiEndpoint, { method: 'POST' });
+            const res = await fetch(`/api/social/${platform}/sync`, { method: 'POST' });
             const result = await res.json();
             if (!res.ok) {
                 setSyncMessageType('error');
@@ -353,7 +353,7 @@ const AnalyticsTabContent = () => {
             }
             setSyncMessageType('success');
             setSyncMessage(result.message);
-            fetchAnalytics();
+            fetchAnalytics(); // Refresh analytics after a successful sync
         } catch (err) {
             setSyncMessageType('error');
             setSyncMessage(err.message);
@@ -364,9 +364,8 @@ const AnalyticsTabContent = () => {
 
     if (isLoading) return <p className="text-center p-8">Loading analytics...</p>;
     if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
-    if (!data) return <p className="text-center p-8">No analytics data available.</p>;
 
-    const { stats, dailyReach, platformStats } = data;
+    const { stats = {}, dailyReach = [], platformStats = [] } = data || {};
 
     const reachChartData = dailyReach.map(item => ({
         date: item.date,
