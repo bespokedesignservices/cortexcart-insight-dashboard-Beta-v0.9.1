@@ -595,7 +595,7 @@ const AnalyticsTabContent = () => {
         setIsSyncing(prev => ({ ...prev, [platform]: true }));
         setSyncMessage('');
         try {
-            const res = await fetch(`/api/social/${platform}/sync`, { method: 'POST' });
+            const res = await fetch(`/api/social/${platform}/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}), });
             const result = await res.json();
             if (!res.ok) {
                 setSyncMessageType('error');
