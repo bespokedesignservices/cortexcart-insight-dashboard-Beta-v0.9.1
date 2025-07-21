@@ -30,7 +30,7 @@ export async function POST(request) {
 
         const accessToken = decrypt(connections[0].access_token_encrypted);
         
-        const pinApiResponse = await axios.post(`${process.env.PINTEREST_API_URL}/v5/pins`, pinData, {
+        const response = await axios.post(`${process.env.PINTEREST_API_URL}/v5/pins`, pinData, {
     headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -52,14 +52,7 @@ export async function POST(request) {
         console.log('[DEBUG] Sending this Pin Data to Pinterest:', JSON.stringify(pinData, null, 2));
         // --- END OF NEW DEBUG LOGS ---
 
-        const pinApiResponse = await axios.post('https://api-sandbox.pinterest.com/v5/pins', pinData, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        return NextResponse.json({ success: true, pinId: pinApiResponse.data.id }, { status: 201 });
+        return NextResponse.json({ success: true, pinId: response.data.id }, { status: 201 });
 
     } catch (error) {
         // --- MODIFIED ERROR LOGGING ---
