@@ -314,7 +314,7 @@ const handleDisconnect = async (platform) => {
                             <button onClick={() => handleDisconnect('x')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                         </div>
                     ) : (
-                        <a href="/api/connect/twitter" className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800">Connect to X</a>
+                        <a href="/api/auth/signin/twitter" className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800">Connect to X</a>
                     )}
                 </div>
 
