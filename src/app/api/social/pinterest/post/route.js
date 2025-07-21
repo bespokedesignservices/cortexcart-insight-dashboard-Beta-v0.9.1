@@ -30,7 +30,7 @@ export async function POST(request) {
 
         const accessToken = decrypt(connections[0].access_token_encrypted);
         
-        const response = await axios.post(`${process.env.PINTEREST_API_URL}/v5/pins`, pinData, {
+        const pinApiResponse = await axios.post(`${process.env.PINTEREST_API_URL}/v5/pins`, pinData, {
     headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
