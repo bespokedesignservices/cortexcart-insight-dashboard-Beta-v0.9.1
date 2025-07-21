@@ -651,7 +651,7 @@ const AnalyticsTabContent = () => {
             <div className="flex justify-between items-center">
                 <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
                 <div className="flex gap-x-2">
-                     <button onClick={() => handleSync('twitter')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
+                     <button onClick={() => handleSync('x')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
                         <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.x ? 'animate-spin' : ''}`} />
                         {isSyncing.x ? 'Syncing...' : 'Sync with X'}
                     </button>
