@@ -148,11 +148,9 @@ const SocialConnectionsTabContent = () => {
     const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false });
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
-    const [connectedPageId, setConnectedPageId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
     const searchParams = useSearchParams();
-    
     const fetchConnections = useCallback(async () => {
         setIsLoading(true);
         try {
@@ -161,7 +159,6 @@ const SocialConnectionsTabContent = () => {
             
             const statuses = await statusRes.json();
             setConnectionStatus(statuses);
-            setConnectedPageId(statuses.page_id);
 
             if (statuses.facebook) {
                 const [pagesRes, igRes] = await Promise.all([
@@ -256,38 +253,45 @@ const handleDisconnect = async (platform) => {
                             <div className="mt-4 pt-4 border-t">
                                 <h4 className="text-base font-medium text-gray-800">Your Facebook Pages</h4>
                                 {facebookPages.length > 0 ? (
-                                    <ul className="mt-2 space-y-2">
-                                        {facebookPages.map(page => (
-                                            <li key={page.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                                                <div className="flex items-center">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={page.picture?.data?.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
-                                                    <span className="text-sm font-medium text-gray-700">{page.name}</span>
-                                                </div>
-                                                {connectedPageId === page.id ? 
-                                                    <span className="text-sm font-semibold text-green-600">Active</span> :
-                                                                     <button 
-                                    onClick={() => handleConnectPage(page.id, page.access_token)} 
-                                    className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100"
-                                >
-                                    Connect
-                                </button>
-                                                }
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : <p className="text-sm text-gray-500 mt-2">No pages found.</p>}
+    <ul className="mt-2 space-y-2">
+        {facebookPages.map(page => (
+            <li key={page.page_id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                {/* Left side: Page Info */}
+                <div className="flex items-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={page.picture?.data?.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
+                    <span className="text-sm font-medium text-gray-700">{page.page_name}</span>
+                </div>
+
+                {/* Right side: Connection Status/Button */}
+                {/* You need a condition here, like page.isConnected */}
+                {page.isConnected ? (
+                    <span className="text-sm font-semibold text-green-600">Active</span>
+                ) : (
+                    <button 
+                        onClick={() => handleConnectPage(page.page_id, page.access_token)} 
+                        className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100"
+                    >
+                        Connect
+                    </button>
+                )}
+            </li>
+        ))}
+    </ul>
+) : (
+    <p className="text-sm text-gray-500 mt-2">No pages found.</p>
+)}
                             </div>
                             <div className="mt-4 pt-4 border-t">
                                 <h4 className="text-base font-medium text-gray-800">Your Instagram Accounts</h4>
                                 {instagramAccounts.length > 0 ? (
                                     <ul className="mt-2 space-y-2">
-                                        {instagramAccounts.map(ig => (
-                                            <li key={ig.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                        {instagramAccounts.map(acc => (
+                                            <li key={acc.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                                 <div className="flex items-center">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={ig.profile_picture_url} alt={ig.username} className="h-8 w-8 rounded-full mr-3" />
-                                                    <span className="text-sm font-medium text-gray-700">@{ig.username}</span>
+                                                    <img src={acc.profile_picture_url} alt={acc.username} className="h-8 w-8 rounded-full mr-3" />
+                                                    <span className="text-sm font-medium text-gray-700">@{acc.username}</span>
                                                 </div>
                                                 <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>Connect</button>
                                             </li>

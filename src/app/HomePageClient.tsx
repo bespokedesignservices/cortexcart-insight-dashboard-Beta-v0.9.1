@@ -1,5 +1,16 @@
+
 'use client';
 import Link from 'next/link';
+// EULA: This file is subject to the terms and conditions defined in EULA.md, which is part of this source code package. #
+//                                                                                                                       #
+//                             No unauthorized Copying, Redistribution either in part or whole                           #
+//                             Redistributing under your own name, refactoring of code to sell                           #
+//                             as your own. This APP/Software is  the exclusive property of                              #
+//                             Cortexcart Insight Dashboard, and Jonathan Service the author.                            #
+//                                                                                                                       #
+//                             Cortexcart Version 0.9.3 Beta Release 3 - www.cortexcart.com                              #
+// #######################################################################################################################
+import React from 'react';
 import Image from 'next/image';
 import { 
     ShieldCheckIcon, ChartBarIcon, SparklesIcon, ArrowRightIcon,    PuzzlePieceIcon, TableCellsIcon, BeakerIcon 

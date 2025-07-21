@@ -159,7 +159,7 @@ return (
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             {isLoading ? <p>Loading images...</p> : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 max-h-96 overflow-y-auto pt-4 border-t">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto pt-4 border-t">
                     {images.map(image => (
                         <DisplayImage key={image.id} image={image} onDelete={handleDeleteImage} onSelect={onImageAdd} />
                     ))}

@@ -10,7 +10,7 @@ export async function GET(request) {
         const state = crypto.randomBytes(16).toString('hex');
         const callbackURL = `${process.env.NEXTAUTH_URL}/connect/callback/facebook`;
         
-        const scopes = 'email,public_profile,pages_show_list';
+        const scopes = 'email,public_profile,pages_show_list,business_management';
 
         const params = new URLSearchParams({
             client_id: process.env.FACEBOOK_CLIENT_ID,
