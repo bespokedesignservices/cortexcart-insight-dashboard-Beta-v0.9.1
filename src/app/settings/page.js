@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link'; // FIX: Added missing import for Link
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
 import { CheckCircleIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
 import AlertBanner from '@/app/components/AlertBanner';
+
 
 const tabs = [
     { name: 'General', href: '#' },
@@ -152,31 +152,47 @@ const SocialConnectionsTabContent = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
     const searchParams = useSearchParams();
-    const fetchConnections = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const statusRes = await fetch('/api/social/connections/status');
-            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
-            
-            const statuses = await statusRes.json();
-            setConnectionStatus(statuses);
+    const [activePageId, setActivePageId] = useState(null); 
 
-            if (statuses.facebook) {
-                const [pagesRes, igRes] = await Promise.all([
-                    fetch('/api/social/facebook/pages'),
-                    fetch('/api/social/instagram/accounts')
-                ]);
+ const fetchConnections = useCallback(async () => {
+    setIsLoading(true);
+    try {
+        // First, get the main connection statuses
+        const statusRes = await fetch('/api/social/connections/status');
+        if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
+        
+        const statuses = await statusRes.json();
+        setConnectionStatus(statuses);
 
-                if (pagesRes.ok) setFacebookPages(await pagesRes.json());
-                if (igRes.ok) setInstagramAccounts(await igRes.json());
+        // If Facebook is connected, fetch all related Facebook data
+        if (statuses.facebook) {
+            const [pagesRes, igRes, activePageRes] = await Promise.all([
+                fetch('/api/social/facebook/pages'),
+                fetch('/api/social/instagram/accounts'),
+                fetch('/api/social/facebook/active-page')
+            ]);
+
+            // Process each response ONCE
+            if (pagesRes.ok) {
+                const pagesData = await pagesRes.json();
+                setFacebookPages(pagesData);
             }
-        } catch (err) {
-            console.error("Failed to fetch connection data:", err);
-            setAlert({ show: true, message: err.message, type: 'danger' });
-        } finally {
-            setIsLoading(false);
+            if (igRes.ok) {
+                const igData = await igRes.json();
+                setInstagramAccounts(igData);
+            }
+            if (activePageRes.ok) {
+                const activePageData = await activePageRes.json();
+                setActivePageId(activePageData.active_facebook_page_id);
+            }
         }
-    }, []);
+    } catch (err) {
+        console.error("Failed to fetch connection data:", err);
+        setAlert({ show: true, message: err.message, type: 'danger' });
+    } finally {
+        setIsLoading(false);
+    }
+}, []);
 
     useEffect(() => {
         fetchConnections();
@@ -199,30 +215,33 @@ const handleDisconnect = async (platform) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ platform }),
         });
-        // We'll call fetchConnections to refresh the UI
-        fetchConnections();
     } catch (err) { // FIX: Use the 'err' variable for logging
         console.error(`Could not disconnect ${platform}:`, err);
         alert(`Could not disconnect ${platform}. Please try again.`);
     }
 };
-  const handleConnectPage = async (pageId, pageAccessToken) => {
-        setAlert({ show: false, message: '', type: 'info' });
-        try {
-            const res = await fetch('/api/social/facebook/connect-page', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId, pageAccessToken })
-            });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message || 'Failed to connect page.');
-            
-            setAlert({ show: true, message: `Page connected successfully!`, type: 'success' });
-            fetchConnections(); // Refresh statuses and page list
-        } catch (error) {
-            setAlert({ show: true, message: error.message, type: 'danger' });
-        }
-    };
+const handleConnectPage = async (pageId) => {
+    setAlert({ show: false, message: '', type: 'info' }); // Clears old alerts
+    try {
+        const res = await fetch('/api/social/facebook/connect-page', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pageId })
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || 'Failed to connect page.');
+
+        // This is the crucial line for instant UI update
+        setActivePageId(pageId);
+        
+        // Show the success message
+        setAlert({ show: true, message: `Page connected successfully!`, type: 'success' });
+
+    } catch (error) {
+        setAlert({ show: true, message: error.message, type: 'danger' });
+    }
+};
     if (isLoading) return <p>Loading connection status...</p>;
 
     return (
@@ -244,9 +263,10 @@ const handleDisconnect = async (platform) => {
                                 <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                             </div>
                         ) : (
-                            <a href="/api/connect/facebook" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center">
-                                Connect to Facebook
+                             <a href="/api/connect/facebook" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center">
+                               Connect to Facebook
                             </a>
+                           
                         )}
                     </div>
                     {connectionStatus.facebook && (
@@ -261,21 +281,25 @@ const handleDisconnect = async (platform) => {
                 <div className="flex items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={page.picture?.data?.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
-                    <span className="text-sm font-medium text-gray-700">{page.page_name}</span>
+                    <span className="text-sm font-medium text-gray-700">{page.name}</span>
                 </div>
 
                 {/* Right side: Connection Status/Button */}
-                {/* You need a condition here, like page.isConnected */}
-                {page.isConnected ? (
-                    <span className="text-sm font-semibold text-green-600">Active</span>
-                ) : (
-                    <button 
-                        onClick={() => handleConnectPage(page.page_id, page.access_token)} 
-                        className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100"
-                    >
-                        Connect
-                    </button>
-                )}
+              
+          {page.page_id === activePageId ? (
+            <span className="flex items-center text-sm font-medium text-green-600">
+                <CheckCircleIcon className="h-5 w-5 mr-1.5" />
+                Active
+            </span>
+        ) : (
+            <button 
+                onClick={() => handleConnectPage(page.page_id)} 
+                className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100"
+            >
+                Connect
+            </button>
+        )}
+               
             </li>
         ))}
     </ul>
@@ -315,8 +339,8 @@ const handleDisconnect = async (platform) => {
                             <button onClick={() => handleDisconnect('x')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                         </div>
                     ) : (
-                        <Link href="/api/auth/signin/twitter" className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800">Connect to X</Link>
-                    )}
+                    <a href="/api/connect/twitter" className="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700">Connect X/Twitter</a>
+                      )}
                 </div>
 
                 <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">

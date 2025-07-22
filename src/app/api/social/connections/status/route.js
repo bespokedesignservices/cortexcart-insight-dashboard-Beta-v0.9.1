@@ -11,11 +11,11 @@ export async function GET() {
     }
 
     const userEmail = session.user.email;
-    const supportedPlatforms = ['x', 'facebook', 'pinterest'];
+    const supportedPlatforms = ['x', 'facebook', 'pinterest', 'instagram', 'youtube'];
 
     try {
         // --- THIS IS THE FIX ---
-        // The query now also selects the page_id and page_access_token_encrypted
+        // The query now also selects the page_id
             const [connections] = await db.query(
             'SELECT platform, page_id FROM social_connect WHERE user_email = ?',
             [userEmail]

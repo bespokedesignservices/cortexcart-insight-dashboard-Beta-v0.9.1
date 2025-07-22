@@ -1,10 +1,9 @@
-// File: src/app/api/social/facebook/create-post/route.js
-
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
 import { decrypt } from '@/lib/crypto';
 import { NextResponse } from 'next/server';
+import axios from 'axios';
 
 export async function POST(request) {
     const session = await getServerSession(authOptions);
@@ -12,54 +11,55 @@ export async function POST(request) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
     }
 
+    // Get a single connection from the pool to manage it properly
+    const connection = await db.getConnection();
+
     try {
         const { content, imageUrl } = await request.json();
 
-        // 1. Get the user's connected page and its specific access token
-        const [connections] = await db.query(
-            'SELECT page_id, page_access_token_encrypted FROM social_connect WHERE user_email = ? AND platform = ?',
-            [session.user.email, 'facebook']
+        // Use 'connection.query' instead of 'db.query'
+        const [sites] = await connection.query(
+            'SELECT active_facebook_page_id FROM facebook_pages_connected WHERE user_email = ?',
+            [session.user.email]
         );
 
-        if (connections.length === 0 || !connections[0].page_id || !connections[0].page_access_token_encrypted) {
-            throw new Error('No Facebook Page has been connected. Please connect a page in settings.');
+        const pageId = sites[0]?.active_facebook_page_id;
+        if (!pageId) {
+            throw new Error('No active Facebook Page has been set. Please connect a page in your settings.');
         }
 
-        const connection = connections[0];
-        const pageId = connection.page_id;
-        const pageAccessToken = decrypt(connection.page_access_token_encrypted);
+        const [pages] = await connection.query(
+            'SELECT access_token_encrypted FROM facebook_pages WHERE page_id = ? AND user_email = ?',
+            [pageId, session.user.email]
+        );
 
-        // 2. Determine the correct Facebook API endpoint
-        let endpoint = `https://graph.facebook.com/${pageId}/feed`;
-        const params = new URLSearchParams({
-            message: content,
-            access_token: pageAccessToken,
-        });
-
-        // If an image is provided, switch to the photos endpoint
-        if (imageUrl) {
-            endpoint = `https://graph.facebook.com/${pageId}/photos`;
-            params.set('url', imageUrl);
-            params.set('caption', content);
-            params.delete('message'); // 'message' is not used for photo uploads
+        if (pages.length === 0) {
+            throw new Error('Access Token for the selected page was not found.');
         }
         
-        // 3. Post to the Facebook Graph API
-        const response = await fetch(`${endpoint}?${params.toString()}`, {
-            method: 'POST',
-        });
+        const pageAccessToken = decrypt(pages[0].access_token_encrypted);
 
-        const data = await response.json();
+        let endpoint = `https://graph.facebook.com/${pageId}/feed`;
+        let params = { message: content, access_token: pageAccessToken };
 
-        if (data.error) {
-            console.error('Facebook API Error:', data.error);
-            throw new Error(data.error.message);
+        if (imageUrl) {
+            endpoint = `https://graph.facebook.com/${pageId}/photos`;
+            params = { url: imageUrl, caption: content, access_token: pageAccessToken };
+        }
+        
+        const response = await axios.post(endpoint, params);
+
+        if (response.data.error) {
+            throw new Error(response.data.error.message);
         }
 
-        return NextResponse.json({ message: 'Successfully posted to Facebook!', postId: data.id || data.post_id }, { status: 200 });
+        return NextResponse.json({ message: 'Successfully posted to Facebook!', postId: response.data.id || response.data.post_id });
 
     } catch (error) {
         console.error('Error posting to Facebook:', error);
         return NextResponse.json({ message: error.message }, { status: 500 });
+    } finally {
+        // Now the 'connection' variable exists and can be released
+        if (connection) connection.release();
     }
 }
