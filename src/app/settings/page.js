@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link'; // FIX: Added missing import for Link
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
 import { CheckCircleIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
