@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
+import { useSession, signOut, signIn } from 'next-auth/react'; // FIX: Removed unused 'signIn'
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
@@ -263,9 +263,14 @@ const handleConnectPage = async (pageId) => {
                                 <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                             </div>
                         ) : (
-                             <a href="/api/connect/facebook" className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 flex items-center">
-                               Connect to Facebook
-                            </a>
+                             <button className="px-3 py-1 text-sm bg-blue-600 border border-gray-300 rounded-md hover:bg-white-100 text-white" 
+    onClick={() => signIn('facebook', {
+        callbackUrl: '/settings'
+    })}
+     
+>
+    Connect to Facebook
+</button>
                            
                         )}
                     </div>
@@ -318,7 +323,7 @@ const handleConnectPage = async (pageId) => {
                                                     <img src={acc.profile_picture_url} alt={acc.username} className="h-8 w-8 rounded-full mr-3" />
                                                     <span className="text-sm font-medium text-gray-700">@{acc.username}</span>
                                                 </div>
-                                                <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50" disabled>Connect</button>
+                                                <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Connect</button>
                                             </li>
                                         ))}
                                     </ul>
