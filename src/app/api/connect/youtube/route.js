@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import crypto from 'crypto';
 
-export async function GET(request) {
+export async function GET() {
     // HARDCODE the URI for this test
     const redirectUri = 'http://localhost:3000/connect/callback/youtube';
 

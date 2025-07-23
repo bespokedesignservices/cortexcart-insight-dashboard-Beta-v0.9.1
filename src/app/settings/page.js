@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession, signOut, signIn } from 'next-auth/react'; // FIX: Removed unused 'signIn'
+import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
 import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';

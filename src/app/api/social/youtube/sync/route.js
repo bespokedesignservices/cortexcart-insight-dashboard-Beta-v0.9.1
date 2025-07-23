@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import db from '@/lib/db';
 import { decrypt } from '@/lib/crypto';
 
-export async function POST(request) {
+export async function POST() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
