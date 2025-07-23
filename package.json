@@ -21,6 +21,7 @@
     "dotenv": "^17.2.0",
     "formidable": "^3.5.4",
     "heatmap.js": "^2.0.5",
+    "iron-session": "^8.0.4",
     "leaflet": "^1.9.4",
     "marked": "^15.0.12",
     "moment": "^2.30.1",

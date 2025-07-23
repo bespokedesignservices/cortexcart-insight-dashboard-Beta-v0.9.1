@@ -258,14 +258,17 @@ const handleConnectPage = async (pageId) => {
                             <p className="text-sm text-gray-500">Connect your Facebook/Instagram account to manage your pages and posts.</p>
                         </div>
                         {connectionStatus.facebook ? (
-                             <div className="flex items-center gap-x-4">
-                                <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
-                                <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
-                            </div>
-                        ) : (
-                       <button onClick={() => signIn('facebook')} className="px-3 py-1 text-sm bg-blue-600 border border-blue-300 rounded-md hover:bg-blue-100 text-white hover:text-black">Connect to Facebook</button>
-                           
-                        )}
+                          <div className="flex items-center gap-x-4">
+        <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+        <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+    </div>
+) : (
+    // Use an <a> tag to point to your custom connection route
+    <a href="/api/connect/facebook" className="px-3 py-1 text-sm bg-blue-600 text-white border border-transparent rounded-md hover:bg-blue-700">
+        Connect to Facebook
+    </a>
+)}
+
                     </div>
                     {connectionStatus.facebook && (
                         <>

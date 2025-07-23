@@ -660,7 +660,7 @@ const AnalyticsTabContent = () => {
                         {isSyncing.facebook ? 'Syncing...' : 'Sync with Facebook'}
                     </button>
                     <button onClick={() => handleSync('pinterest')} disabled={isSyncing.pinterest} className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400">
-                        <PinterestIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.pinterest ? 'animate-spin' : ''}`} />
+                        <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.facebook ? 'animate-spin' : ''}`} />
                         {isSyncing.pinterest ? 'Syncing...' : 'Sync with Pinterest'}
                     </button>
                 </div>
