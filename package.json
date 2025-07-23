@@ -20,6 +20,7 @@
     "disqus-react": "^1.1.6",
     "dotenv": "^17.2.0",
     "formidable": "^3.5.4",
+    "googleapis": "^153.0.0",
     "heatmap.js": "^2.0.5",
     "iron-session": "^8.0.4",
     "leaflet": "^1.9.4",

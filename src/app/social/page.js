@@ -663,6 +663,11 @@ const AnalyticsTabContent = () => {
                         <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.facebook ? 'animate-spin' : ''}`} />
                         {isSyncing.pinterest ? 'Syncing...' : 'Sync with Pinterest'}
                     </button>
+                                       <button onClick={() => handleSync('youtube')} disabled={isSyncing.youtube} className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400">
+                        <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.youtube ? 'animate-spin' : ''}`} />
+                        {isSyncing.youtube ? 'Syncing...' : 'Sync with Youtube'}
+                    </button>
+
                 </div>
             </div>
             

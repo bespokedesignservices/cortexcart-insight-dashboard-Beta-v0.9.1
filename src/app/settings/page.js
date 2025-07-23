@@ -146,7 +146,7 @@ const IntegrationsTabContent = () => {
 };
 
 const SocialConnectionsTabContent = () => {
-    const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false });
+    const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false, youtube: false });
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -358,7 +358,20 @@ const handleConnectPage = async (pageId) => {
                         <a href="/api/connect/pinterest" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect to Pinterest</a>
                     )}
                 </div>
-
+<div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+    <div>
+        <p className="font-semibold">YouTube</p>
+        <p className="text-sm text-gray-500">Connect your YouTube channel to sync videos and analytics.</p>
+    </div>
+    {connectionStatus.youtube ? ( // We will add 'youtube' to the connectionStatus state
+        <div className="flex items-center gap-x-4">
+            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+            <button onClick={() => handleDisconnect('youtube')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+        </div>
+    ) : (
+        <a href="/api/connect/youtube" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect YouTube</a>
+    )}
+</div>
             </div>
         </div>
     );

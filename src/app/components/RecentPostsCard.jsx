@@ -9,6 +9,7 @@ const TABS = {
     'x': 'X (Twitter)',
     'facebook': 'Facebook',
     'pinterest': 'Pinterest', // Add this line
+    'youtube': 'YouTube'
 
 };
 
