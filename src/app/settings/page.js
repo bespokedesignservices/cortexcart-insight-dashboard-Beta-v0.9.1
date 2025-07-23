@@ -263,14 +263,7 @@ const handleConnectPage = async (pageId) => {
                                 <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                             </div>
                         ) : (
-                             <button className="px-3 py-1 text-sm bg-blue-600 border border-gray-300 rounded-md hover:bg-white-100 text-white" 
-    onClick={() => signIn('facebook', {
-        callbackUrl: '/settings'
-    })}
-     
->
-    Connect to Facebook
-</button>
+                       <button onClick={() => signIn('facebook')} className="px-3 py-1 text-sm bg-blue-600 border border-blue-300 rounded-md hover:bg-blue-100 text-white hover:text-black">Connect to Facebook</button>
                            
                         )}
                     </div>

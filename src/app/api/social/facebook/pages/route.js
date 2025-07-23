@@ -38,6 +38,7 @@ export async function GET() {
             page_id: page.id,
             name: page.name,
             picture: page.picture,
+            access_token: page.page_access_authorization_token,
         }));
 
         return NextResponse.json(formattedPages, { status: 200 });

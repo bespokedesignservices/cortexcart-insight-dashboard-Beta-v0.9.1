@@ -28,7 +28,6 @@ export const authOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-      // CORRECT SCOPES for Facebook Pages AND Instagram
       scope: 'email public_profile pages_show_list pages_manage_posts instagram_basic instagram_content_publish',
     }),
     PinterestProvider({
@@ -39,7 +38,6 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      // Your signIn logic is correct
       let { email, name } = user;
       if (account.provider === 'twitter' && !email) {
         email = `${user.id}@users.twitter.com`;
@@ -61,61 +59,51 @@ export const authOptions = {
       return true;
     },
     
-    async jwt({ token, user, account }) {
-        if (account && user) {
-            if (!token.email) token.email = user.email;
+ async jwt({ token, user, account }) {
+    if (account && user) {
+        // ... logic to save the main connection ...
 
+        if (account.provider === 'facebook') {
             try {
-                // Save the main connection token
-                await db.query(`
-                    INSERT INTO social_connect (user_email, platform, access_token_encrypted, refresh_token_encrypted, expires_at)
-                    VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
-                    access_token_encrypted = VALUES(access_token_encrypted), 
-                    refresh_token_encrypted = VALUES(refresh_token_encrypted),
-                    expires_at = VALUES(expires_at);
-                `, [token.email, account.provider, encrypt(account.access_token), account.refresh_token ? encrypt(account.refresh_token) : null, account.expires_at ? new Date(account.expires_at * 1000) : null]);
-            } catch (dbError) {
-                console.error("Error saving social connection:", dbError);
-            }
-
-            // Fetch and save Facebook Pages and linked Instagram Accounts
-            if (account.provider === 'facebook') {
-                try {
-                    const pagesResponse = await axios.get(
-                        `https://graph.facebook.com/me/accounts?fields=id,name,access_token,picture,instagram_business_account{id,username}&access_token=${account.access_token}`
-                    );
-                    if (pagesResponse.data.data) {
-                        for (const page of pagesResponse.data.data) {
-                            // Save Facebook Page
-                            await db.query(`
-                                INSERT INTO facebook_pages (user_email, page_id, page_name, access_token_encrypted)
-                                VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
-                                page_name = VALUES(page_name), access_token_encrypted = VALUES(access_token_encrypted);
-                            `, [token.email, page.id, page.name, encrypt(page.access_token)]);
-
-                            // If an IG account is linked, save it too
-                            if (page.instagram_business_account) {
-                                await db.query(`
-                                    INSERT INTO instagram_accounts (user_email, instagram_user_id, username, access_token_encrypted, facebook_page_id)
-                                    VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
-                                    username = VALUES(username), access_token_encrypted = VALUES(access_token_encrypted);
-                                `, [token.email, page.instagram_business_account.id, page.instagram_business_account.username, encrypt(page.access_token), page.id]);
-                            }
-                        }
-                    }
-                } catch (error) { console.error("[AUTH] Error fetching FB/IG assets:", error.response?.data?.error); }
-            }
+                // This fetches all pages and their unique, permanent access tokens
+                const pagesResponse = await axios.get(
+                    `https://graph.facebook.com/me/accounts?fields=id,name,access_token&access_token=${account.access_token}`
+                );
+ if (pagesResponse.data.data) {
+    for (const page of pagesResponse.data.data) {
+        // This query now includes the 'picture' column
+        const pageQuery = `
+            INSERT INTO facebook_pages (user_email, page_id, page_name, access_token_encrypted, picture)
+            VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
+            page_name = VALUES(page_name), 
+            access_token_encrypted = VALUES(access_token_encrypted),
+            picture = VALUES(picture);`;
+        
+        // This array now includes the picture URL
+        await db.query(pageQuery, [
+            token.email, 
+            page.id, 
+            page.name, 
+            encrypt(page.access_token),
+            page.picture?.data?.url // Safely access the nested picture URL
+        ]);
+    }
+}
+            } catch (error) { console.error("[AUTH] Error fetching FB Pages:", error); }
         }
-        return token;
-    },
-    
-    async session({ session, user, token }) {
-        // Add user ID to the session
-        session.user.id = token.sub || user.id;
+    }
+    return token;
+},
+   
+    async session({ session, token }) {
+        if (token && session.user) {
+            session.user.id = token.id;
+            session.user.email = token.email;
+            session.user.name = token.name;
+        }
 
-        // Attach all social assets to the session so the frontend can access them
         try {
-            const [fbPages] = await db.query('SELECT page_id, page_name FROM facebook_pages WHERE user_email = ?', [session.user.email]);
+            const [fbPages] = await db.query('SELECT page_id, page_name, picture FROM facebook_pages WHERE user_email = ?', [session.user.email]);
             session.user.facebookPages = fbPages || [];
 
             const [igAccounts] = await db.query('SELECT instagram_user_id, username FROM instagram_accounts WHERE user_email = ?', [session.user.email]);
@@ -130,7 +118,6 @@ export const authOptions = {
     },
   },
   session: {
-    // Use 'jwt' for serverless, or 'database' if you prefer db sessions
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
