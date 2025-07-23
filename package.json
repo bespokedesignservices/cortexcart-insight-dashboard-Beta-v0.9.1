@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+     "build": "dotenv -e .env.local -- node --max-old-space-size=4096 node_modules/.bin/next build",
+  "start": "dotenv -e .env.local -- next start -p 3000",
     "lint": "next lint"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
     "d3-scale": "^4.0.2",
     "disqus-react": "^1.1.6",
     "dotenv": "^17.2.0",
+    "dotenv-cli": "^9.0.0",
     "formidable": "^3.5.4",
     "googleapis": "^153.0.0",
     "heatmap.js": "^2.0.5",
