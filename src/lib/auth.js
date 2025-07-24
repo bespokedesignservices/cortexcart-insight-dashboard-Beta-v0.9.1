@@ -77,7 +77,7 @@ export const authOptions = {
             VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
             page_name = VALUES(page_name), 
             access_token_encrypted = VALUES(access_token_encrypted),
-            picture = VALUES(picture);`;
+            picture_url = VALUES(picture_url);`;
         
         // This array now includes the picture URL
         await db.query(pageQuery, [
