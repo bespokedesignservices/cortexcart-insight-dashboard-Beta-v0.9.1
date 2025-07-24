@@ -34,7 +34,18 @@ const EngagementByPlatformChart = ({ data }) => {
       }
     },
   };
-  
+
+  // Define custom colors for each platform
+  // This assumes the order of data in the dataset corresponds to these platforms
+  // For a more robust solution, map colors based on platform names if available in data
+  const chartData = {
+    ...data,
+    datasets: data.datasets.map(dataset => ({
+      ...dataset,
+      backgroundColor: ['#ADD8E6', '#00008B', '#FF0000'], // Light Blue, Dark Blue, Red (These colors will be applied to the chart segments)
+    })),
+  };
+
   // A more robust check to see if there is data to display
   const hasData = data?.datasets?.[0]?.data?.some(value => value > 0);
 
@@ -42,7 +53,7 @@ const EngagementByPlatformChart = ({ data }) => {
     return <p className="text-sm text-gray-500 text-center mt-4">No engagement data available to display. It can take anything from 24 hours to a few days for data to be returned and analyzed by AI, please check back again later!. If the error persists raise a bug report and we will check for the reason and get back to you.</p>;
   }
 
-  return <Doughnut data={data} options={options} />;
+  return <Doughnut data={chartData} options={options} />;
 };
 
 export default EngagementByPlatformChart;

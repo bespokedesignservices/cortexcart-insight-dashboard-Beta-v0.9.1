@@ -73,7 +73,7 @@ export const authOptions = {
     for (const page of pagesResponse.data.data) {
         // This query now includes the 'picture' column
         const pageQuery = `
-            INSERT INTO facebook_pages (user_email, page_id, page_name, access_token_encrypted, picture)
+            INSERT INTO facebook_pages (user_email, page_id, page_name, access_token_encrypted, picture_url)
             VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE 
             page_name = VALUES(page_name), 
             access_token_encrypted = VALUES(access_token_encrypted),
@@ -103,7 +103,7 @@ export const authOptions = {
         }
 
         try {
-            const [fbPages] = await db.query('SELECT page_id, page_name, picture FROM facebook_pages WHERE user_email = ?', [session.user.email]);
+            const [fbPages] = await db.query('SELECT page_id, page_name, picture_url FROM facebook_pages WHERE user_email = ?', [session.user.email]);
             session.user.facebookPages = fbPages || [];
 
             const [igAccounts] = await db.query('SELECT instagram_user_id, username FROM instagram_accounts WHERE user_email = ?', [session.user.email]);

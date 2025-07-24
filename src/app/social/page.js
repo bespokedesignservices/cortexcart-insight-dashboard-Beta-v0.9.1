@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import Layout from '@/app/components/Layout';
 import { ArrowPathIcon, SparklesIcon, StarIcon, CalendarIcon, PaperAirplaneIcon, InformationCircleIcon, CakeIcon, UserIcon, GlobeAltIcon, ClipboardDocumentIcon, ChartBarIcon, PencilSquareIcon, XCircleIcon } from '@heroicons/react/24/solid';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
@@ -14,6 +15,7 @@ import Image from 'next/image';
 import RecentPostsCard from '@/app/components/RecentPostsCard';
 import EngagementByPlatformChart from '@/app/components/EngagementByPlatformChart';
 import PlatformPostsChart from '@/app/components/PlatformPostsChart';
+import { Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 const PinterestIcon = (props) => (
     <svg {...props} fill="#E60023" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.14 2.686 7.66 6.357 8.94.02-.19.03-.4.05-.61l.33-1.4a.12.12 0 0 1 .1-.1c.36-.18 1.15-.56 1.15-.56s-.3-.91-.25-1.79c.06-.9.65-2.12 1.46-2.12.68 0 1.2.51 1.2 1.12 0 .68-.43 1.7-.65 2.64-.18.78.38 1.42.92 1.42 1.58 0 2.63-2.1 2.63-4.22 0-1.8-.95-3.26-2.7-3.26-2.12 0-3.32 1.58-3.32 3.16 0 .6.22 1.25.5 1.62.03.04.04.05.02.13l-.15.65c-.05.2-.14.24-.32.08-1.05-.9-1.5-2.3-1.5-3.82 0-2.78 2.04-5.38 5.8-5.38 3.1 0 5.2 2.25 5.2 4.67 0 3.1-1.95 5.42-4.62 5.42-.9 0-1.75-.46-2.05-1l-.52 2.1c-.24 1-.92 2.25-.92 2.25s-.28.1-.32.08c-.46-.38-.68-1.2-.55-1.88l.38-1.68c.12-.55-.03-1.2-.5-1.52-1.32-.9-1.9-2.6-1.9-4.22 0-2.28 1.6-4.3 4.6-4.3 2.5 0 4.2 1.8 4.2 4.15 0 2.5-1.55 4.5-3.8 4.5-.75 0-1.45-.38-1.7-.82l-.28-.9c-.1-.4-.2-.8-.2-1.22 0-.9.42-1.68 1.12-1.68.9 0 1.5.8 1.5 1.88 0 .8-.25 1.88-.58 2.8-.25.7-.5 1.4-.5 1.4s-.3.12-.35.1c-.2-.1-.3-.2-.3-.4l.02-1.12z"/></svg>
@@ -92,6 +94,10 @@ const SocialNav = ({ activeTab, setActiveTab }) => {
                         <tab.icon className="mr-2 h-5 w-5" /> {tab.name}
                     </button>
                 ))}
+                <Link href="/settings/#social-connect" className="ml-auto flex items-center py-4 px-1 font-medium text-sm transition-colors text-gray-500 hover:text-gray-700">
+                    <Cog6ToothIcon className="h-6 w-6" />
+                </Link>
+
             </nav>
         </div>
     );
@@ -570,9 +576,18 @@ const AnalyticsTabContent = () => {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false });
+    const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false, youtube: false });
     const [syncMessage, setSyncMessage] = useState('');
     const [syncMessageType, setSyncMessageType] = useState('info');
+  // Define the colors for each platform to match your sync buttons
+       const platformColors = {
+        x: 'rgba(0, 0, 0, 0.7)',
+        facebook: 'rgba(37, 99, 235, 0.7)', // blue-600
+        pinterest: 'rgba(220, 38, 38, 0.7)', // red-600
+        youtube: 'rgba(239, 68, 68, 0.7)', // red-500
+        default: 'rgba(107, 114, 128, 0.7)' // gray-500
+    };
+
 
      const fetchAnalytics = useCallback(async () => {
         setIsLoading(true);
@@ -595,7 +610,7 @@ const AnalyticsTabContent = () => {
         setIsSyncing(prev => ({ ...prev, [platform]: true }));
         setSyncMessage('');
         try {
-            const res = await fetch(`/api/social/${platform}/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}), });
+            const res = await fetch(`/api/social/${platform}/sync`, { method: 'POST' });
             const result = await res.json();
             if (!res.ok) {
                 setSyncMessageType('error');
@@ -603,7 +618,7 @@ const AnalyticsTabContent = () => {
             }
             setSyncMessageType('success');
             setSyncMessage(result.message);
-            fetchAnalytics(); // Refresh analytics after a successful sync
+            fetchAnalytics();
         } catch (err) {
             setSyncMessageType('error');
             setSyncMessage(err.message);
@@ -616,103 +631,104 @@ const AnalyticsTabContent = () => {
     if (error) return <p className="text-center p-8 text-red-600">{error}</p>;
 
     const { stats = {}, dailyReach = [], platformStats = [] } = data || {};
+    
+    const reachChartData = (dailyReach || []).map(item => ({ date: item.date, pageviews: item.reach, conversions: 0 }));
 
-    const reachChartData = dailyReach.map(item => ({
-        date: item.date,
-        pageviews: item.reach,
-        conversions: 0 
-    }));
+    const platformLabels = (platformStats || []).map(p => p.platform);
+      const backgroundColors = (platformStats || []).map(p => platformColors[p.platform] || platformColors.default);
 
-    const postsByPlatformData = {
+     const postsByPlatformData = {
         labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
         datasets: [{
             label: 'Number of Posts',
             data: platformStats.map(item => item.postCount),
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            borderColor: 'rgba(75, 192, 192, 1)',
+             backgroundColor: backgroundColors, // Use the dynamic color array
+            //borderColor: borderColor,         // Use the dynamic border color array
             borderWidth: 1,
         }]
     };
     
-     const engagementByPlatformData = {
-        labels: platformStats.map(item => PLATFORMS[item.platform]?.name || item.platform),
+    const engagementByPlatformData = {
+        labels: platformLabels,
         datasets: [{
-            label: 'Engagement Rate (%)',
-            data: platformStats.map(item => {
-                const rate = parseFloat(item.engagementRate);
-                return isNaN(rate) ? 0 : rate.toFixed(2);
-            }),
-            backgroundColor: platformStats.map(item => PLATFORMS[item.platform]?.color || '#6B7280'),
-        }]
+            label: 'Engagement Rate',
+            data: (platformStats || []).map(p => p.engagementRate),
+              backgroundColor: backgroundColors, // Use the dynamic color array
+           // borderColor: borderColor,         // Use the dynamic border color array
+        }],
     };
 
     return ( 
-        <div className="bg-white p-6 rounded-lg shadow-md border space-y-8">
-            <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold text-gray-800">Social Media Analytics Overview</h3>
-                <div className="flex gap-x-2">
-                     <button onClick={() => handleSync('x')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
-                        <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.x ? 'animate-spin' : ''}`} />
-                        {isSyncing.x ? 'Syncing...' : 'Sync with X'}
-                    </button>
-                    <button onClick={() => handleSync('facebook')} disabled={isSyncing.facebook} className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:bg-blue-400">
-                        <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.facebook ? 'animate-spin' : ''}`} />
-                        {isSyncing.facebook ? 'Syncing...' : 'Sync with Facebook'}
-                    </button>
-                    <button onClick={() => handleSync('pinterest')} disabled={isSyncing.pinterest} className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400">
-                        <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.facebook ? 'animate-spin' : ''}`} />
-                        {isSyncing.pinterest ? 'Syncing...' : 'Sync with Pinterest'}
-                    </button>
-                                       <button onClick={() => handleSync('youtube')} disabled={isSyncing.youtube} className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400">
-                        <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.youtube ? 'animate-spin' : ''}`} />
-                        {isSyncing.youtube ? 'Syncing...' : 'Sync with Youtube'}
-                    </button>
-
+        <div className="space-y-8">
+            {/* Card 1: Overview and Sync Buttons */}
+            <div className="bg-white p-6 rounded-lg shadow-md border">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Social Media Analytics Overview</h3>
+                    <div className="flex flex-wrap gap-2">
+                         <button onClick={() => handleSync('x')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
+                            <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.x ? 'animate-spin' : ''}`} />
+                            {isSyncing.x ? 'Syncing...' : 'Sync with X'}
+                        </button>
+                        <button onClick={() => handleSync('facebook')} disabled={isSyncing.facebook} className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:bg-blue-400">
+                            <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.facebook ? 'animate-spin' : ''}`} />
+                            {isSyncing.facebook ? 'Syncing...' : 'Sync with Facebook'}
+                        </button>
+                        <button onClick={() => handleSync('pinterest')} disabled={isSyncing.pinterest} className="inline-flex items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:bg-red-400">
+                            <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.pinterest ? 'animate-spin' : ''}`} />
+                            {isSyncing.pinterest ? 'Syncing...' : 'Sync with Pinterest'}
+                        </button>
+                        <button onClick={() => handleSync('youtube')} disabled={isSyncing.youtube} className="inline-flex items-center rounded-md bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 disabled:bg-red-400">
+                            <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.youtube ? 'animate-spin' : ''}`} />
+                            {isSyncing.youtube ? 'Syncing...' : 'Sync with YouTube'}
+                        </button>
+                    </div>
                 </div>
-            </div>
-            
-            {syncMessage && (
-                <div className={`text-center text-sm p-2 rounded-md ${syncMessageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {syncMessage}
-                </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-blue-50 p-5 rounded-lg">
-                    <p className="text-sm font-medium text-blue-600">Total Posts</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPosts || 0}</p>
-                </div>
-                <div className="bg-green-50 p-5 rounded-lg">
-                    <p className="text-sm font-medium text-green-600">Total Reach</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{(stats.totalReach || 0).toLocaleString()}</p>
-                </div>
-                <div className="bg-purple-50 p-5 rounded-lg">
-                    <p className="text-sm font-medium text-purple-600">Avg. Engagement Rate</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">{parseFloat(stats.engagementRate || 0).toFixed(2)}%</p>
-                </div>
+                {syncMessage && (
+                    <div className={`text-center text-sm p-3 rounded-md mt-4 ${syncMessageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {syncMessage}
+                    </div>
+                )}
             </div>
 
-            <div>
+            {/* Card 2: Key Metrics */}
+            <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Key Metrics</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
+                        <p className="text-sm font-medium text-blue-600">Total Posts</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalPosts || 0}</p>
+                    </div>
+                    <div className="bg-green-50 p-5 rounded-lg border border-green-200">
+                        <p className="text-sm font-medium text-green-600">Total Reach (Impressions)</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{(stats.totalReach || 0).toLocaleString()}</p>
+                    </div>
+                    <div className="bg-purple-50 p-5 rounded-lg border border-purple-200">
+                        <p className="text-sm font-medium text-purple-600">Avg. Engagement Rate</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{parseFloat(stats.engagementRate || 0).toFixed(2)}%</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* --- THE FIX: Uncommented the chart components --- */}
+            <div className="bg-white p-6 rounded-lg shadow-md border">
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach (Last 30 Days)</h4>
                 <div className="h-80"><Ga4LineChart data={reachChartData} /></div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
+                <div className="bg-white p-6 rounded-lg shadow-md border">
                     <h4 className="text-xl font-semibold text-gray-800 mb-4">Posts by Platform</h4>
-                    <div className="h-80">
-                        <PlatformPostsChart chartData={postsByPlatformData} />
+                    <div className="h-80">  
+                         <PlatformPostsChart chartData={postsByPlatformData} />
                     </div>
                 </div>
-                <div>
+                <div className="bg-white p-6 rounded-lg shadow-md border">
                     <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
-                    <div className="h-80 flex justify-center">
-                        <EngagementByPlatformChart data={engagementByPlatformData} />
-                    </div>
+                    <div className="h-80 flex justify-center"><EngagementByPlatformChart data={engagementByPlatformData} /></div>
                 </div>
             </div>
             
             <RecentPostsCard />
+      
         </div>
     );
 };
