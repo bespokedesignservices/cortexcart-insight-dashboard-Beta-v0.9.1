@@ -24,12 +24,14 @@ export async function GET() {
 
     const response = NextResponse.redirect(authorizationUrl);
     
-    response.cookies.set('youtube_oauth_state', state, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        sameSite: 'lax',
-    });
+         response.cookies.set('facebook_oauth_state', state, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            sameSite: 'lax',
+            domain: '.cortexcart.com' // Set the root domain here
+        });
+
 
     return response;
 }

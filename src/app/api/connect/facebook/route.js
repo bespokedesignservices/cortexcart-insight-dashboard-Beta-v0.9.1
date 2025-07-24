@@ -26,11 +26,12 @@ export async function GET(request) {
         const response = NextResponse.redirect(facebookAuthUrl);
 
         // We set a secure cookie with the state value to check against later
-        response.cookies.set('facebook_oauth_state', state, {
+         response.cookies.set('facebook_oauth_state', state, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             path: '/',
             sameSite: 'lax',
+            domain: '.cortexcart.com' // Set the root domain here
         });
 
         return response;

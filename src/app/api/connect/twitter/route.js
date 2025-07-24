@@ -43,6 +43,13 @@ export async function GET() {
         // 4. Attach the security cookies to the response
         response.cookies.set('x_oauth_state', state, { httpOnly: true, path: '/' });
         response.cookies.set('x_oauth_code_verifier', codeVerifier, { httpOnly: true, path: '/' });
+        response.cookies.set('twitter_oauth_state', state, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            sameSite: 'lax',
+            domain: '.cortexcart.com' // Set the root domain here
+        });
 
         return response;
 
