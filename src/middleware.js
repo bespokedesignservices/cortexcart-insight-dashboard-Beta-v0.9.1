@@ -14,7 +14,8 @@ const getSecret = () => {
 export async function middleware(req) {
     const { pathname } = req.nextUrl;
     const secret = getSecret();
-
+    // --- THE FIX: Use the reliable environment variable for the base URL ---
+    const appUrl = process.env.NEXTAUTH_URL;
     // --- Admin Route Protection ---
     if (pathname.startsWith('/admin')) {
         // Allow the login page to be accessed without any token
