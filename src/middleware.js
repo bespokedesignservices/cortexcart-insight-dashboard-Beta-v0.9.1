@@ -28,7 +28,7 @@ export async function middleware(req) {
 
         // If there's no admin token, redirect to the admin login page
         if (!adminToken) {
-            return NextResponse.redirect(new URL('/admin/login', req.url));
+            return NextResponse.redirect(new URL('/admin/login', appURL));
         }
 
         try {
@@ -36,14 +36,14 @@ export async function middleware(req) {
             const { payload } = await jwtVerify(adminToken, secret);
             // Check if the user has the correct role
             if (payload.role !== 'superadmin') {
-                return NextResponse.redirect(new URL('/admin/login?error=Forbidden', req.url));
+                return NextResponse.redirect(new URL('/admin/login?error=Forbidden', appUrl));
             }
             // If the token is valid and the role is correct, allow access
             return NextResponse.next();
         } catch (error) {
             // If the token is invalid (expired, tampered with, etc.), redirect to login
             console.error('Admin token verification failed:', error);
-            return NextResponse.redirect(new URL('/admin/login', req.url));
+            return NextResponse.redirect(new URL('/admin/login', appUrl));
         }
     }
 
@@ -54,7 +54,7 @@ export async function middleware(req) {
 
         if (!sessionToken) {
             // If the user is not signed in, redirect them to the main login page
-            const signInUrl = new URL('/api/auth/signin', req.url);
+            const signInUrl = new URL('/api/auth/signin', appUrl);
             // Save the page they were trying to access to redirect them back after login
             signInUrl.searchParams.set('callbackUrl', req.url);
             return NextResponse.redirect(signInUrl);
