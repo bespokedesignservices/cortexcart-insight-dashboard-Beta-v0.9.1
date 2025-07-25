@@ -1,4 +1,4 @@
-import db from '../../../../lib/db';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // This is a public route and does not require authentication.

@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '../../../../../lib/db';
+import { db } from '@/lib/db'; '../../../../../lib/db';
 import { NextResponse } from 'next/server';
 
 // This is a protected route that should only be triggered by a secure cron job

@@ -2,7 +2,7 @@
 
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '../../../../lib/db';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // GET handler: Fetches just the GA4 property ID.

@@ -5,6 +5,7 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import RealTimeClock from './RealTimeClock';
+import ThemeToggle from './ThemeToggle';
 import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
 import { 
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
@@ -68,6 +69,7 @@ const TopNav = () => {
 
     return (
         <div className="flex items-center space-x-4 h-full">
+           <ThemeToggle className="text-gray-900" />
 <RealTimeClock />
             <div className="relative h-full flex items-center" ref={notificationsRef}>
                 <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 relative">

@@ -1,6 +1,6 @@
 // src/app/api/admin/roadmap/route.js
 import { verifyAdminSession } from '@/lib/admin-auth';
-import db from '../../../../../src/lib/db';
+import { db } from '@/lib/db'; '../../../../../src/lib/db';
 import { NextResponse } from 'next/server';
 
 // GET handler to fetch all roadmap features

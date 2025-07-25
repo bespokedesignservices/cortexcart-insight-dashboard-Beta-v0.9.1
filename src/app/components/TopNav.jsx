@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { BellIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon } from '@heroicons/react/24/outline';
 import NotificationsPanel from './NotificationsPanel';
-
+import ThemeToggle from './ThemeToggle';
 export default function TopNav() {
     const { data: session, status } = useSession();
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -70,7 +70,9 @@ export default function TopNav() {
     }
 
     return (
-        <div className="flex items-center space-x-4">
+        
+        <div className="flex items-center space-x-4 ml-auto">
+           
             <div className="relative" ref={notificationsRef}>
                 <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 relative">
                     <span className="sr-only">View notifications</span>

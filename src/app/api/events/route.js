@@ -1,4 +1,4 @@
-import db from '../../../../lib/db'; // Adjust path if necessary
+import { db } from '@/lib/db'; // Adjust path if necessary
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {

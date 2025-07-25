@@ -2,7 +2,7 @@
 
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '../../../../../lib/db';
+import { db } from '@/lib/db'; '../../../../../lib/db';
 import { decrypt, encrypt } from '@/lib/crypto';
 import { NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';

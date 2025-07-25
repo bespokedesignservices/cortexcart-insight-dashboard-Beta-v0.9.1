@@ -1,4 +1,4 @@
-import db from '@/lib/db';
+import { db } from '@/lib/db'; '@/lib/db';
 import { NextResponse } from 'next/server';
 import { simpleCache } from '@/lib/cache';
 

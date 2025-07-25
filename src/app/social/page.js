@@ -663,7 +663,7 @@ const AnalyticsTabContent = () => {
             {/* Card 1: Overview and Sync Buttons */}
             <div className="bg-white p-6 rounded-lg shadow-md border">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Social Media Analytics Overview</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Analytics Overview</h3>
                     <div className="flex flex-wrap gap-2">
                          <button onClick={() => handleSync('x')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
                             <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.x ? 'animate-spin' : ''}`} />
@@ -901,174 +901,181 @@ const DemographicsTabContent = () => {
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md border">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">Demographics Insights</h3>
-            <p className="text-gray-600 mb-6">
-                Select demographic filters to gain insights into your audience. This feature allows you to tailor your content and campaigns more effectively.
-            </p>
+        <div className="space-y-8">
+            <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">Demographics Insights</h3>
+                <p className="text-gray-600 mb-6">
+                    Select demographic filters to gain insights into your audience. This feature allows you to tailor your content and campaigns more effectively.
+                </p>
+            </div>
 
             {currentDemographics && (
-                <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 mb-6" role="alert">
-                    <p className="font-bold mb-2">Current Demographic Settings:</p>
-                    <div className="flex items-center text-sm mb-1">
-                        <CakeIcon className="h-5 w-5 mr-2" />
-                        <span>Age Range: {currentDemographics.age_range || 'Not set'}</span>
-                    </div>
-                    <div className="flex items-center text-sm mb-1">
-                        <UserIcon className="h-5 w-5 mr-2" />
-                        <span>Sex: {currentDemographics.sex || 'Not set'}</span>
-                    </div>
-                    <div className="flex items-center text-sm">
-                        <GlobeAltIcon className="h-5 w-5 mr-2" />
-                        <span>Country: {currentDemographics.country || 'Not set'}</span>
+                <div className="bg-white p-6 rounded-lg shadow-md border">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Current Demographic Settings</h3>
+                    <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4" role="alert">
+                        <div className="flex items-center text-sm mb-1">
+                            <CakeIcon className="h-5 w-5 mr-2" />
+                            <span>Age Range: {currentDemographics.age_range || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center text-sm mb-1">
+                            <UserIcon className="h-5 w-5 mr-2" />
+                            <span>Sex: {currentDemographics.sex || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center text-sm">
+                            <GlobeAltIcon className="h-5 w-5 mr-2" />
+                            <span>Country: {currentDemographics.country || 'Not set'}</span>
+                        </div>
                     </div>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                    <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700">Age Range: {ageRange || 'Not set'}</label>
-                    <input
-                        type="range"
-                        id="ageRange"
-                        name="ageRange"
-                        min="13"
-                        max="65"
-                        step="1"
-                        value={ageRange.split('-')[0] || 13} // Use the start of the range for the slider value
-                        onChange={(e) => {
-                            const startAge = parseInt(e.target.value, 10);
-                            let endAge;
-                            if (startAge >= 65) {
-                                endAge = '65+';
-                            } else if (startAge >= 55) {
-                                endAge = '64';
-                            } else if (startAge >= 45) {
-                                endAge = '54';
-                            } else if (startAge >= 35) {
-                                endAge = '44';
-                            } else if (startAge >= 25) {
-                                endAge = '34';
-                            } else if (startAge >= 18) {
-                                endAge = '24';
-                            } else {
-                                endAge = '17';
-                            }
-                            setAgeRange(`${startAge}-${endAge}`);
-                        }}
-                        className="mt-1 block w-full"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1"><span>13</span><span>18</span><span>25</span><span>35</span><span>45</span><span>55</span><span>65+</span></div>
-                </div>
-
-                <div>
-                    <label htmlFor="sex" className="block text-sm font-medium text-gray-700">Sex</label>
-                                 <div className="mt-1 space-y-2">
-                        <div className="flex items-center">
-                            <input
-                                id="sex-male"
-                                name="sex"
-                                type="checkbox"
-                                value="male"
-                                checked={sex === 'male'}
-                                onChange={() => setSex('male')}
-                                className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                            />
-                            <label htmlFor="sex-male" className="ml-2 block text-sm text-gray-900">
-                                Male
-                            </label>
-                        </div>
-                        <div className="flex items-center">
-                            <input
-                                id="sex-female"
-                                name="sex"
-                                type="checkbox"
-                                value="female"
-                                checked={sex === 'female'}
-                                onChange={() => setSex('female')}
-                                className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                            />
-                            <label htmlFor="sex-female" className="ml-2 block text-sm text-gray-900">
-                                Female
-                            </label>
-                        </div>
-                        <div className="flex items-center">
-                            <input
-                                id="sex-other"
-                                name="sex"
-                                type="checkbox"
-                                value="other"
-                                checked={sex === 'other'}
-                                onChange={() => setSex('other')}
-                                className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                            />
-                            <label htmlFor="sex-other" className="ml-2 block text-sm text-gray-900">
-                                Other
-                            </label>
-                        </div>
+            <div className="bg-white p-6 rounded-lg shadow-md border">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Apply New Filters</h3>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700">Age Range: {ageRange || 'Not set'}</label>
+                        <input
+                            type="range"
+                            id="ageRange"
+                            name="ageRange"
+                            min="13"
+                            max="65"
+                            step="1"
+                            value={ageRange.split('-')[0] || 13} // Use the start of the range for the slider value
+                            onChange={(e) => {
+                                const startAge = parseInt(e.target.value, 10);
+                                let endAge;
+                                if (startAge >= 65) {
+                                    endAge = '65+';
+                                } else if (startAge >= 55) {
+                                    endAge = '64';
+                                } else if (startAge >= 45) {
+                                    endAge = '54';
+                                } else if (startAge >= 35) {
+                                    endAge = '44';
+                                } else if (startAge >= 25) {
+                                    endAge = '34';
+                                } else if (startAge >= 18) {
+                                    endAge = '24';
+                                } else {
+                                    endAge = '17';
+                                }
+                                setAgeRange(`${startAge}-${endAge}`);
+                            }}
+                            className="mt-1 block w-full"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1"><span>13</span><span>18</span><span>25</span><span>35</span><span>45</span><span>55</span><span>65+</span></div>
                     </div>
 
-                </div>
+                    <div>
+                        <label htmlFor="sex" className="block text-sm font-medium text-gray-700">Sex</label>
+                        <div className="mt-1 space-y-2">
+                            <div className="flex items-center">
+                                <input
+                                    id="sex-male"
+                                    name="sex"
+                                    type="checkbox"
+                                    value="male"
+                                    checked={sex === 'male'}
+                                    onChange={() => setSex('male')}
+                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                />
+                                <label htmlFor="sex-male" className="ml-2 block text-sm text-gray-900">
+                                    Male
+                                </label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="sex-female"
+                                    name="sex"
+                                    type="checkbox"
+                                    value="female"
+                                    checked={sex === 'female'}
+                                    onChange={() => setSex('female')}
+                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                />
+                                <label htmlFor="sex-female" className="ml-2 block text-sm text-gray-900">
+                                    Female
+                                </label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="sex-other"
+                                    name="sex"
+                                    type="checkbox"
+                                    value="other"
+                                    checked={sex === 'other'}
+                                    onChange={() => setSex('other')}
+                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                />
+                                <label htmlFor="sex-other" className="ml-2 block text-sm text-gray-900">
+                                    Other
+                                </label>
+                            </div>
+                        </div>
 
-                <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-gray-700">Country</label>
-                    <input
-                        type="text"
-                        id="country"
-                        name="country"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        placeholder="e.g., United States"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    />
-                    {country.length === 0 && (
-                        <select 
+                    </div>
+
+                    <div>
+                        <label htmlFor="country" className="block text-sm font-medium text-gray-700">Country</label>
+                        <input
+                            type="text"
                             id="country"
                             name="country"
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
+                            placeholder="e.g., United States"
                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        >
-                            <option value="">Select a country</option>
-                            <option value="United States">United States</option>
-                            <option value="Canada">Canada</option>
-                            <option value="United Kingdom">United Kingdom</option>
-                            <option value="Australia">Australia</option>
-                            <option value="Germany">Germany</option>
-                            <option value="France">France</option>
-                            <option value="Japan">Japan</option>
-                            <option value="India">India</option>
-                            <option value="Brazil">Brazil</option>
-                            <option value="Mexico">Mexico</option>
-                            <option value="China">China</option>
-                            <option value="South Africa">South Africa</option>
-                            <option value="Argentina">Argentina</option>
-                            <option value="Italy">Italy</option>
-                            <option value="Spain">Spain</option>
-                            <option value="Netherlands">Netherlands</option>
-                            <option value="Sweden">Sweden</option>
-                            <option value="Norway">Norway</option>
-                            <option value="Denmark">Denmark</option>
-                            <option value="Finland">Finland</option>
-                            <option value="New Zealand">New Zealand</option>
-                            <option value="Singapore">Singapore</option>
-                            <option value="South Korea">South Korea</option>
-                            <option value="Russia">Russia</option>
-                            <option value="Saudi Arabia">Saudi Arabia</option>
-                            <option value="United Arab Emirates">United Arab Emirates</option>
-                            <option value="Egypt">Egypt</option>
-                            <option value="Nigeria">Nigeria</option>
-                            <option value="Kenya">Kenya</option>
-                            <option value="Indonesia">Indonesia</option>
-                            <option value="Malaysia">Malaysia</option>
-                            <option value="Thailand">Thailand</option>
-                        </select>
-                    )}
-                </div>
-                <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Apply Filters
-                </button>
-            </form>
+                        />
+                        {country.length === 0 && (
+                            <select
+                                id="country"
+                                name="country"
+                                value={country}
+                                onChange={(e) => setCountry(e.target.value)}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            >
+                                <option value="">Select a country</option>
+                                <option value="United States">United States</option>
+                                <option value="Canada">Canada</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                                <option value="Japan">Japan</option>
+                                <option value="India">India</option>
+                                <option value="Brazil">Brazil</option>
+                                <option value="Mexico">Mexico</option>
+                                <option value="China">China</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Argentina">Argentina</option>
+                                <option value="Italy">Italy</option>
+                                <option value="Spain">Spain</option>
+                                <option value="Netherlands">Netherlands</option>
+                                <option value="Sweden">Sweden</option>
+                                <option value="Norway">Norway</option>
+                                <option value="Denmark">Denmark</option>
+                                <option value="Finland">Finland</option>
+                                <option value="New Zealand">New Zealand</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="South Korea">South Korea</option>
+                                <option value="Russia">Russia</option>
+                                <option value="Saudi Arabia">Saudi Arabia</option>
+                                <option value="United Arab Emirates">United Arab Emirates</option>
+                                <option value="Egypt">Egypt</option>
+                                <option value="Nigeria">Nigeria</option>
+                                <option value="Kenya">Kenya</option>
+                                <option value="Indonesia">Indonesia</option>
+                                <option value="Malaysia">Malaysia</option>
+                                <option value="Thailand">Thailand</option>
+                            </select>
+                        )}
+                    </div>
+                    <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Apply Filters
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };
@@ -1164,8 +1171,8 @@ export default function SocialMediaManagerPage() {
                     setView={setView}
                     optimalTimes={optimalTimes}
                 />
-            )
-            }{activeTab === 'Demographics' && <DemographicsTabContent />}
+            )}
+            {activeTab === 'Demographics' && <DemographicsTabContent />}
         </Layout>
     );
 }

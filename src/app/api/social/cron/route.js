@@ -1,6 +1,6 @@
 // File: src/app/api/social/cron/route.js
 
-import db from '../../../../lib/db';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { decrypt, encrypt } from '@/lib/crypto';
 import { TwitterApi } from 'twitter-api-v2';

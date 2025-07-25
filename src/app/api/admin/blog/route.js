@@ -1,5 +1,5 @@
 import { verifyAdminSession } from '@/lib/admin-auth';
-import db from '../../../../../src/lib/db';
+import { db } from '@/lib/db'; '../../../../../src/lib/db';
 import { NextResponse } from 'next/server';
 
 const generateSlug = (title) => {

@@ -2,7 +2,7 @@
 
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '@/lib/db';
+import { db } from '@/lib/db'; '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function DELETE(request, { params }) {

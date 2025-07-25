@@ -21,6 +21,7 @@ import CountryViewsList from '@/app/components/CountryViewsList';
 import Ga4LineChart from '@/app/components/Ga4LineChart';
 import PerformanceScore from '@/app/components/PerformanceScore';
 
+
 const currencySymbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: '$', AUD: '$' };
 
 const DataSourceToggle = ({ dataSource, setDataSource }) => (
@@ -193,6 +194,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-4">
             <DataSourceToggle dataSource={dataSource} setDataSource={setDataSource} />
             <DateFilter onFilterChange={handleDateFilterChange} />
+
         </div>
       </div>
       

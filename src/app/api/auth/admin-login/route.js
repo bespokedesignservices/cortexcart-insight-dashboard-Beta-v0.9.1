@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import db from '../../../../../lib/db';
+import { db } from '@/lib/db'; '../../../../../lib/db';
 import crypto from 'crypto';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';

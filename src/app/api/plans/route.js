@@ -1,4 +1,4 @@
-import db from '../../../../lib/db';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // This line tells Next.js to always fetch this route dynamically (no caching)

@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '@/lib/db';
+import { db } from '@/lib/db'; '@/lib/db';
 import { encrypt } from '@/lib/crypto';
 
 export const runtime = 'nodejs';

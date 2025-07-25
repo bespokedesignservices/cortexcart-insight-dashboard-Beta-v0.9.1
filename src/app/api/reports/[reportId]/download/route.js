@@ -1,7 +1,7 @@
 // src/app/api/reports/[reportId]/download/route.js
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '../../../../../../lib/db';
+import { db } from '@/lib/db'; '../../../../../../lib/db';
 import { NextResponse } from 'next/server';
 import puppeteer from 'puppeteer';
 import { marked } from 'marked';

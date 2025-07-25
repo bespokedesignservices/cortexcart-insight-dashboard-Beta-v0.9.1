@@ -1,6 +1,6 @@
 // src/app/api/admin/roadmap/reorder/route.js
 import { verifyAdminSession } from '@/lib/admin-auth';
-import db from '../../../../../../src/lib/db';
+import { db } from '@/lib/db'; '../../../../../../src/lib/db';
 import { NextResponse } from 'next/server';
 
 // PATCH handler to update the order and status of multiple features

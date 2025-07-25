@@ -1,5 +1,5 @@
 import { verifyAdminSession } from '@/lib/admin-auth';
-import db from '@/lib/db';
+import { db } from '@/lib/db'; '@/lib/db';
 import { NextResponse } from 'next/server';
 
 // GET handler to fetch the current beta mode status

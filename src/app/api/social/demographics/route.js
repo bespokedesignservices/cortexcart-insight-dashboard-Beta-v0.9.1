@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '../../../../../lib/db';
+import { db } from '@/lib/db'; '../../../../../lib/db';
 import { NextResponse } from 'next/server';
 
 // GET: Fetch existing demographic settings for the logged-in user

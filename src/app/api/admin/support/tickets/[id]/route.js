@@ -1,5 +1,5 @@
 import { verifyAdminSession } from '@/lib/admin-auth';
-import db from '../../../../../../../lib/db';
+import { db } from '@/lib/db'; '../../../../../../../lib/db';
 import { NextResponse } from 'next/server';
 
 // This file handles fetching a single ticket and updating its status

@@ -4,7 +4,7 @@ import { writeFile } from 'fs/promises';
 import path from 'path';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import db from '@/lib/db';
+import { db } from '@/lib/db'; '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
