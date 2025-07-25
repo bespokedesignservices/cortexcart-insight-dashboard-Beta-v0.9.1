@@ -207,19 +207,33 @@ const SocialConnectionsTabContent = () => {
         }
     }, [searchParams, fetchConnections]);
 
-const handleDisconnect = async (platform) => {
-    if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
-    try {
-        await fetch('/api/social/connections/status', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ platform }),
-        });
-    } catch (err) { // FIX: Use the 'err' variable for logging
-        console.error(`Could not disconnect ${platform}:`, err);
-        alert(`Could not disconnect ${platform}. Please try again.`);
-    }
-};
+  const handleDisconnect = async (platform) => {
+        if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
+
+        try {
+            const res = await fetch('/api/social/connections/status', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platform }),
+            });
+
+            if (!res.ok) {
+                const result = await res.json();
+                throw new Error(result.message || `Could not disconnect ${platform}.`);
+            }
+            
+            // This is the crucial step:
+            // After a successful disconnect, call fetchConnections again to refresh the UI.
+            await fetchConnections(); 
+            
+            setAlert({ show: true, message: `${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected successfully!`, type: 'success' });
+
+        } catch (err) {
+            console.error(`Could not disconnect ${platform}:`, err);
+            setAlert({ show: true, message: err.message, type: 'danger' });
+        }
+    };
+
 const handleConnectPage = async (pageId) => {
     setAlert({ show: false, message: '', type: 'info' }); // Clears old alerts
     try {
