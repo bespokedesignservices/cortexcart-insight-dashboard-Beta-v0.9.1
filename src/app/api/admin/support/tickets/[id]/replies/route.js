@@ -1,6 +1,5 @@
 import { verifyAdminSession } from '@/lib/admin-auth';
-import { db } from '@/lib/db'; '../../../../../../../../lib/db';
-import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';import { NextResponse } from 'next/server';
 
 // POST a new reply from an admin and create a notification
 export async function POST(request, { params }) {

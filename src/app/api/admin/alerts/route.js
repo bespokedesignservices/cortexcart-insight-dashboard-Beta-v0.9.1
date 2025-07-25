@@ -1,6 +1,5 @@
 import { verifyAdminSession } from '@/lib/admin-auth';
-import { db } from '@/lib/db'; '../../../../../lib/db';
-import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';import { NextResponse } from 'next/server';
 
 // GET handler to fetch all alert banners for the admin panel
 export async function GET() {

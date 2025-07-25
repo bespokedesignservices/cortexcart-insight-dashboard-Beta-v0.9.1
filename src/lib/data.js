@@ -1,5 +1,5 @@
 // src/lib/data.js
-import { db } from '@/lib/db'; './db';
+import { db } from '@/lib/db'; 
 
 // Logic from /api/content/homepage/route.js
 export async function getHomepageContent() {

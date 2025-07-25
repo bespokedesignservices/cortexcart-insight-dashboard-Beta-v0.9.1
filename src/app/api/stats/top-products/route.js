@@ -1,5 +1,4 @@
-import { db } from '@/lib/db'; '../../../../../lib/db';
-import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { simpleCache } from '@/lib/cache';

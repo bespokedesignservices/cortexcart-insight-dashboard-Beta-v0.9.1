@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/db'; '../../../../../lib/db';
-import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';import { NextResponse } from 'next/server';
 
 async function fetchPageContent(url) {
     try {

@@ -1,9 +1,7 @@
 
 'use client';
 import Link from 'next/link';
-import { inter } from 'next/font/google'; // 1. Import the font
 import "./globals.css";
-import { ThemeProvider } from "./components/ThemeProvider"; // 2. Import the ThemeProvider
 // EULA: This file is subject to the terms and conditions defined in EULA.md, which is part of this source code package. #
 //                                                                                                                       #
 //                             No unauthorized Copying, Redistribution either in part or whole                           #

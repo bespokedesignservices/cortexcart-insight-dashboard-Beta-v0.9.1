@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 import { cookies } from 'next/headers';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/db'; '@/lib/db';
+import { db } from '@/lib/db';
 import { encrypt } from '@/lib/crypto';
 
 export async function GET(request) {

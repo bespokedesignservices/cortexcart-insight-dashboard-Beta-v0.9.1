@@ -1,5 +1,4 @@
-import { db } from '@/lib/db'; '../../../../../lib/db';
-import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';import { NextResponse } from 'next/server';
 import { simpleCache } from '@/lib/cache'; // 1. Import the cache
 
 export async function GET(request) {

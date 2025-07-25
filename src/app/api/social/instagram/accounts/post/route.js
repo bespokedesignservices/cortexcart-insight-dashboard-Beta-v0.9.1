@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth'; // Adjust path if needed for your authOptions
-import { db } from '@/lib/db'; '@/lib/db'; // Adjust path if needed
+import { db } from '@/lib/db';
 import { decrypt } from '@/lib/crypto'; // Adjust path if needed
 
 export async function POST(request) {

@@ -1,6 +1,5 @@
 // src/app/api/stats/locations/route.js
-import { db } from '@/lib/db'; '../../../../../lib/db';
-import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';import { NextResponse } from 'next/server';
 import { simpleCache } from '@/lib/cache';
 
 export async function GET(request) {

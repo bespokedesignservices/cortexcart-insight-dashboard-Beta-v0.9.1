@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'; '../../../../../lib/db'; // Make sure this alias is correct for your setup
+import { db } from '@/lib/db';// Make sure this alias is correct for your setup
 import { NextResponse } from 'next/server';
 import { simpleCache } from '@/lib/cache'; // 1. Import the cache
 
