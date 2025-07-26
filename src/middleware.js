@@ -4,11 +4,14 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { jwtVerify } from 'jose';
 
-// Helper function to get the REGULAR user JWT secret
-const getUserSecret = () => new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
-
 // Helper function to get the ADMIN JWT secret
-const getAdminSecret = () => new TextEncoder().encode(process.env.JWT_ADMIN_SECRET);
+const getAdminSecret = () => {
+    const secret = process.env.JWT_ADMIN_SECRET;
+    if (!secret) {
+        throw new Error("JWT_ADMIN_SECRET is not set in environment variables.");
+    }
+    return new TextEncoder().encode(secret);
+};
 
 export async function middleware(req) {
     const { pathname } = req.nextUrl;
@@ -24,26 +27,23 @@ export async function middleware(req) {
         }
 
         try {
-            // THE FIX: Use the correct admin secret for verification
             const adminSecret = getAdminSecret();
             const { payload } = await jwtVerify(adminToken, adminSecret);
             
             if (payload.role !== 'superadmin') {
                 return NextResponse.redirect(new URL('/admin/login?error=Forbidden', appUrl));
             }
-            // If the token is valid, allow access
             return NextResponse.next();
         } catch (error) {
             console.error('Admin token verification failed:', error.message);
-            // If the token is invalid (expired, tampered, etc.), redirect to login
             return NextResponse.redirect(new URL('/admin/login?error=InvalidToken', appUrl));
         }
     }
 
     // --- Regular User Route Protection ---
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/settings') || pathname.startsWith('/subscribe')) {
-        const userSecret = process.env.NEXTAUTH_SECRET;
-        const sessionToken = await getToken({ req, secret: userSecret });
+        // getToken from next-auth uses the raw secret string directly
+        const sessionToken = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
         if (!sessionToken) {
             const signInUrl = new URL('/api/auth/signin', appUrl);
@@ -52,7 +52,6 @@ export async function middleware(req) {
         }
     }
 
-    // If no protected routes match, allow the request
     return NextResponse.next();
 }
 
