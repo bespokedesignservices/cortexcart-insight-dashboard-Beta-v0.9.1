@@ -260,6 +260,10 @@ export default function DashboardPage() {
               <ChartContainer title="Page Views & Conversions Over Time">
                 <Ga4LineChart data={ga4ChartData} />
               </ChartContainer>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <StatCard title="Avg. Engagement Time" value={ga4Stats?.averageEngagementDuration ? `${(ga4Stats.averageEngagementDuration / 60).toFixed(2)} min` : '0 min'} icon="⏱️" />
+                {/* Placeholder for a potential line chart for engagement time if GA4 API supports historical engagement data */}
+              </div>
             </div>
           )}
         </div>

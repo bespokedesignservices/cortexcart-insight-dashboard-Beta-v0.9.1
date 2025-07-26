@@ -28,7 +28,7 @@ export async function middleware(req) {
 
         // If there's no admin token, redirect to the admin login page
         if (!adminToken) {
-            return NextResponse.redirect(new URL('/admin/login', appURL));
+            return NextResponse.redirect(new URL('/admin/login', appUrl));
         }
 
         try {

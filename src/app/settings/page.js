@@ -13,6 +13,7 @@ const tabs = [
     { name: 'General', href: '#' },
     { name: 'Integrations', href: '#' },
     { name: 'Social Connections', href: '#' },
+    { name: 'Platforms', href: '#' }, // Keep this line as is
     { name: 'Widget Settings', href: '#' },
     { name: 'Billing', href: '#' },
     { name: 'Danger Zone', href: '#' },
@@ -149,10 +150,10 @@ const SocialConnectionsTabContent = () => {
     const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false, youtube: false });
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
-    const searchParams = useSearchParams();
+    const [isLoading, setIsLoading] = useState(false);
     const [activePageId, setActivePageId] = useState(null); 
+    const [shopifyStore, setShopifyStore] = useState('');
 
  const fetchConnections = useCallback(async () => {
     setIsLoading(true);
@@ -162,6 +163,7 @@ const SocialConnectionsTabContent = () => {
         if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
         
         const statuses = await statusRes.json();
+        console.log("Fetched statuses:", statuses); // Debugging line
         setConnectionStatus(statuses);
 
         // If Facebook is connected, fetch all related Facebook data
@@ -185,6 +187,10 @@ const SocialConnectionsTabContent = () => {
                 const activePageData = await activePageRes.json();
                 setActivePageId(activePageData.active_facebook_page_id);
             }
+        } else {
+            // If Facebook is not connected, clear Facebook/Instagram specific states
+            setFacebookPages([]);
+            setInstagramAccounts([]);
         }
     } catch (err) {
         console.error("Failed to fetch connection data:", err);
@@ -195,6 +201,7 @@ const SocialConnectionsTabContent = () => {
 }, []);
 
     useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search); // Get searchParams inside useEffect
         fetchConnections();
 
         const connectStatus = searchParams.get('connect_status');
@@ -205,7 +212,7 @@ const SocialConnectionsTabContent = () => {
             setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
             setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
         }
-    }, [searchParams, fetchConnections]);
+    }, [fetchConnections]);
 
   const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
@@ -256,9 +263,9 @@ const handleConnectPage = async (pageId) => {
         setAlert({ show: true, message: error.message, type: 'danger' });
     }
 };
-    if (isLoading) return <p>Loading connection status...</p>;
 
     return (
+        
         <div className="max-w-3xl space-y-4">
             {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
             <div>
@@ -321,6 +328,7 @@ const handleConnectPage = async (pageId) => {
 ) : (
     <p className="text-sm text-gray-500 mt-2">No pages found.</p>
 )}
+
                             </div>
                             <div className="mt-4 pt-4 border-t">
                                 <h4 className="text-base font-medium text-gray-800">Your Instagram Accounts</h4>
@@ -358,20 +366,6 @@ const handleConnectPage = async (pageId) => {
                       )}
                 </div>
 
-                <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
-                    <div>
-                        <p className="font-semibold">Pinterest</p>
-                        <p className="text-sm text-gray-500">Connect your Pinterest account to pin content and view analytics.</p>
-                    </div>
-                    {connectionStatus.pinterest ? (
-                        <div className="flex items-center gap-x-4">
-                            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
-                            <button onClick={() => handleDisconnect('pinterest')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
-                        </div>
-                    ) : (
-                        <a href="/api/connect/pinterest" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect to Pinterest</a>
-                    )}
-                </div>
 <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
     <div>
         <p className="font-semibold">YouTube</p>
@@ -383,10 +377,120 @@ const handleConnectPage = async (pageId) => {
             <button onClick={() => handleDisconnect('youtube')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
         </div>
     ) : (
-        <a href="/api/connect/youtube" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect YouTube</a>
+        <a href="/api/connect/youtube" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700" aria-disabled>Connect YouTube</a>
     )}
 </div>
             </div>
+
+            <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+                <div>
+                    <p className="font-semibold">Pinterest</p>
+                    <p className="text-sm text-gray-500">Connect your Pinterest account to pin content and view analytics.</p>
+                </div>
+                {connectionStatus.pinterest ? (
+                    <div className="flex items-center gap-x-4">
+                        <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                        <button onClick={() => handleDisconnect('pinterest')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                    </div>
+                ) : (
+                    <a href="/api/connect/pinterest" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect to Pinterest</a>
+                )}
+            </div>
+        </div>
+    
+    );
+
+};
+
+// --- Platforms Tab Content ---
+const PlatformsTabContent = () => {
+    const [connectionStatus, setConnectionStatus] = useState({ pinterest: false, shopify: false, youtube: false });
+    const [shopifyStore, setShopifyStore] = useState(''); // State for Shopify store name input
+    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+
+    const fetchConnections = useCallback(async () => {
+        try {
+            const statusRes = await fetch('/api/social/connections/status');
+            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
+            const statuses = await statusRes.json();
+            setConnectionStatus(statuses);
+        } catch (err) {
+            console.error("Failed to fetch platform connection data:", err);
+            setAlert({ show: true, message: err.message, type: 'danger' });
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchConnections();
+        const searchParams = new URLSearchParams(window.location.search);
+        const connectStatus = searchParams.get('connect_status');
+        if (connectStatus) {
+            const message = connectStatus === 'success' 
+                ? 'Platform connected successfully!' 
+                : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
+            setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
+            setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
+        }
+    }, [fetchConnections]);
+
+    const handleDisconnect = async (platform) => {
+        if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
+        try {
+            const res = await fetch('/api/social/connections/status', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platform }),
+            });
+            if (!res.ok) {
+                const result = await res.json();
+                throw new Error(result.message || `Could not disconnect ${platform}.`);
+            }
+            await fetchConnections(); 
+            setAlert({ show: true, message: `${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected successfully!`, type: 'success' });
+        } catch (err) {
+            console.error(`Could not disconnect ${platform}:`, err);
+            setAlert({ show: true, message: err.message, type: 'danger' });
+        }
+    };
+
+    return (
+        <div className="max-w-3xl space-y-4">
+            {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Platform Integrations</h3>
+            <p className="mt-1 text-sm text-gray-500">Connect your e-commerce and other platforms.</p>
+
+            <div className="mt-4 p-4 border rounded-lg">
+                <p className="font-semibold">Shopify</p>
+                <p className="text-sm text-gray-500">Connect your Shopify store to link social media performance to sales.</p>
+                {connectionStatus.shopify ? (
+                    <div className="flex items-center gap-x-4 mt-2">
+                        <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                        <button onClick={() => handleDisconnect('shopify')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                    </div>
+                ) : (
+                    <form action="/api/connect/shopify" method="POST" className="mt-3 flex items-center gap-x-2">
+                        <div className="relative rounded-md shadow-sm">
+                            <input
+                                type="text"
+                                name="shop"
+                                id="shop"
+                                className="block w-full rounded-md border-0 py-1.5 pr-12 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                                placeholder="your-store-name"
+                                value={shopifyStore}
+                                onChange={(e) => setShopifyStore(e.target.value)}
+                                required
+                            />
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <span className="text-gray-500 sm:text-sm">.myshopify.com</span>
+                            </div>
+                        </div>
+                        <button type="submit" className="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                            Connect
+                        </button>
+                    </form>
+                )}
+            </div>
+
         </div>
     );
 };
@@ -525,6 +629,7 @@ export default function SettingsPage() {
                 {activeTab === 'Integrations' && <IntegrationsTabContent />}
                 {activeTab === 'Social Connections' && <SocialConnectionsTabContent />}
                 {activeTab === 'Widget Settings' && <WidgetSettingsTabContent siteId={session?.user?.email} />}
+                {activeTab === 'Platforms' && <PlatformsTabContent />}
                 {activeTab === 'Billing' && <BillingTabContent />}
                 {activeTab === 'Danger Zone' && <DangerZoneTabContent />}
             </div>

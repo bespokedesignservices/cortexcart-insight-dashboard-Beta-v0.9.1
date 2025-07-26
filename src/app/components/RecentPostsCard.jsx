@@ -62,7 +62,7 @@ export default function RecentPostsCard() {
     );
 
     return (
-        <div className="bg-white p-6 border border-gray-900 rounded shadow-sm">
+        <div className="bg-white p-6 rounded shadow-sm">
             <h3 className="text-xl font-bold text-gray-800 mb-4">Recent Posts</h3>
             <div>
                 <div className="border-b border-gray-200">

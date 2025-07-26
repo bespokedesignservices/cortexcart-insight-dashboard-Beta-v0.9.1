@@ -328,7 +328,7 @@ const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setP
         <>
          
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
+                    <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
                         <div className="flex items-center border-b pb-4 overflow-x-auto whitespace-nowrap">
                             {Object.values(PLATFORMS).map(platform => {
                                 const Icon = platform.icon;
@@ -528,7 +528,7 @@ const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setP
                         </form>
                     </div>
                     <div className="lg:col-span-1 space-y-8">
-                        <div className="bg-white p-6 rounded-lg shadow-md border space-y-4">
+                        <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
                             <h3 className="font-semibold text-lg">AI Assistant</h3>
                             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g., 'New Summer T-Shirt Sale'" className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"/>
                      <button onClick={handleGeneratePost} disabled={isGenerating || !topic.trim()} className="w-full flex items-center justify-center px-4 py-2 border rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400">
@@ -538,7 +538,7 @@ const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setP
                     {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
                          </div>
-                        <div className="bg-white p-6 rounded-lg shadow-md border">
+                        <div className="bg-white p-6 rounded-lg shadow-md">
                             <h3 className="font-semibold text-lg mb-4">Upcoming Posts</h3>
                             <div className="space-y-3 max-h-96 overflow-y-auto">
                         {scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => {
@@ -576,7 +576,7 @@ const AnalyticsTabContent = () => {
     const [data, setData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false, youtube: false });
+    const [isSyncing, setIsSyncing] = useState({ x: false, facebook: false, pinterest: false, youtube: false , shopify: false});
     const [syncMessage, setSyncMessage] = useState('');
     const [syncMessageType, setSyncMessageType] = useState('info');
   // Define the colors for each platform to match your sync buttons
@@ -661,9 +661,10 @@ const AnalyticsTabContent = () => {
     return ( 
         <div className="space-y-8">
             {/* Card 1: Overview and Sync Buttons */}
-            <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">Analytics Overview</h3>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-4">Analytics Overview</h3>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                          <button onClick={() => handleSync('x')} disabled={isSyncing.x} className="inline-flex items-center rounded-md bg-black px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:bg-gray-400">
                             <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.x ? 'animate-spin' : ''}`} />
@@ -681,7 +682,11 @@ const AnalyticsTabContent = () => {
                             <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.youtube ? 'animate-spin' : ''}`} />
                             {isSyncing.youtube ? 'Syncing...' : 'Sync with YouTube'}
                         </button>
-                    </div>
+                           <button onClick={() => handleSync('shopify')} disabled={isSyncing.shopify} className="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700 disabled:bg-green-400">
+                            <ArrowPathIcon className={`-ml-0.5 mr-1.5 h-5 w-5 ${isSyncing.shopify ? 'animate-spin' : ''}`} />
+                            {isSyncing.shopify ? 'Syncing...' : 'Sync with Shopify'}
+                        </button>
+                   
                 </div>
                 {syncMessage && (
                     <div className={`text-center text-sm p-3 rounded-md mt-4 ${syncMessageType === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
@@ -691,7 +696,7 @@ const AnalyticsTabContent = () => {
             </div>
 
             {/* Card 2: Key Metrics */}
-            <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Key Metrics</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
@@ -710,18 +715,18 @@ const AnalyticsTabContent = () => {
             </div>
 
             {/* --- THE FIX: Uncommented the chart components --- */}
-            <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach (Last 30 Days)</h4>
                 <div className="h-80"><Ga4LineChart data={reachChartData} /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white p-6 rounded-lg shadow-md border">
+                <div className="bg-white p-6 rounded-lg shadow-md">
                     <h4 className="text-xl font-semibold text-gray-800 mb-4">Posts by Platform</h4>
                     <div className="h-80">  
                          <PlatformPostsChart chartData={postsByPlatformData} />
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-md border">
+                <div className="bg-white p-6 rounded-lg shadow-md">
                     <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
                     <div className="h-80 flex justify-center"><EngagementByPlatformChart data={engagementByPlatformData} /></div>
                 </div>
@@ -741,12 +746,14 @@ const CustomEvent = ({ event }) => (
 
 const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, setCalendarDate, view, setView, optimalTimes }) => {
        console.log('Optimal times received by calendar:', optimalTimes);
-
+    
     const onEventDrop = useCallback(async ({ event, start }) => {
         if (moment(start).isBefore(moment())) {
             alert("Cannot move events to a past date.");
             return;
         }
+
+        // Check if the event is being dropped on an optimal day
 
         const originalEvents = [...scheduledPosts];
         const updatedEvents = scheduledPosts.map(e => 
@@ -816,6 +823,13 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, s
 
     return (
  <>
+        <div className="bg-white p-6 rounded-lg shadow-md mb-4">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4">Schedule Posts</h3>
+            <p className="mt-1 text-sm text-gray-500">
+                Plan and organize your social media content calendar. Drag and drop posts to easily reschedule them.
+            </p>
+        </div>
+       
         <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4 mb-6" role="alert">
             <div className="flex">
                 <InformationCircleIcon className="h-5 w-5 text-blue-400 mr-3" />
@@ -834,7 +848,7 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, s
                     </div>
                 </div>
             </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border" style={{ height: '80vh' }}>
+        <div className="bg-white p-6 rounded-lg shadow-md" style={{ height: '80vh' }}>
             <DragAndDropCalendar
                 localizer={localizer}
                 events={scheduledPosts}
@@ -902,7 +916,7 @@ const DemographicsTabContent = () => {
 
     return (
         <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">Demographics Insights</h3>
                 <p className="text-gray-600 mb-6">
                     Select demographic filters to gain insights into your audience. This feature allows you to tailor your content and campaigns more effectively.
@@ -910,166 +924,182 @@ const DemographicsTabContent = () => {
             </div>
 
             {currentDemographics && (
-                <div className="bg-white p-6 rounded-lg shadow-md border">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Current Demographic Settings</h3>
-                    <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-700 p-4" role="alert">
-                        <div className="flex items-center text-sm mb-1">
-                            <CakeIcon className="h-5 w-5 mr-2" />
-                            <span>Age Range: {currentDemographics.age_range || 'Not set'}</span>
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Current Demographic Settings</h3> {/* Changed from h4 to h3 */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> {/* Added grid layout */}
+                        {/* Age Range Card */}
+                        <div className="bg-blue-50 p-5 rounded-lg border border-blue-200 flex items-center">
+                            <CakeIcon className="h-8 w-8 text-blue-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-blue-600">Age Range</p>
+                                <p className="text-xl font-bold text-gray-900">{currentDemographics.age_range || 'Not set'}</p>
+                            </div>
                         </div>
-                        <div className="flex items-center text-sm mb-1">
-                            <UserIcon className="h-5 w-5 mr-2" />
-                            <span>Sex: {currentDemographics.sex || 'Not set'}</span>
+                        {/* Sex Card */}
+                        <div className="bg-green-50 p-5 rounded-lg border border-green-200 flex items-center">
+                            <UserIcon className="h-8 w-8 text-green-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-green-600">Sex</p>
+                                <p className="text-xl font-bold text-gray-900">{currentDemographics.sex || 'Not set'}</p>
+                            </div>
                         </div>
-                        <div className="flex items-center text-sm">
-                            <GlobeAltIcon className="h-5 w-5 mr-2" />
-                            <span>Country: {currentDemographics.country || 'Not set'}</span>
+                        {/* Country Card */}
+                        <div className="bg-purple-50 p-5 rounded-lg border border-purple-200 flex items-center">
+                            <GlobeAltIcon className="h-8 w-8 text-purple-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-purple-600">Country</p>
+                                <p className="text-xl font-bold text-gray-900">{currentDemographics.country || 'Not set'}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="bg-white p-6 rounded-lg shadow-md border">
+            <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Apply New Filters</h3>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700">Age Range: {ageRange || 'Not set'}</label>
-                        <input
-                            type="range"
-                            id="ageRange"
-                            name="ageRange"
-                            min="13"
-                            max="65"
-                            step="1"
-                            value={ageRange.split('-')[0] || 13} // Use the start of the range for the slider value
-                            onChange={(e) => {
-                                const startAge = parseInt(e.target.value, 10);
-                                let endAge;
-                                if (startAge >= 65) {
-                                    endAge = '65+';
-                                } else if (startAge >= 55) {
-                                    endAge = '64';
-                                } else if (startAge >= 45) {
-                                    endAge = '54';
-                                } else if (startAge >= 35) {
-                                    endAge = '44';
-                                } else if (startAge >= 25) {
-                                    endAge = '34';
-                                } else if (startAge >= 18) {
-                                    endAge = '24';
-                                } else {
-                                    endAge = '17';
-                                }
-                                setAgeRange(`${startAge}-${endAge}`);
-                            }}
-                            className="mt-1 block w-full"
-                        />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1"><span>13</span><span>18</span><span>25</span><span>35</span><span>45</span><span>55</span><span>65+</span></div>
-                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Age Range Card (Largest) */}
+                        <div className="md:col-span-2 bg-gray-50 p-5 rounded-lg border border-gray-200">
+                            <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700">Age Range: {ageRange || 'Not set'}</label>
+                            <input
+                                type="range"
+                                id="ageRange"
+                                name="ageRange"
+                                min="13"
+                                max="65"
+                                step="1"
+                                value={ageRange.split('-')[0] || 13} // Use the start of the range for the slider value
+                                onChange={(e) => {
+                                    const startAge = parseInt(e.target.value, 10);
+                                    let endAge;
+                                    if (startAge >= 65) {
+                                        endAge = '65+';
+                                    } else if (startAge >= 55) {
+                                        endAge = '64';
+                                    } else if (startAge >= 45) {
+                                        endAge = '54';
+                                    } else if (startAge >= 35) {
+                                        endAge = '44';
+                                    } else if (startAge >= 25) {
+                                        endAge = '34';
+                                    } else if (startAge >= 18) {
+                                        endAge = '24';
+                                    } else {
+                                        endAge = '17';
+                                    }
+                                    setAgeRange(`${startAge}-${endAge}`);
+                                }}
+                                className="mt-1 block w-full"
+                            />
+                            <div className="flex justify-between text-xs text-gray-500 mt-1"><span>13</span><span>18</span><span>25</span><span>35</span><span>45</span><span>55</span><span>65+</span></div>
+                        </div>
 
-                    <div>
-                        <label htmlFor="sex" className="block text-sm font-medium text-gray-700">Sex</label>
-                        <div className="mt-1 space-y-2">
-                            <div className="flex items-center">
-                                <input
-                                    id="sex-male"
-                                    name="sex"
-                                    type="checkbox"
-                                    value="male"
-                                    checked={sex === 'male'}
-                                    onChange={() => setSex('male')}
-                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                                />
-                                <label htmlFor="sex-male" className="ml-2 block text-sm text-gray-900">
-                                    Male
-                                </label>
-                            </div>
-                            <div className="flex items-center">
-                                <input
-                                    id="sex-female"
-                                    name="sex"
-                                    type="checkbox"
-                                    value="female"
-                                    checked={sex === 'female'}
-                                    onChange={() => setSex('female')}
-                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                                />
-                                <label htmlFor="sex-female" className="ml-2 block text-sm text-gray-900">
-                                    Female
-                                </label>
-                            </div>
-                            <div className="flex items-center">
-                                <input
-                                    id="sex-other"
-                                    name="sex"
-                                    type="checkbox"
-                                    value="other"
-                                    checked={sex === 'other'}
-                                    onChange={() => setSex('other')}
-                                    className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
-                                />
-                                <label htmlFor="sex-other" className="ml-2 block text-sm text-gray-900">
-                                    Other
-                                </label>
+                        {/* Sex Card */}
+                        <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                            <label htmlFor="sex" className="block text-sm font-medium text-gray-700">Sex</label>
+                            <div className="mt-1 space-y-2">
+                                <div className="flex items-center">
+                                    <input
+                                        id="sex-male"
+                                        name="sex"
+                                        type="checkbox"
+                                        value="male"
+                                        checked={sex === 'male'}
+                                        onChange={() => setSex('male')}
+                                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="sex-male" className="ml-2 block text-sm text-gray-900">
+                                        Male
+                                    </label>
+                                </div>
+                                <div className="flex items-center">
+                                    <input
+                                        id="sex-female"
+                                        name="sex"
+                                        type="checkbox"
+                                        value="female"
+                                        checked={sex === 'female'}
+                                        onChange={() => setSex('female')}
+                                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="sex-female" className="ml-2 block text-sm text-gray-900">
+                                        Female
+                                    </label>
+                                </div>
+                                <div className="flex items-center">
+                                    <input
+                                        id="sex-other"
+                                        name="sex"
+                                        type="checkbox"
+                                        value="other"
+                                        checked={sex === 'other'}
+                                        onChange={() => setSex('other')}
+                                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                    <label htmlFor="sex-other" className="ml-2 block text-sm text-gray-900">
+                                        Other
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
-                    </div>
-
-                    <div>
-                        <label htmlFor="country" className="block text-sm font-medium text-gray-700">Country</label>
-                        <input
-                            type="text"
-                            id="country"
-                            name="country"
-                            value={country}
-                            onChange={(e) => setCountry(e.target.value)}
-                            placeholder="e.g., United States"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        />
-                        {country.length === 0 && (
-                            <select
+                        {/* Country Card */}
+                        <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                            <label htmlFor="country" className="block text-sm font-medium text-gray-700">Country</label>
+                            <input
+                                type="text"
                                 id="country"
                                 name="country"
                                 value={country}
                                 onChange={(e) => setCountry(e.target.value)}
+                                placeholder="e.g., United States"
                                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                            >
-                                <option value="">Select a country</option>
-                                <option value="United States">United States</option>
-                                <option value="Canada">Canada</option>
-                                <option value="United Kingdom">United Kingdom</option>
-                                <option value="Australia">Australia</option>
-                                <option value="Germany">Germany</option>
-                                <option value="France">France</option>
-                                <option value="Japan">Japan</option>
-                                <option value="India">India</option>
-                                <option value="Brazil">Brazil</option>
-                                <option value="Mexico">Mexico</option>
-                                <option value="China">China</option>
-                                <option value="South Africa">South Africa</option>
-                                <option value="Argentina">Argentina</option>
-                                <option value="Italy">Italy</option>
-                                <option value="Spain">Spain</option>
-                                <option value="Netherlands">Netherlands</option>
-                                <option value="Sweden">Sweden</option>
-                                <option value="Norway">Norway</option>
-                                <option value="Denmark">Denmark</option>
-                                <option value="Finland">Finland</option>
-                                <option value="New Zealand">New Zealand</option>
-                                <option value="Singapore">Singapore</option>
-                                <option value="South Korea">South Korea</option>
-                                <option value="Russia">Russia</option>
-                                <option value="Saudi Arabia">Saudi Arabia</option>
-                                <option value="United Arab Emirates">United Arab Emirates</option>
-                                <option value="Egypt">Egypt</option>
-                                <option value="Nigeria">Nigeria</option>
-                                <option value="Kenya">Kenya</option>
-                                <option value="Indonesia">Indonesia</option>
-                                <option value="Malaysia">Malaysia</option>
-                                <option value="Thailand">Thailand</option>
-                            </select>
-                        )}
+                            />
+                            {country.length === 0 && (
+                                <select
+                                    id="country"
+                                    name="country"
+                                    value={country}
+                                    onChange={(e) => setCountry(e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                                    <option value="">Select a country</option>
+                                    <option value="United States">United States</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="Australia">Australia</option>
+                                    <option value="Germany">Germany</option>
+                                    <option value="France">France</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="India">India</option>
+                                    <option value="Brazil">Brazil</option>
+                                    <option value="Mexico">Mexico</option>
+                                    <option value="China">China</option>
+                                    <option value="South Africa">South Africa</option>
+                                    <option value="Argentina">Argentina</option>
+                                    <option value="Italy">Italy</option>
+                                    <option value="Spain">Spain</option>
+                                    <option value="Netherlands">Netherlands</option>
+                                    <option value="Sweden">Sweden</option>
+                                    <option value="Norway">Norway</option>
+                                    <option value="Denmark">Denmark</option>
+                                    <option value="Finland">Finland</option>
+                                    <option value="New Zealand">New Zealand</option>
+                                    <option value="Singapore">Singapore</option>
+                                    <option value="South Korea">South Korea</option>
+                                    <option value="Russia">Russia</option>
+                                    <option value="Saudi Arabia">Saudi Arabia</option>
+                                    <option value="United Arab Emirates">United Arab Emirates</option>
+                                    <option value="Egypt">Egypt</option>
+                                    <option value="Nigeria">Nigeria</option>
+                                    <option value="Kenya">Kenya</option>
+                                    <option value="Indonesia">Indonesia</option>
+                                    <option value="Malaysia">Malaysia</option>
+                                    <option value="Thailand">Thailand</option>
+                                </select>
+                            )}
+                        </div>
                     </div>
                     <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Apply Filters

@@ -37,7 +37,7 @@ export async function GET() {
             return NextResponse.json({ message: 'Site URL not found in settings.' }, { status: 404 });
         }
 
-        const apiKey = process.env.PAGESPEED_API_KEY;
+        const apiKey = process.env.GOOGLE_PAGESPEED_API_KEY;
         const apiEndpoint = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(siteUrl)}&key=${apiKey}&strategy=mobile`;
 
         const response = await fetch(apiEndpoint);
