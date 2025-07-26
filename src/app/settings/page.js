@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
+import { useSession, signOut } from 'next-auth/react';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
 import { CheckCircleIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
 import AlertBanner from '@/app/components/AlertBanner';
-
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from 'next/image';
 
 const tabs = [
     { name: 'General', href: '#' },
     { name: 'Integrations', href: '#' },
     { name: 'Social Connections', href: '#' },
-    { name: 'Platforms', href: '#' }, // Keep this line as is
+    { name: 'Platforms', href: '#' },
     { name: 'Widget Settings', href: '#' },
     { name: 'Billing', href: '#' },
     { name: 'Danger Zone', href: '#' },
@@ -146,124 +147,98 @@ const IntegrationsTabContent = () => {
 };
 
 const SocialConnectionsTabContent = () => {
+    const searchParams = useSearchParams(); // FIX: Use the hook here
     const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false, youtube: false });
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
-    const [setIsLoading] = useState(false);
+    const [, setIsLoading] = useState(false); 
     const [activePageId, setActivePageId] = useState(null); 
  
- const fetchConnections = useCallback(async () => {
-    setIsLoading(true);
-    try {
-        // First, get the main connection statuses
-        const statusRes = await fetch('/api/social/connections/status');
-        if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
-        
-        const statuses = await statusRes.json();
-        console.log("Fetched statuses:", statuses); // Debugging line
-        setConnectionStatus(statuses);
+    const fetchConnections = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const statusRes = await fetch('/api/social/connections/status');
+            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
+            
+            const statuses = await statusRes.json();
+            setConnectionStatus(statuses);
 
-        // If Facebook is connected, fetch all related Facebook data
-        if (statuses.facebook) {
-            const [pagesRes, igRes, activePageRes] = await Promise.all([
-                fetch('/api/social/facebook/pages'),
-                fetch('/api/social/instagram/accounts'),
-                fetch('/api/social/facebook/active-page')
-            ]);
+            if (statuses.facebook) {
+                const [pagesRes, igRes, activePageRes] = await Promise.all([
+                    fetch('/api/social/facebook/pages'),
+                    fetch('/api/social/instagram/accounts'),
+                    fetch('/api/social/facebook/active-page')
+                ]);
 
-            // Process each response ONCE
-            if (pagesRes.ok) {
-                const pagesData = await pagesRes.json();
-                setFacebookPages(pagesData);
+                if (pagesRes.ok) setFacebookPages(await pagesRes.json());
+                if (igRes.ok) setInstagramAccounts(await igRes.json());
+                if (activePageRes.ok) setActivePageId((await activePageRes.json()).active_facebook_page_id);
+                
+            } else {
+                setFacebookPages([]);
+                setInstagramAccounts([]);
             }
-            if (igRes.ok) {
-                const igData = await igRes.json();
-                setInstagramAccounts(igData);
-            }
-            if (activePageRes.ok) {
-                const activePageData = await activePageRes.json();
-                setActivePageId(activePageData.active_facebook_page_id);
-            }
-        } else {
-            // If Facebook is not connected, clear Facebook/Instagram specific states
-            setFacebookPages([]);
-            setInstagramAccounts([]);
+        } catch (err) {
+            console.error("Failed to fetch connection data:", err);
+            setAlert({ show: true, message: err.message, type: 'danger' });
+        } finally {
+            setIsLoading(false);
         }
-    } catch (err) {
-        console.error("Failed to fetch connection data:", err);
-        setAlert({ show: true, message: err.message, type: 'danger' });
-    } finally {
-        setIsLoading(false);
-    }
-}, [setIsLoading]);
+    }, [setIsLoading]); // FIX: Removed fetchConnections from its own dependency array
 
     useEffect(() => {
-        const searchParams = new URLSearchParams(window.location.search); // Get searchParams inside useEffect
         fetchConnections();
-
         const connectStatus = searchParams.get('connect_status');
         if (connectStatus) {
             const message = connectStatus === 'success' 
                 ? 'Account connected successfully!' 
                 : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
             setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
+            
+            // FIX: Clean the URL after showing the message
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+
             setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
         }
-    }, [fetchConnections]);
+    }, [fetchConnections, searchParams]);
 
-  const handleDisconnect = async (platform) => {
+    const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
-
         try {
             const res = await fetch('/api/social/connections/status', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ platform }),
             });
-
-            if (!res.ok) {
-                const result = await res.json();
-                throw new Error(result.message || `Could not disconnect ${platform}.`);
-            }
-            
-            // This is the crucial step:
-            // After a successful disconnect, call fetchConnections again to refresh the UI.
+            if (!res.ok) throw new Error((await res.json()).message || `Could not disconnect ${platform}.`);
             await fetchConnections(); 
-            
             setAlert({ show: true, message: `${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected successfully!`, type: 'success' });
-
         } catch (err) {
             console.error(`Could not disconnect ${platform}:`, err);
             setAlert({ show: true, message: err.message, type: 'danger' });
         }
     };
 
-const handleConnectPage = async (pageId) => {
-    setAlert({ show: false, message: '', type: 'info' }); // Clears old alerts
-    try {
-        const res = await fetch('/api/social/facebook/connect-page', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pageId })
-        });
-
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || 'Failed to connect page.');
-
-        // This is the crucial line for instant UI update
-        setActivePageId(pageId);
-        
-        // Show the success message
-        setAlert({ show: true, message: `Page connected successfully!`, type: 'success' });
-
-    } catch (error) {
-        setAlert({ show: true, message: error.message, type: 'danger' });
-    }
-};
+    const handleConnectPage = async (pageId) => {
+        setAlert({ show: false, message: '', type: 'info' });
+        try {
+            const res = await fetch('/api/social/facebook/connect-page', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pageId })
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Failed to connect page.');
+            setActivePageId(pageId);
+            setAlert({ show: true, message: `Page connected successfully!`, type: 'success' });
+        } catch (error) {
+            setAlert({ show: true, message: error.message, type: 'danger' });
+        }
+    };
 
     return (
-        
         <div className="max-w-3xl space-y-4">
             {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
             <div>
@@ -278,54 +253,43 @@ const handleConnectPage = async (pageId) => {
                         </div>
                         {connectionStatus.facebook ? (
                           <div className="flex items-center gap-x-4">
-        <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
-        <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
-    </div>
-) : (
-    // Use an <a> tag to point to your custom connection route
-    <a href="/api/connect/facebook" className="px-3 py-1 text-sm bg-blue-600 text-white border border-transparent rounded-md hover:bg-blue-700">
-        Connect to Facebook
-    </a>
-)}
-
+                            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                            <button onClick={() => handleDisconnect('facebook')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                        ) : (
+                            <a href="/api/connect/facebook" className="px-3 py-1 text-sm bg-blue-600 text-white border border-transparent rounded-md hover:bg-blue-700">
+                                Connect to Facebook
+                            </a>
+                        )}
                     </div>
                     {connectionStatus.facebook && (
                         <>
                             <div className="mt-4 pt-4 border-t">
                                 <h4 className="text-base font-medium text-gray-800">Your Facebook Pages</h4>
                                 {facebookPages.length > 0 ? (
-    <ul className="mt-2 space-y-2">
-        {facebookPages.map(page => (
-            <li key={page.page_id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                {/* Left side: Page Info */}
-                <div className="flex items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={page.picture?.data?.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />
-                    <span className="text-sm font-medium text-gray-700">{page.name}</span>
-                </div>
-
-                {/* Right side: Connection Status/Button */}
-              
-          {page.page_id === activePageId ? (
-            <span className="flex items-center text-sm font-medium text-green-600">
-                <CheckCircleIcon className="h-5 w-5 mr-1.5" />
-                Active
-            </span>
-        ) : (
-            <button 
-                onClick={() => handleConnectPage(page.page_id)} 
-                className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100"
-            >
-                Connect
-            </button>
-        )}
-               
-            </li>
-        ))}
-    </ul>
-) : (
-    <p className="text-sm text-gray-500 mt-2">No pages found.</p>
-)}
+                                    <ul className="mt-2 space-y-2">
+                                        {facebookPages.map(page => (
+                                            <li key={page.page_id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                                <div className="flex items-center">
+                                                    {page.picture?.data?.url && <Image src={page.picture.data.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />}
+                                                    <span className="text-sm font-medium text-gray-700">{page.name}</span>
+                                                </div>
+                                                {page.page_id === activePageId ? (
+                                                    <span className="flex items-center text-sm font-medium text-green-600">
+                                                        <CheckCircleIcon className="h-5 w-5 mr-1.5" />
+                                                        Active
+                                                    </span>
+                                                ) : (
+                                                    <button onClick={() => handleConnectPage(page.page_id)} className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100">
+                                                        Connect
+                                                    </button>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-gray-500 mt-2">No pages found.</p>
+                                )}
 
                             </div>
                             <div className="mt-4 pt-4 border-t">
@@ -335,8 +299,7 @@ const handleConnectPage = async (pageId) => {
                                         {instagramAccounts.map(acc => (
                                             <li key={acc.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                                 <div className="flex items-center">
-                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                    <img src={acc.profile_picture_url} alt={acc.username} className="h-8 w-8 rounded-full mr-3" />
+                                                    {acc.profile_picture_url && <Image src={acc.profile_picture_url} alt={acc.username} className="h-8 w-8 rounded-full mr-3" />}
                                                     <span className="text-sm font-medium text-gray-700">@{acc.username}</span>
                                                 </div>
                                                 <button className="px-3 py-1 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50">Connect</button>
@@ -364,46 +327,45 @@ const handleConnectPage = async (pageId) => {
                       )}
                 </div>
 
-<div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
-    <div>
-        <p className="font-semibold">YouTube</p>
-        <p className="text-sm text-gray-500">Connect your YouTube channel to sync videos and analytics.</p>
-    </div>
-    {connectionStatus.youtube ? ( // We will add 'youtube' to the connectionStatus state
-        <div className="flex items-center gap-x-4">
-            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
-            <button onClick={() => handleDisconnect('youtube')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
-        </div>
-    ) : (
-        <a href="/api/connect/youtube" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700" aria-disabled>Connect YouTube</a>
-    )}
-</div>
-            </div>
-
-            <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
-                <div>
-                    <p className="font-semibold">Pinterest</p>
-                    <p className="text-sm text-gray-500">Connect your Pinterest account to pin content and view analytics.</p>
-                </div>
-                {connectionStatus.pinterest ? (
-                    <div className="flex items-center gap-x-4">
-                        <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
-                        <button onClick={() => handleDisconnect('pinterest')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+                    <div>
+                        <p className="font-semibold">YouTube</p>
+                        <p className="text-sm text-gray-500">Connect your YouTube channel to sync videos and analytics.</p>
                     </div>
-                ) : (
-                    <a href="/api/connect/pinterest" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect to Pinterest</a>
-                )}
+                    {connectionStatus.youtube ? (
+                        <div className="flex items-center gap-x-4">
+                            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                            <button onClick={() => handleDisconnect('youtube')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                    ) : (
+                        <a href="/api/connect/youtube" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700" aria-disabled>Connect YouTube</a>
+                    )}
+                </div>
+
+                <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+                    <div>
+                        <p className="font-semibold">Pinterest</p>
+                        <p className="text-sm text-gray-500">Connect your Pinterest account to pin content and view analytics.</p>
+                    </div>
+                    {connectionStatus.pinterest ? (
+                        <div className="flex items-center gap-x-4">
+                            <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
+                            <button onClick={() => handleDisconnect('pinterest')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
+                        </div>
+                    ) : (
+                        <a href="/api/connect/pinterest" className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">Connect to Pinterest</a>
+                    )}
+                </div>
             </div>
         </div>
-    
     );
-
 };
 
 // --- Platforms Tab Content ---
 const PlatformsTabContent = () => {
+    const searchParams = useSearchParams(); // FIX: Use the hook here
     const [connectionStatus, setConnectionStatus] = useState({ pinterest: false, shopify: false, youtube: false });
-    const [shopifyStore, setShopifyStore] = useState(''); // State for Shopify store name input
+    const [shopifyStore, setShopifyStore] = useState('');
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
 
     const fetchConnections = useCallback(async () => {
@@ -420,16 +382,20 @@ const PlatformsTabContent = () => {
 
     useEffect(() => {
         fetchConnections();
-        const searchParams = new URLSearchParams(window.location.search);
         const connectStatus = searchParams.get('connect_status');
         if (connectStatus) {
             const message = connectStatus === 'success' 
                 ? 'Platform connected successfully!' 
                 : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
             setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
+            
+            // FIX: Clean the URL after showing the message
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+
             setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
         }
-    }, [fetchConnections]);
+    }, [fetchConnections, searchParams]);
 
     const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
@@ -439,10 +405,7 @@ const PlatformsTabContent = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ platform }),
             });
-            if (!res.ok) {
-                const result = await res.json();
-                throw new Error(result.message || `Could not disconnect ${platform}.`);
-            }
+            if (!res.ok) throw new Error((await res.json()).message || `Could not disconnect ${platform}.`);
             await fetchConnections(); 
             setAlert({ show: true, message: `${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected successfully!`, type: 'success' });
         } catch (err) {
@@ -488,7 +451,6 @@ const PlatformsTabContent = () => {
                     </form>
                 )}
             </div>
-
         </div>
     );
 };
@@ -567,8 +529,11 @@ const DangerZoneTabContent = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const handleAccountDelete = async () => {
         setIsDeleting(true);
-        try { await signOut({ callbackUrl: '/api/account/delete' }); } 
-        catch { setIsDeleting(false); } // FIX: Removed unused 'error' variable
+        try { 
+            await signOut({ callbackUrl: '/api/account/delete' }); 
+        } catch { 
+            setIsDeleting(false); 
+        }
     };
 
     return (
@@ -610,10 +575,18 @@ export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState(tabs[0].name);
 
     useEffect(() => {
-        if (status === 'unauthenticated') { router.push('/'); }
+        if (status === 'unauthenticated') { 
+            router.push('/'); 
+        }
     }, [status, router]);
 
-    if (status === 'loading') { return <Layout><p>Loading...</p></Layout>; }
+    if (status === 'loading') { 
+        return <Layout><div className="p-8">Loading...</div></Layout>; 
+    }
+    
+    if (status === 'unauthenticated') {
+        return null; // Don't render anything while redirecting
+    }
 
     return (
         <Layout>
@@ -626,7 +599,7 @@ export default function SettingsPage() {
                 {activeTab === 'General' && <GeneralTabContent />}
                 {activeTab === 'Integrations' && <IntegrationsTabContent />}
                 {activeTab === 'Social Connections' && <SocialConnectionsTabContent />}
-                {activeTab === 'Widget Settings' && <WidgetSettingsTabContent siteId={session?.user?.email} />}
+                {activeTab === 'Widget Settings' && <WidgetSettingsTabContent siteId={session?.user?.site_id} />}
                 {activeTab === 'Platforms' && <PlatformsTabContent />}
                 {activeTab === 'Billing' && <BillingTabContent />}
                 {activeTab === 'Danger Zone' && <DangerZoneTabContent />}
