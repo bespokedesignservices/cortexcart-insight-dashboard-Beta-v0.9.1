@@ -1,44 +1,79 @@
-// src/app/api/admin/roadmap/route.js
-import { verifyAdminSession } from '@/lib/admin-auth';
-import { db } from '@/lib/db'; 
-import { NextResponse } from 'next/server';
+// src/app/api/admin/roadmap/route.js (Corrected)
 
-// GET handler to fetch all roadmap features
-export async function GET() {
-    // This route can be public, so no session check is needed here.
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { jwtVerify } from 'jose'; // FIX: Import jwtVerify for custom token validation
+
+// Helper function to get the secret key
+const getSecret = () => {
+    const secret = process.env.JWT_ADMIN_SECRET;
+    if (!secret) {
+        throw new Error("JWT_ADMIN_SECRET is not set in environment variables.");
+    }
+    return new TextEncoder().encode(secret);
+};
+
+// --- POST: Add a new roadmap item ---
+export async function POST(req) {
     try {
-        const [features] = await db.query(
-            'SELECT * FROM roadmap_features ORDER BY status, sort_order ASC'
-        );
-        return NextResponse.json(features, { status: 200 });
+        // FIX: Replaced next-auth getToken with custom admin token verification
+        const adminCookie = req.cookies.get('admin-session-token');
+        const token = adminCookie?.value;
+
+        if (!token) {
+            return new NextResponse("Forbidden: No session token found.", { status: 403 });
+        }
+        
+        const secret = getSecret();
+        const { payload } = await jwtVerify(token, secret);
+
+        if (payload.role !== 'superadmin') {
+            return new NextResponse("Forbidden: You do not have permission for this action.", { status: 403 });
+        }
+        
+        // --- End of new authentication logic ---
+
+        const body = await req.json();
+        const { title, description, category, status, releaseDate } = body;
+
+        if (!title || !description || !category || !status) {
+            return new NextResponse("Missing required fields", { status: 400 });
+        }
+
+        const newRoadmapItem = await db.roadmap.create({
+            data: {
+                title,
+                description,
+                category,
+                status,
+                release_date: releaseDate ? new Date(releaseDate) : null,
+            },
+        });
+
+        return NextResponse.json(newRoadmapItem, { status: 201 });
+
     } catch (error) {
-        console.error('Error fetching roadmap features:', error);
-        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+        console.error('[ROADMAP_POST_ERROR]', error);
+        // If the token is invalid, jwtVerify will throw an error
+        if (error.code === 'ERR_JWT_EXPIRED' || error.code === 'ERR_JWS_INVALID') {
+            return new NextResponse("Unauthorized: Invalid session token.", { status: 401 });
+        }
+        return new NextResponse("Internal Server Error", { status: 500 });
     }
 }
 
-// POST handler to create a new feature
-export async function POST(request) {
-    const adminSession = await verifyAdminSession();
-    if (!adminSession) {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-    }
 
+// --- GET: Fetch all roadmap items ---
+export async function GET() {
     try {
-        const { name, description, status } = await request.json();
-        if (!name || !status) {
-            return NextResponse.json({ message: 'Name and status are required' }, { status: 400 });
-        }
-
-        const query = `
-            INSERT INTO roadmap_features (name, description, status)
-            VALUES (?, ?, ?);
-        `;
-        const [result] = await db.query(query, [name, description, status]);
-        
-        return NextResponse.json({ message: 'Feature created successfully', featureId: result.insertId }, { status: 201 });
+        const roadmapItems = await db.roadmap.findMany({
+            orderBy: {
+                release_date: 'desc', // Show newest first
+            },
+        });
+        return NextResponse.json(roadmapItems, { status: 200 });
     } catch (error) {
-        console.error('Error creating feature:', error);
-        return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+        console.error('[ROADMAP_GET_ERROR]', error);
+        return new NextResponse("Internal Server Error", { status: 500 });
     }
 }
