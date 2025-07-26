@@ -1,39 +1,46 @@
+// src/app/api/admin/login/route.js (Corrected)
+
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';import crypto from 'crypto';
+import { db } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
 
-function verifyPassword(password, storedHash) {
-    const [salt, key] = storedHash.split(':');
-    const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-    return key === hash;
-}
+// Helper function to get the ADMIN JWT secret
+const getAdminSecret = () => {
+    const secret = process.env.JWT_ADMIN_SECRET;
+    if (!secret) {
+        throw new Error("JWT_ADMIN_SECRET is not set in environment variables.");
+    }
+    return new TextEncoder().encode(secret);
+};
 
-export async function POST(request) {
+export async function POST(req) {
     try {
-        const { email, password } = await request.json();
+        const { email, password } = await req.json();
 
         if (!email || !password) {
-            return NextResponse.json({ message: 'Email and password are required.' }, { status: 400 });
+            return new NextResponse("Email and password are required", { status: 400 });
         }
 
-        const [admins] = await db.query('SELECT * FROM admins WHERE email = ?', [email]);
+        const admin = await db.admin.findUnique({
+            where: { email: email },
+        });
 
-        if (admins.length === 0) {
-            return NextResponse.json({ message: 'Invalid credentials.' }, { status: 401 });
+        if (!admin) {
+            return new NextResponse("Invalid credentials", { status: 401 });
         }
 
-        const admin = admins[0];
-        const isPasswordValid = verifyPassword(password, admin.password);
+        const isPasswordValid = await bcrypt.compare(password, admin.password);
 
         if (!isPasswordValid) {
-            return NextResponse.json({ message: 'Invalid credentials.' }, { status: 401 });
+            return new NextResponse("Invalid credentials", { status: 401 });
         }
 
-        // --- Create a session token (JWT) ---
-        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+        // --- THE FIX: Create the token using 'jose' ---
+        const secret = getAdminSecret();
         const token = await new SignJWT({
-            id: admin.id,
+            userId: admin.id,
             email: admin.email,
             role: admin.role,
         })
@@ -41,19 +48,20 @@ export async function POST(request) {
         .setIssuedAt()
         .setExpirationTime('1h') // Token is valid for 1 hour
         .sign(secret);
-        
-        // --- Set the token in a secure, http-only cookie ---
+
+        // Set the token in a secure, httpOnly cookie
         cookies().set('admin-session-token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
             path: '/',
-            sameSite: 'strict',
+            maxAge: 60 * 60, // 1 hour in seconds
         });
 
-        return NextResponse.json({ message: 'Login successful' }, { status: 200 });
+        return NextResponse.json({ message: "Login successful" }, { status: 200 });
 
     } catch (error) {
-        console.error('Admin login error:', error);
-        return NextResponse.json({ message: 'An internal error occurred.' }, { status: 500 });
+        console.error('[ADMIN_LOGIN_ERROR]', error);
+        return new NextResponse("Internal Server Error", { status: 500 });
     }
 }
