@@ -29,11 +29,10 @@ async function verifyAdmin(req) {
             return { error: new NextResponse("Forbidden: You do not have permission.", { status: 403 }) };
         }
         return { payload }; // Success
-    } catch (err) {
+    } catch { // THE FIX: 'err' has been removed from here
         return { error: new NextResponse("Unauthorized: Invalid session token.", { status: 401 }) };
     }
 }
-
 
 // --- PUT: Update an existing roadmap item ---
 export async function PUT(req, { params }) {
