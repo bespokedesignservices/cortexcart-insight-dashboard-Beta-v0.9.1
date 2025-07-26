@@ -2,11 +2,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { db, getConnection } from '@/lib/db';
 import { decrypt } from '@/lib/crypto';
 import axios from 'axios';
 
-export async function POST(request) {
+export async function POST() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
         return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });

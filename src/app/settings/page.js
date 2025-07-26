@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession, signOut } from 'next-auth/react'; // FIX: Removed unused 'signIn'
-import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/app/components/Layout';
 import SettingsTabs from '@/app/components/SettingsTabs';
 import { CheckCircleIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
@@ -151,10 +150,9 @@ const SocialConnectionsTabContent = () => {
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
-    const [isLoading, setIsLoading] = useState(false);
+    const [setIsLoading] = useState(false);
     const [activePageId, setActivePageId] = useState(null); 
-    const [shopifyStore, setShopifyStore] = useState('');
-
+ 
  const fetchConnections = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -198,7 +196,7 @@ const SocialConnectionsTabContent = () => {
     } finally {
         setIsLoading(false);
     }
-}, []);
+}, [setIsLoading]);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search); // Get searchParams inside useEffect
